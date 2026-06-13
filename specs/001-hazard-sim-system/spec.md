@@ -106,7 +106,7 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 - **FR-014**: The system MUST support at least 100 simultaneous citizens in a single simulation
 - **FR-015**: The system MUST support at least 10 simultaneous hazards in a single simulation
 - **FR-016**: The system MUST record all simulation events in order with timestamps for post-simulation review
-- **FR-017**: Hazard types MUST be extensible — initially generic with configurable visual and behavioral properties, with the ability to define specific hazard types (flood, fire, volcano, tsunami, etc.) in future iterations
+- **FR-017**: Hazard types MUST be defined in app code with a built-in registry — initially generic, with the ability to add specific hazard types (flood, fire, volcano, tsunami, etc.) by extending the registry. Config references them by name only; visual and behavioral properties are not configurable at runtime.
 - **FR-018**: Citizens MUST have a configurable degree of autonomy influencing their movement decisions (e.g., path preference, risk tolerance, speed variation)
 - **FR-019**: The hazard emergence interval MUST be configurable per simulation
 

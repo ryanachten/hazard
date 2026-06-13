@@ -1,0 +1,297 @@
+# Data Model: Hazard Simulation System
+
+## Entity Overview
+
+```
+Simulation ──1:N──→ Citizen
+Simulation ──1:N──→ Hazard
+Simulation ──1:N──→ SafeZone
+Simulation ──1:N──→ StaticObstacle
+Simulation ──1:N──→ SimulationEvent
+Simulation ──1:1──→ Environment (configuration only)
+```
+
+## Simulation
+
+```go
+type Simulation struct {
+    ID          string          // UUID
+    Config      SimulationConfig
+    State       SimulationState // created → running → paused → completed
+    Tick        uint64          // current tick number
+    StartedAt   time.Time
+    CompletedAt *time.Time
+    Citizens    []Citizen
+    Hazards     []Hazard
+    SafeZones   []SafeZone
+    Obstacles   []StaticObstacle
+    Grid        *Grid           // 2D grid representation for pathfinding
+}
+```
+
+**State transitions**: `created → running ⇄ paused → completed`
+
+- `created`: Environment configured, citizens seeded, waiting for start
+- `running`: Tick loop active; citizens idle (random movement) until the first hazard emerges, then navigate to safe zones as hazards expand
+- `paused`: Tick loop suspended, state preserved
+- `completed`: All citizens escaped or dead
+
+**Validation rules**:
+- Must have at least 1 safe zone (otherwise citizens have no goal)
+- Dimensions must be positive (width > 0, height > 0)
+
+## SimulationConfig
+
+```go
+type SimulationConfig struct {
+    Width                   int              // Grid width in cells
+    Height                  int              // Grid height in cells
+    TickInterval            time.Duration    // e.g., 100ms (10 Hz default)
+    Seed                    int64            // RNG seed for reproducibility
+    CitizenCountRange       [2]int           // [min, max] citizens to spawn
+    CitizenSpeedRange       [2]int           // [min, max] cells per tick
+    CitizenRiskTolerance    [2]float64       // [min, max] per-citizen risk tolerance
+    CitizenSpeedVariation   [2]float64       // [min, max] per-citizen speed variation
+    CitizenPathPreference   string           // "shortest" | "safest" | "balanced"
+    HazardIntervalRange     [2]int           // [min, max] ticks between emergence
+    MaxHazards              int              // Maximum concurrent hazards
+    HazardSpreadRateRange   [2]float64       // [min, max] cells per tick
+    HazardDurationRange     [2]int           // [min, max] ticks, 0 = indefinite
+    HazardTypeNames         []string         // Names from built-in registry for weighted random selection
+    SafeZoneCountRange      [2]int           // [min, max] safe zones to generate
+    SafeZoneRadiusRange     [2]int           // [min, max] radius in cells
+    SafeZonePlacement       string           // "far_from_start" | "random" | "corners"
+    ObstacleCountRange      [2]int           // [min, max] obstacles to generate
+    ObstacleSizeRange       SizeRange        // Width/height ranges
+    ObstacleTypes           []string         // Names from built-in registry for random assignment
+}
+
+type SizeRange struct {
+    Width  [2]int // [min, max]
+    Height [2]int // [min, max]
+}
+```
+
+## Citizen
+
+```go
+type Citizen struct {
+    ID             string         // UUID
+    SimulationID   string
+    StartPos       Position
+    CurrentPos     Position
+    Status         CitizenStatus  // navigating, escaped, dead
+    Speed          int            // Cells per tick (from config or per-citizen)
+    Autonomy       AutonomyProfile
+    CurrentPath    []Position     // Planned path to nearest safe zone
+    PathIndex      int            // Current step along path
+    KilledBy       *string        // Hazard ID if status == dead
+    EscapedAt      *time.Time
+    EscapedToZone  *string        // SafeZone ID
+}
+
+type CitizenStatus string
+
+const (
+    CitizenIdle       CitizenStatus = "idle"
+    CitizenNavigating CitizenStatus = "navigating"
+    CitizenEscaped    CitizenStatus = "escaped"
+    CitizenDead       CitizenStatus = "dead"
+)
+```
+
+**State transitions**: `idle → navigating → escaped | dead`
+
+- `idle`: Pre-hazard phase; moves randomly each tick using open adjacent cells, does not pathfind to safe zones yet
+- `navigating`: Active, following path toward safe zone, may recalculate
+- `escaped`: Reached a safe zone
+- `dead`: Overtaken by a hazard
+
+**Validation**:
+- StartPos must be within grid bounds
+- StartPos must not overlap with a static obstacle
+- Speed must be >= 1
+
+## AutonomyProfile
+
+```go
+type AutonomyProfile struct {
+    RiskTolerance float64 // 0.0 = avoid all hazards (prefer long safe path), 1.0 = ignore hazards (prefer shortest)
+    SpeedVariation float64 // 0.0 = constant speed, >0 = random variation ±%
+    PathPreference string  // "shortest" | "safest" | "balanced"
+}
+```
+
+## Hazard
+
+```go
+type Hazard struct {
+    ID              string        // UUID
+    SimulationID    string
+    Type            HazardType
+    Origin          Position
+    CurrentRadius   float64       // Expands over time
+    InitialRadius   float64
+    MaxRadius       float64
+    SpreadRate      float64       // Cells per tick
+    Severity        float64       // 0.0–1.0 (affects citizen death threshold)
+    State           HazardState   // scheduled, emerging, active, dissipated
+    EmergedAt       *time.Time
+    Duration        int           // Ticks before dissipation (0 = indefinite)
+    TicksActive     int
+}
+
+type HazardType struct {
+    Name        string  // e.g., "generic", "flood", "fire"
+    Color       string  // CSS color for visualization
+    SpreadCurve string  // "linear" | "accelerating" | "decelerating"
+}
+
+// Built-in hazard types are defined in app code as a registry (map[string]HazardType).
+// Config references them by name via HazardTypeNames in SimulationConfig.
+// Example built-in registry:
+//
+//	var HazardTypes = map[string]HazardType{
+//	    "generic": {Name: "generic", Color: "#ff4444", SpreadCurve: "linear"},
+//	    "flood":   {Name: "flood",   Color: "#4488ff", SpreadCurve: "accelerating"},
+//	    "fire":    {Name: "fire",    Color: "#ff8800", SpreadCurve: "accelerating"},
+//	}
+
+type HazardState string
+
+const (
+    HazardScheduled  HazardState = "scheduled"
+    HazardEmerging   HazardState = "emerging"
+    HazardActive     HazardState = "active"
+    HazardDissipated HazardState = "dissipated"
+)
+```
+
+**State transitions**: `scheduled → emerging → active → dissipated`
+
+- `scheduled`: Not yet emerged; will emerge at configured tick
+- `emerging`: First N ticks of existence (initial growth phase)
+- `active`: Fully active, expanding at spread rate
+- `dissipated`: Expired (duration elapsed), no longer blocks movement
+
+**Validation**:
+- Origin must be within grid bounds
+- Spread rate must be >= 0
+- Duration must be >= 0 (0 = does not dissipate)
+
+## SafeZone
+
+```go
+type SafeZone struct {
+    ID       string   // UUID
+    Position Position
+    Radius   int      // In grid cells
+}
+```
+
+**Validation**:
+- Must be within grid bounds
+- Must not overlap with static obstacles
+
+## StaticObstacle
+
+```go
+type StaticObstacle struct {
+    ID       string   // UUID
+    Position Position
+    Width    int      // In grid cells
+    Height   int      // In grid cells
+    Type     string   // References built-in obstacle type registry, e.g., "building", "terrain"
+}
+```
+
+**Validation**:
+- Must be within grid bounds
+- Must not overlap with safe zones
+
+## Environment (value object / config component)
+
+```go
+type Environment struct {
+    Width     int
+    Height    int
+    Obstacles []StaticObstacle
+    SafeZones []SafeZone
+}
+```
+
+## Grid (runtime construct)
+
+```go
+type CellType int
+
+const (
+    CellOpen     CellType = 0  // Passable
+    CellObstacle CellType = 1  // Blocked by static obstacle
+    CellHazard   CellType = 2  // Blocked by hazard zone
+    CellSafeZone CellType = 3  // Goal area
+)
+
+type Grid struct {
+    Width  int
+    Height int
+    Cells  [][]CellType // [y][x] indexed
+}
+```
+
+## Position
+
+```go
+type Position struct {
+    X int
+    Y int
+}
+```
+
+## SimulationEvent
+
+```go
+type SimulationEvent struct {
+    ID           string    // UUID
+    SimulationID string
+    Timestamp    time.Time
+    Tick         uint64
+    EventType    EventType
+    EntityID     string    // Citizen, Hazard, or Simulation ID
+    Payload      []byte    // JSON-encoded event-specific data
+}
+
+type EventType string
+
+const (
+    EventSimulationStarted   EventType = "simulation.started"
+    EventSimulationPaused    EventType = "simulation.paused"
+    EventSimulationStopped   EventType = "simulation.stopped"
+    EventSimulationCompleted EventType = "simulation.completed"
+    EventCitizenMoved        EventType = "citizen.moved"
+    EventCitizenEscaped      EventType = "citizen.escaped"
+    EventCitizenDied         EventType = "citizen.died"
+    EventCitizenRecalculated EventType = "citizen.recalculated"
+    EventCitizenAlerted      EventType = "citizen.alerted"
+    EventHazardEmerged       EventType = "hazard.emerged"
+    EventHazardExpanded      EventType = "hazard.expanded"
+    EventHazardDissipated    EventType = "hazard.dissipated"
+)
+```
+
+## Edge Case Handling
+
+| Scenario | Behavior |
+|---|---|
+| All paths blocked to all safe zones | Citizens recalculate each tick; when no path exists, they stay in place until either a path opens or hazard overtakes them |
+| Hazard completely envelops a safe zone | Safe zone becomes unreachable; citizens still targeting it will recalculate toward other safe zones |
+| All citizens die before any escape | Simulation ends when last citizen dies (FR-009) |
+| Citizen cannot outpace hazard | If hazard radius reaches citizen position before citizen reaches safe zone → citizen marked dead (FR-008) |
+| Idle citizen when first hazard emerges | All idle citizens immediately switch to navigating and pathfind to safe zones |
+| Zero hazard interval | No hazards emerge; citizens idle until `HazardInterval` ticks elapse, then auto-switch to navigating |
+| Citizen seeded inside hazard | Citizen dies immediately (FR-008) — idle or not |
+| Citizen with no valid path at start | Idle movement still occurs within valid cells; when first hazard emerges, tries to pathfind and becomes trapped |
+| Zero citizens | Simulation starts and immediately completes (FR-009: all citizens either escaped or dead — vacuously true) |
+| Hazard on top of citizen at emergence | Citizen dies on that tick (FR-008) |
+| Safe zone enveloped before citizens reach | Citizens recalculate (FR-007); if all safe zones blocked, citizens are trapped |
+| Idle citizen with no unblocked adjacent cell | Citizen stays in place for that tick (all directions blocked by obstacles or grid boundary) |

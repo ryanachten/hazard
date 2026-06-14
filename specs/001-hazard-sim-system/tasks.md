@@ -1,5 +1,5 @@
 ---
-description: "Task list for Hazard Simulation System - 10 progressive slices for learning Go, Kafka, and event-driven architecture"
+description: "Task list for Hazard Simulation System - 9 progressive slices for learning Go, Kafka, and event-driven architecture"
 ---
 
 # Tasks: Hazard Simulation System
@@ -7,7 +7,9 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 **Input**: Design documents from `specs/001-hazard-sim-system/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
 
-**Learning Path**: 10 progressive slices, each introducing new Go concepts. Build in order — no skipping ahead.
+**Learning Path**: 9 progressive slices, each introducing new Go concepts. Build in order — no skipping ahead.
+
+> **Note**: Old Phases 1 (Setup) and 2 (Foundational types in isolation) were collapsed into Phase 1. Empty directory structures and Docker Compose for Kafka add no value early. Types are defined alongside the code that uses them.
 
 **Organization**: Tasks are grouped by user story. Each user story is independently testable.
 
@@ -15,34 +17,9 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 1: Setup 🛠️
+## Phase 1: User Story 1 — Grid + A* Pathfinding (P1) 🎯 MVP SLICE 1/6
 
-**Purpose**: Initialize Go project, directory structure, and developer tooling
-
-**Learning Outcome**: Go module layout, `go mod` commands, golangci-lint setup
-
-- [ ] T001 Create project directory structure (`internal/`, `cmd/`, `web/`, `examples/`) and verify it compiles with `go build ./...`
-- [ ] T002 [P] Install and configure Go tooling: verify `gofmt -s`, `go vet`, `staticcheck` pass on initial codebase
-- [ ] T003 [P] Add `docker-compose.yml` for local single-node Kafka per `research.md` — verify with `docker compose up -d`
-
----
-
-## Phase 2: Foundational — Core Types & Data Model 🧱
-
-**Purpose**: Define all shared types, structs, and constants that every other package depends on
-
-**Learning Outcome**: Go structs, constants, type definitions, file organization across packages
-
-- [ ] T004 [P] Define `Position`, `CellType`, and `Grid` types in `internal/pathfinding/interface.go` per the pathfinding contract
-- [ ] T005 [P] Define simulation entity structs (`Citizen`, `Hazard`, `SafeZone`, `StaticObstacle`, `Simulation`) in `internal/engine/` per data-model.md
-- [ ] T006 Define `SimulationConfig` struct with all configuration fields in `internal/config/config.go` per the config contract
-- [ ] T007 Define `SimulationEvent` struct, `EventType` constants, and all event payload structs in `internal/events/events.go` per the events contract
-
-**Checkpoint**: Foundation ready — all shared types compile with `go build ./...`
-
----
-
-## Phase 3: User Story 1 — Grid + A* Pathfinding (P1) 🎯 MVP SLICE 1/6
+> **Note**: Old Phase 1 (empty setup) and Phase 2 (isolated type definitions) are folded into this phase. T004 (Position/CellType/Grid types) is merged into T008 below since they live in the same package. T005–T007 (entity structs, config, events) are deferred to their respective phases where they're first used.
 
 **Goal**: Build a 2D grid and A* pathfinder. Citizens will later use this to navigate. This is the mathematical core of the system.
 
@@ -50,7 +27,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 **Learning Outcome**: Go interfaces, method receivers, slices, `make`, table-driven tests
 
-- [ ] T008 [P] [US1] Implement `Pathfinder` interface with `FindPath()` and `Name()` methods in `internal/pathfinding/interface.go`
+- [x] T008 [P] [US1] Define `Position`, `CellType`, `Grid` types and `Pathfinder` interface with `FindPath()` and `Name()` methods in `internal/pathfinding/interface.go`
 - [ ] T009 [P] [US1] Implement A* algorithm with Manhattan distance heuristic in `internal/pathfinding/astar.go` — cardinal-only movement, returns `[]Position` or nil
 - [ ] T010 [US1] Write table-driven tests in `internal/pathfinding/astar_test.go` testing: open grid path, obstacle avoidance, no-path case, start==goal edge case
 
@@ -58,7 +35,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 4: User Story 1 — Citizen Movement (P1) 🎯 MVP SLICE 2/6
+## Phase 2: User Story 1 — Citizen Movement (P1) 🎯 MVP SLICE 2/6
 
 **Goal**: Citizens exist on the grid and follow paths toward destinations on each tick. This introduces state mutation over time.
 
@@ -75,7 +52,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 5: User Story 1 — Hazards + Envelopment (P1) 🎯 MVP SLICE 3/6
+## Phase 3: User Story 1 — Hazards + Envelopment (P1) 🎯 MVP SLICE 3/6
 
 **Goal**: Hazards emerge at scheduled ticks and expand their radius over time, blocking grid cells and forcing citizens to recalculate.
 
@@ -92,7 +69,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 6: User Story 1 — Safe Zones + Death (P1) 🎯 MVP SLICE 4/6
+## Phase 4: User Story 1 — Safe Zones + Death (P1) 🎯 MVP SLICE 4/6
 
 **Goal**: Citizens can reach safe zones (escape) or be overtaken by hazards (die). Simulation ends when all citizens are resolved.
 
@@ -109,7 +86,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 7: User Story 1 — CLI Controls (P1) 🎯 MVP SLICE 5/6
+## Phase 5: User Story 1 — CLI Controls (P1) 🎯 MVP SLICE 5/6
 
 **Goal**: An operator can start, pause, resume, stop, and check status of a simulation via a CLI tool.
 
@@ -126,7 +103,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 8: User Story 1 — Event Emission (P1) 🎯 MVP SLICE 6/6
+## Phase 6: User Story 1 — Event Emission (P1) 🎯 MVP SLICE 6/6
 
 **Goal**: The simulation emits structured events for every state change, stored in-memory for now. This is the bridge to Kafka and WebSocket in later phases.
 
@@ -143,7 +120,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 9: User Story 2 — WebSocket Broadcast + Canvas Viz (P2) 🌐
+## Phase 7: User Story 2 — WebSocket Broadcast + Canvas Viz (P2) 🌐
 
 **Goal**: Simulation events stream to browser clients in real-time via WebSocket, rendered on an HTML Canvas.
 
@@ -163,7 +140,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 10: User Story 3 — Kafka Integration + Event History (P3) 📡
+## Phase 8: User Story 3 — Kafka Integration + Event History (P3) 📡
 
 **Goal**: Simulation events are published to Kafka and can be replayed after the simulation ends.
 
@@ -181,7 +158,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 11: User Story 4 — Autonomy + Performance (P3) ⚡
+## Phase 9: User Story 4 — Autonomy + Performance (P3) ⚡
 
 **Goal**: Citizens have varied behaviors (risk tolerance, path preference) and the system handles 100+ citizens at <2x real-time.
 
@@ -198,7 +175,7 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 
 ---
 
-## Phase 12: Polish & Cross-Cutting Concerns ✨
+## Phase 10: Polish & Cross-Cutting Concerns ✨
 
 **Purpose**: Final quality pass, documentation, and end-to-end validation
 
@@ -212,37 +189,33 @@ description: "Task list for Hazard Simulation System - 10 progressive slices for
 ### Phase Dependencies
 
 ```
-Phase 1: Setup — no dependencies
+Phase 1: US1 Grid+A* — no dependencies (types defined here)
     ↓
-Phase 2: Foundational — depends on Phase 1
-    ↓ (BLOCKS ALL USER STORIES)
-Phase 3: US1 Grid+A* — depends on Phase 1, 2
+Phase 2: US1 Movement — depends on Phase 1 (uses Grid + A*)
     ↓
-Phase 4: US1 Movement — depends on Phase 3 (uses Grid + A*)
+Phase 3: US1 Hazards — depends on Phase 2 (uses Citizen movement)
     ↓
-Phase 5: US1 Hazards — depends on Phase 4 (uses Citizen movement)
+Phase 4: US1 Safe Zones — depends on Phase 3 (uses Hazards)
     ↓
-Phase 6: US1 Safe Zones — depends on Phase 5 (uses Hazards)
+Phase 5: US1 CLI — depends on Phase 4 (uses full simulation)
     ↓
-Phase 7: US1 CLI — depends on Phase 6 (uses full simulation)
+Phase 6: US1 Events — depends on Phase 5 (CLI needs events)
     ↓
-Phase 8: US1 Events — depends on Phase 7 (CLI needs events)
+Phase 7: US2 WebSocket+Viz — depends on Phase 6 (needs events)
     ↓
-Phase 9: US2 WebSocket+Viz — depends on Phase 8 (needs events)
+Phase 8: US3 Kafka — depends on Phase 6 (needs events)
     ↓
-Phase 10: US3 Kafka — depends on Phase 8 (needs events)
+Phase 9: US4 Autonomy — depends on Phase 4 (needs full simulation)
     ↓
-Phase 11: US4 Autonomy — depends on Phase 6 (needs full simulation)
-    ↓
-Phase 12: Polish — depends on all phases
+Phase 10: Polish — depends on all phases
 ```
 
 ### User Story Dependencies
 
 - **US1 (P1)**: Core simulation — no dependencies on other stories. Must be 100% complete first.
-- **US2 (P2)**: WebSocket/Viz — depends on US1 event emission (Phase 8). Events flow to WebSocket.
-- **US3 (P3)**: Kafka/History — depends on US1 event emission (Phase 8). Events flow to Kafka.
-- **US4 (P3)**: Autonomy/Scale — depends on US1 core engine (Phase 6). Extends citizen behavior.
+- **US2 (P2)**: WebSocket/Viz — depends on US1 event emission (Phase 6). Events flow to WebSocket.
+- **US3 (P3)**: Kafka/History — depends on US1 event emission (Phase 6). Events flow to Kafka.
+- **US4 (P3)**: Autonomy/Scale — depends on US1 core engine (Phase 4). Extends citizen behavior.
 
 ### Within Each User Story Phase
 
@@ -253,14 +226,12 @@ Phase 12: Polish — depends on all phases
 
 ### Parallel Opportunities
 
-- Phase 1 (Setup): T002, T003 can run in parallel
-- Phase 2 (Foundational): T004, T005 can run in parallel (different packages)
-- Phase 3 (US1/Grid): T008, T009 can run in parallel (interface + implementation)
-- Phase 5 (US1/Hazards): T015 is independent
-- Phase 7 (US1/CLI): All tasks are sequential
-- Phase 9 (US2/Viz): T031, T032, T034, T035, T036 can all run in parallel
-- Phase 10 (US3/Kafka): T038, T039 can run in parallel
-- Phase 11 (US4/Autonomy): T043 is independent
+- Phase 1 (US1/Grid): T008, T009 can run in parallel (interface + implementation)
+- Phase 3 (US1/Hazards): T015 is independent
+- Phase 5 (US1/CLI): All tasks are sequential
+- Phase 7 (US2/Viz): T031, T032, T034, T035, T036 can all run in parallel
+- Phase 8 (US3/Kafka): T038, T039 can run in parallel
+- Phase 9 (US4/Autonomy): T043 is independent
 
 ---
 
@@ -282,7 +253,7 @@ Phase 12: Polish — depends on all phases
 
 ### MVP Scope (User Story 1 Only)
 
-The MVP covers Phases 1-8 (T001-T030). This delivers:
+The MVP covers Phases 1-6 (T008-T030). This delivers:
 - A working simulation with citizens, hazards, safe zones
 - A* pathfinding with obstacle avoidance
 - Event emission in memory
@@ -307,11 +278,11 @@ The MVP covers Phases 1-8 (T001-T030). This delivers:
 
 ### Incremental Delivery
 
-1. Complete Phases 1-2 → Foundation ready
-2. Complete Phases 3-8 → MVP: fully functional simulation with CLI
-3. Add Phase 9 → Real-time visualization (huge win!)
-4. Add Phase 10 → Kafka event streaming (core learning goal)
-5. Add Phase 11 → Scale and autonomy (polish)
+1. Complete Phase 1 → Grid + A* pathfinding ready
+2. Complete Phases 1-6 → MVP: fully functional simulation with CLI
+3. Add Phase 7 → Real-time visualization (huge win!)
+4. Add Phase 8 → Kafka event streaming (core learning goal)
+5. Add Phase 9 → Scale and autonomy (polish)
 
 ### Validation
 

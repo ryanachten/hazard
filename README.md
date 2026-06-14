@@ -14,3 +14,10 @@ Event-driven hazard simulation system.
 pre-commit install
 pre-commit install --hook-type pre-push
 ```
+
+## Tests
+
+- Get code coverage for path
+```bash
+go test -coverprofile=cov.out ./internal/pathfinding/ && go tool cover -func=cov.out
+```

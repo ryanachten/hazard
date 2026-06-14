@@ -7,6 +7,9 @@ import (
 	"slices"
 )
 
+// ErrDestinationUnreachable returned when unable to reach destination from source node
+var ErrDestinationUnreachable = errors.New("destination unreachable")
+
 // Dijkstra implementation of the pathfinding algorithm
 type Dijkstra struct {
 }
@@ -105,7 +108,7 @@ func (d *Dijkstra) FindPath(grid grid, from, to Position) ([]Position, error) {
 
 	curNode := traversalPath[to.Y][to.X]
 	if curNode == nil {
-		return nil, errors.New("destination unreachable")
+		return nil, ErrDestinationUnreachable
 	}
 
 	result := make([]Position, 0)

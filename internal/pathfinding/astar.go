@@ -6,16 +6,16 @@ import (
 	"slices"
 )
 
-// Dijkstra implementation of the pathfinding algorithm
-type Dijkstra struct{}
+// AStar implementation of the pathfinding algorithm
+type AStar struct{}
 
 // Name returns the given name of a pathfinding algorithm
-func (d *Dijkstra) Name() string {
-	return "dijkstra"
+func (a *AStar) Name() string {
+	return "a*"
 }
 
 // FindPath finds shortest path from a starting point to a given destination
-func (d *Dijkstra) FindPath(grid grid, from, to Position) ([]Position, error) {
+func (a *AStar) FindPath(grid grid, from, to Position) ([]Position, error) {
 
 	// If from and to are the same node, then short-circuit
 	if from == to {
@@ -52,9 +52,8 @@ func (d *Dijkstra) FindPath(grid grid, from, to Position) ([]Position, error) {
 		curItem := heap.Pop(&pq).(*Item)
 		curPos := curItem.value
 
-		// If it's not the shortest distance for this node, skip it
-		if curItem.priority > distances[curPos.Y][curPos.X] {
-			continue
+		if curPos == to {
+			break
 		}
 
 		// Explore neighbouring elements of index
@@ -88,7 +87,7 @@ func (d *Dijkstra) FindPath(grid grid, from, to Position) ([]Position, error) {
 						X: x,
 						Y: y,
 					},
-					priority: distances[y][x], // cost = distance
+					priority: distances[y][x] + heuristic(Position{X: x, Y: y}, to),
 				})
 			}
 		}
@@ -110,4 +109,10 @@ func (d *Dijkstra) FindPath(grid grid, from, to Position) ([]Position, error) {
 	slices.Reverse(result)
 
 	return result, nil
+}
+
+// Using Manhattan heuristic since we can only move left, right, up and down
+func heuristic(position, destination Position) int {
+	cost := math.Abs(float64(position.Y-destination.Y)) + math.Abs(float64(position.X-destination.X))
+	return int(cost)
 }

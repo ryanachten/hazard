@@ -28,8 +28,8 @@ description: "Task list for Hazard Simulation System - 9 progressive slices for 
 **Learning Outcome**: Go interfaces, method receivers, slices, `make`, table-driven tests
 
 - [x] T008 [P] [US1] Define `Position`, `CellType`, `Grid` types and `Pathfinder` interface with `FindPath()` and `Name()` methods in `internal/pathfinding/interface.go`
-- [ ] T009 [P] [US1] Implement A* algorithm with Manhattan distance heuristic in `internal/pathfinding/astar.go` — cardinal-only movement, returns `[]Position` or nil
-- [ ] T010 [US1] Write table-driven tests in `internal/pathfinding/astar_test.go` testing: open grid path, obstacle avoidance, no-path case, start==goal edge case
+- [x] T009 [P] [US1] Implement A* algorithm with Manhattan distance heuristic in `internal/pathfinding/astar.go` — cardinal-only movement, returns `[]Position` or nil
+- [x] T010 [US1] Write table-driven tests in `internal/pathfinding/astar_test.go` testing: open grid path, obstacle avoidance, no-path case, start==goal edge case
 
 **Checkpoint**: `go test -v ./internal/pathfinding/` passes. You understand interfaces, structs, and slices.
 

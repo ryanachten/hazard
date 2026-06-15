@@ -7,6 +7,14 @@ import (
 )
 
 func TestDijkstra_FindPath(t *testing.T) {
+	testFindPath(t, &Dijkstra{})
+}
+
+func TestAStar_FindPath(t *testing.T) {
+	testFindPath(t, &AStar{})
+}
+
+func testFindPath(t *testing.T, algo Pathfinder) {
 	tests := []struct {
 		name        string
 		grid        grid
@@ -23,6 +31,13 @@ func TestDijkstra_FindPath(t *testing.T) {
 			expectedLen: 2,
 		},
 		{
+			name:        "non-trivial navigation",
+			grid:        grid{Width: 6, Height: 6, Cells: makeGrid(6, 6, cellOpen)},
+			from:        Position{X: 0, Y: 0},
+			to:          Position{X: 5, Y: 5},
+			expectedLen: 11,
+		},
+		{
 			name:        "blocked by obstacle",
 			grid:        grid{Width: 2, Height: 2, Cells: makeGrid(2, 2, cellObstacle)},
 			from:        Position{X: 0, Y: 0},
@@ -36,8 +51,6 @@ func TestDijkstra_FindPath(t *testing.T) {
 			to:          Position{X: 0, Y: 0},
 			expectedLen: 1,
 		}}
-
-	algo := &Dijkstra{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -59,7 +72,7 @@ func TestDijkstra_FindPath(t *testing.T) {
 func makeGrid(width, height int, variant cellType) [][]cellType {
 	cells := make([][]cellType, height)
 	for y := range height {
-		cells[y] = make([]cellType, height)
+		cells[y] = make([]cellType, width)
 
 		for x := range width {
 			cells[y][x] = variant

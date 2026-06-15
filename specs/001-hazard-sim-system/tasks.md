@@ -43,7 +43,7 @@ description: "Task list for Hazard Simulation System - 9 progressive slices for 
 
 **Learning Outcome**: Go methods on structs, state machines, iteration, tick-based simulation
 
-- [ ] T011 [US1] Implement `Citizen` struct with `Status` state machine (`idle`, `navigating`, `escaped`, `dead`) and validation in `internal/engine/citizen.go`
+- [x] T011 [US1] Implement `Citizen` struct with `Status` state machine (`idle`, `navigating`, `escaped`, `dead`) and validation in `internal/engine/citizen.go`
 - [ ] T012 [US1] Implement `Simulation` struct with `NewSimulation()`, `Tick()`, and state management in `internal/engine/simulation.go`
 - [ ] T013 [US1] Implement citizen path following: on each tick, advance `PathIndex` toward goal, update `CurrentPos` in `internal/engine/citizen.go`
 - [ ] T014 [US1] Write tests in `internal/engine/simulation_test.go` verifying: citizen advances along path each tick, citizen stops at goal, multiple citizens move independently

@@ -27,7 +27,7 @@ The config defines **generative rules** — ranges, counts, and constraints from
     "max_concurrent": 5,
     "spread_rate_range": [0.3, 0.7],
     "duration_range": [200, 400],
-    "type_names": ["generic"]
+    "type_names": ["fire", "flood", "lava"]
   },
   "safe_zones": {
     "count_range": [1, 3],

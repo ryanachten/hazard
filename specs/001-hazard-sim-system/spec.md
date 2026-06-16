@@ -106,7 +106,7 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 - **FR-014**: The system MUST support at least 100 simultaneous citizens in a single simulation
 - **FR-015**: The system MUST support at least 10 simultaneous hazards in a single simulation
 - **FR-016**: The system MUST record all simulation events in order with timestamps for post-simulation review
-- **FR-017**: Hazard types MUST be defined in app code with a built-in registry — initially generic, with the ability to add specific hazard types (flood, fire, volcano, tsunami, etc.) by extending the registry. Config references them by name only; visual and behavioral properties are not configurable at runtime.
+- **FR-017**: Hazard types MUST be defined in app code with a built-in registry — initially fire, flood, lava (all `expanding` kind), with the ability to add new kinds (e.g., `strike` for lightning, `global` for earthquake) by extending the registry. Config references them by name only; behavioral properties are not configurable at runtime.
 - **FR-018**: Citizens MUST have a configurable degree of autonomy influencing their movement decisions (e.g., path preference, risk tolerance, speed variation)
 - **FR-019**: The hazard emergence interval MUST be configurable per simulation
 
@@ -114,7 +114,7 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 
 - **Simulation**: A single run encompassing environment configuration, citizens, hazards, safe zones, and the event stream. Has a lifecycle (created, running, paused, completed).
 - **Citizen**: An autonomous agent with start position, current position, status (navigating, escaped, dead), movement speed, autonomy profile, and goal of reaching any safe zone. Responds to hazards and obstacles by recalculating path.
-- **Hazard**: An expanding obstacle with position, type (extensible — initially generic), initial radius, progression speed, maximum radius, severity, and lifecycle (scheduled, emerging, active, dissipated). Progressively envelops surrounding area.
+- **Hazard**: An obstacle with position, type (extensible — initially fire, flood, lava), initial radius, progression speed, maximum radius, severity, and lifecycle (scheduled, active, dissipated). Behavior governed by `HazardKind` (expanding, strike, global).
 - **Safe Zone**: A designated area within the environment that citizens must reach to survive. Citizens are considered escaped upon entry.
 - **Environment**: A bounded 2D space with configurable width and height containing static obstacles, safe zones, citizens, and hazards.
 - **Static Obstacle**: Impassable terrain features (buildings, landscape) that block citizen movement and hazard progression. Defined at environment setup.
@@ -145,4 +145,4 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 - The simulation runs on a single machine for the initial version
 - Standard grid-based pathfinding algorithms (e.g., A*) are sufficient for citizen navigation in initial versions
 - Citizens have basic autonomy — they can choose between multiple viable paths based on configurable preferences (e.g., shortest path vs. safest path)
-- The system will be built in progressive phases: (1) basic movement + static obstacles + generic hazards, (2) citizen death + safe zones, (3) hazard types + progressive envelopment, (4) citizen autonomy, (5) specific hazard definitions
+- The system will be built in progressive phases: (1) basic movement + static obstacles + expanding hazards, (2) citizen death + safe zones, (3) hazard types + progressive envelopment, (4) citizen autonomy, (5) additional hazard kinds (strike, global)

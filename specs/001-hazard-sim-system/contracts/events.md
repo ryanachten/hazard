@@ -126,9 +126,8 @@ Emitted after the generation phase completes. Contains the concrete values gener
     "spread_rate": 0.5,
     "max_radius": 15.0,
     "hazard_type": {
-      "name": "generic",
-      "color": "#ff4444",
-      "spread_curve": "linear"
+      "name": "fire",
+      "kind": "expanding"
     }
   }
 }

@@ -1,9 +1,13 @@
 // Package engine defines the simulation engine
 package engine
 
+import pf "hazard/internal/pathfinding"
+
 // Citizen subjected to a hazard
 type Citizen struct {
-	Status CitizenStatus
+	Status           CitizenStatus
+	CurrentPath      []pf.Position
+	CurrentPathIndex int
 }
 
 // CitizenStatus defines the state of citizen activity

@@ -50,6 +50,34 @@ func testFindPath(t *testing.T, algo Pathfinder) {
 			from:        Position{X: 0, Y: 0},
 			to:          Position{X: 0, Y: 0},
 			expectedLen: 1,
+		},
+		{
+			name:        "from is out of bounds (negative)",
+			grid:        NewGrid(3, 3, CellOpen),
+			from:        Position{X: -1, Y: 0},
+			to:          Position{X: 1, Y: 0},
+			expectedErr: ErrPositionOutOfBounds,
+		},
+		{
+			name:        "from is out of bounds (exceeds width)",
+			grid:        NewGrid(3, 3, CellOpen),
+			from:        Position{X: 5, Y: 0},
+			to:          Position{X: 1, Y: 0},
+			expectedErr: ErrPositionOutOfBounds,
+		},
+		{
+			name:        "to is out of bounds (negative)",
+			grid:        NewGrid(3, 3, CellOpen),
+			from:        Position{X: 0, Y: 0},
+			to:          Position{X: -1, Y: -1},
+			expectedErr: ErrPositionOutOfBounds,
+		},
+		{
+			name:        "to is out of bounds (exceeds height)",
+			grid:        NewGrid(3, 3, CellOpen),
+			from:        Position{X: 0, Y: 0},
+			to:          Position{X: 0, Y: 5},
+			expectedErr: ErrPositionOutOfBounds,
 		}}
 
 	for _, test := range tests {

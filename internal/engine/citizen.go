@@ -18,4 +18,8 @@ const (
 	CitizenIdle CitizenStatus = "idle"
 	// CitizenNavigating when moving towards a given destination
 	CitizenNavigating CitizenStatus = "navigating"
+	// CitizenEscaped when the citizen has reached a safe zone
+	CitizenEscaped CitizenStatus = "escaped"
+	// CitizenDead when the citizen has been overtaken by a hazard
+	CitizenDead CitizenStatus = "dead"
 )

@@ -17,7 +17,7 @@ func TestAStar_FindPath(t *testing.T) {
 func testFindPath(t *testing.T, algo Pathfinder) {
 	tests := []struct {
 		name        string
-		grid        grid
+		grid        Grid
 		from        Position
 		to          Position
 		expectedLen int
@@ -25,28 +25,28 @@ func testFindPath(t *testing.T, algo Pathfinder) {
 	}{
 		{
 			name:        "adjacent cells",
-			grid:        grid{Width: 3, Height: 3, Cells: makeGrid(3, 3, cellOpen)},
+			grid:        NewGrid(3, 3, CellOpen),
 			from:        Position{X: 0, Y: 0},
 			to:          Position{X: 1, Y: 0},
 			expectedLen: 2,
 		},
 		{
 			name:        "non-trivial navigation",
-			grid:        grid{Width: 6, Height: 6, Cells: makeGrid(6, 6, cellOpen)},
+			grid:        NewGrid(6, 6, CellOpen),
 			from:        Position{X: 0, Y: 0},
 			to:          Position{X: 5, Y: 5},
 			expectedLen: 11,
 		},
 		{
 			name:        "blocked by obstacle",
-			grid:        grid{Width: 2, Height: 2, Cells: makeGrid(2, 2, cellObstacle)},
+			grid:        NewGrid(2, 2, CellObstacle),
 			from:        Position{X: 0, Y: 0},
 			to:          Position{X: 1, Y: 0},
 			expectedErr: ErrDestinationUnreachable,
 		},
 		{
 			name:        "to and from are the same position",
-			grid:        grid{Width: 3, Height: 3, Cells: makeGrid(3, 3, cellOpen)},
+			grid:        NewGrid(3, 3, CellOpen),
 			from:        Position{X: 0, Y: 0},
 			to:          Position{X: 0, Y: 0},
 			expectedLen: 1,
@@ -67,17 +67,4 @@ func testFindPath(t *testing.T, algo Pathfinder) {
 			require.Equal(t, test.to, path[len(path)-1], "path should end at to")
 		})
 	}
-}
-
-func makeGrid(width, height int, variant cellType) [][]cellType {
-	cells := make([][]cellType, height)
-	for y := range height {
-		cells[y] = make([]cellType, width)
-
-		for x := range width {
-			cells[y][x] = variant
-		}
-	}
-
-	return cells
 }

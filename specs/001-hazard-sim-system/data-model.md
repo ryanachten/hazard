@@ -79,12 +79,12 @@ type Citizen struct {
     ID             string         // UUID
     SimulationID   string
     StartPos       Position
-    CurrentPos     Position
+    CurrentPos     Position       // Optional cached projection; if present must equal CurrentPath[PathIndex] when path exists
     Status         CitizenStatus  // navigating, escaped, dead
     Speed          int            // Cells per tick (from config or per-citizen)
     Autonomy       AutonomyProfile
     CurrentPath    []Position     // Planned path to nearest safe zone
-    PathIndex      int            // Current step along path
+    PathIndex      int            // Current step along path (canonical for derived position)
     KilledBy       *string        // Hazard ID if status == dead
     EscapedAt      *time.Time
     EscapedToZone  *string        // SafeZone ID

@@ -18,3 +18,6 @@ var directions = []Position{
 
 // ErrDestinationUnreachable returned when unable to reach destination from source node
 var ErrDestinationUnreachable = errors.New("destination unreachable")
+
+// ErrPositionOutOfBounds returned when a position is outside grid bounds
+var ErrPositionOutOfBounds = errors.New("position out of bounds")

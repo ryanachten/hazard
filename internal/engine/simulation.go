@@ -15,15 +15,21 @@ type Simulation struct {
 	Grid      *pf.Grid
 }
 
+// SimulationState phases of a simulation
 type SimulationState string
 
 const (
-	SimulationCreated   SimulationState = "created"
-	SimulationRunning   SimulationState = "running"
-	SimulationPaused    SimulationState = "paused"
+	// SimulationCreated simulation created but not running
+	SimulationCreated SimulationState = "created"
+	// SimulationRunning simulation running
+	SimulationRunning SimulationState = "running"
+	// SimulationPaused simulation paused
+	SimulationPaused SimulationState = "paused"
+	// SimulationCompleted simulation completed
 	SimulationCompleted SimulationState = "completed"
 )
 
+// SimulationConfig configuration for a simulation
 type SimulationConfig struct {
 	TickIntervalMs    int
 	Width             int
@@ -31,7 +37,14 @@ type SimulationConfig struct {
 	CitizenCountRange [2]int
 }
 
+// NewSimulation creates a simulation based on configuration
 func NewSimulation(config SimulationConfig) Simulation {
+	if config.Width <= 0 || config.Height <= 0 {
+		panic("simulation width and height must be greater than zero")
+	}
+	if config.CitizenCountRange[0] > config.CitizenCountRange[1] {
+		panic("CitizenCountRange[0] must be less than or equal to CitizenCountRange[1]")
+	}
 
 	grid := pf.NewGrid(config.Width, config.Height, pf.CellOpen)
 
@@ -49,6 +62,11 @@ func NewSimulation(config SimulationConfig) Simulation {
 		path, err := pathfinder.FindPath(grid, startPosition, safeZone)
 		if err != nil {
 			log.Printf("Error creating path for citizen %v: %v", i, err)
+			citizens[i] = Citizen{
+				Status:           CitizenIdle,
+				CurrentPath:      []pf.Position{startPosition},
+				CurrentPathIndex: 0,
+			}
 			continue
 		}
 
@@ -68,6 +86,7 @@ func NewSimulation(config SimulationConfig) Simulation {
 	}
 }
 
+// Tick increments a simulation by one tick
 func (s *Simulation) Tick() {
 	if s.State == SimulationPaused || s.State == SimulationCompleted {
 		return

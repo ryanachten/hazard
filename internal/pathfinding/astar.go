@@ -16,6 +16,9 @@ func (a *AStar) Name() string {
 
 // FindPath finds shortest path from a starting point to a given destination
 func (a *AStar) FindPath(grid Grid, from, to Position) ([]Position, error) {
+	if !grid.InBounds(from) || !grid.InBounds(to) {
+		return nil, ErrPositionOutOfBounds
+	}
 
 	// If from and to are the same node, then short-circuit
 	if from == to {

@@ -24,7 +24,7 @@ A 2D grid-based hazard simulation system where citizens navigate around static o
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 ### Principle I — Small Slice Delivery ✅
-The spec already defines progressive phases: (1) basic movement + static obstacles + generic hazards, (2) citizen death + safe zones, (3) hazard types + progressive envelopment, (4) citizen autonomy, (5) specific hazard definitions. The implementation slices must match or subdivide these further.
+The spec already defines progressive phases: (1) basic movement + static obstacles + expanding hazards, (2) citizen death + safe zones, (3) hazard types + progressive envelopment, (4) citizen autonomy, (5) additional hazard kinds (strike, global). The implementation slices must match or subdivide these further.
 
 ### Principle II — Agent-Assisted Code Review ✅
 User writes all production code; agents review. Code review feedback addressed before merge. Agents may generate tests, config, boilerplate but not feature logic.

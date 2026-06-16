@@ -60,7 +60,7 @@ description: "Task list for Hazard Simulation System - 9 progressive slices for 
 
 **Learning Outcome**: Concurrent state (via sequential tick), config-driven behavior, floating-point radius → grid-cell mapping
 
-- [ ] T015 [P] [US1] Implement `Hazard` struct with lifecycle state machine (`scheduled`, `emerging`, `active`, `dissipated`) and `HazardType` in `internal/engine/hazard.go`
+- [ ] T015 [P] [US1] Implement `Hazard` struct with lifecycle state machine (`scheduled`, `active`, `dissipated`) and `HazardType` in `internal/engine/hazard.go`
 - [ ] T016 [US1] Implement hazard emergence scheduling and radius expansion logic in `Simulation.Tick()` in `internal/engine/simulation.go`
 - [ ] T017 [US1] Implement hazard-cell-to-Grid integration: mark cells within hazard radius as `CellHazard` so pathfinding avoids them, in `internal/engine/simulation.go`
 - [ ] T018 [US1] Write tests in `internal/engine/hazard_test.go` verifying: radius grows each tick, hazard cells block pathfinding, hazard dissipates after duration

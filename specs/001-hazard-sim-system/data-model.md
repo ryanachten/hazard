@@ -135,43 +135,48 @@ type Hazard struct {
     MaxRadius       float64
     SpreadRate      float64       // Cells per tick
     Severity        float64       // 0.0–1.0 (affects citizen death threshold)
-    State           HazardState   // scheduled, emerging, active, dissipated
+    State           HazardState   // scheduled, active, dissipated
     EmergedAt       *time.Time
     Duration        int           // Ticks before dissipation (0 = indefinite)
     TicksActive     int
 }
 
+type HazardKind string
+
+const (
+    HazardKindExpanding HazardKind = "expanding" // fire, flood, lava
+    HazardKindStrike    HazardKind = "strike"    // lightning (future)
+    HazardKindGlobal    HazardKind = "global"    // earthquake (future)
+)
+
 type HazardType struct {
-    Name        string  // e.g., "generic", "flood", "fire"
-    Color       string  // CSS color for visualization
-    SpreadCurve string  // "linear" | "accelerating" | "decelerating"
+    Name string     // e.g., "fire", "flood", "lava"
+    Kind HazardKind // governs tick behavior
 }
 
-// Built-in hazard types are defined in app code as a registry (map[string]HazardType).
-// Config references them by name via HazardTypeNames in SimulationConfig.
-// Example built-in registry:
-//
-//	var HazardTypes = map[string]HazardType{
-//	    "generic": {Name: "generic", Color: "#ff4444", SpreadCurve: "linear"},
-//	    "flood":   {Name: "flood",   Color: "#4488ff", SpreadCurve: "accelerating"},
-//	    "fire":    {Name: "fire",    Color: "#ff8800", SpreadCurve: "accelerating"},
-//	}
+Built-in hazard types are defined in app code as a registry (map[string]HazardType).
+Config references them by name via HazardTypeNames in SimulationConfig.
+Example built-in registry:
+
+var HazardTypes = map[string]HazardType{
+    "fire":  {Name: "fire",  Kind: HazardKindExpanding},
+    "flood": {Name: "flood", Kind: HazardKindExpanding},
+    "lava":  {Name: "lava",  Kind: HazardKindExpanding},
+}
 
 type HazardState string
 
 const (
     HazardScheduled  HazardState = "scheduled"
-    HazardEmerging   HazardState = "emerging"
     HazardActive     HazardState = "active"
     HazardDissipated HazardState = "dissipated"
 )
 ```
 
-**State transitions**: `scheduled → emerging → active → dissipated`
+**State transitions**: `scheduled → active → dissipated`
 
 - `scheduled`: Not yet emerged; will emerge at configured tick
-- `emerging`: First N ticks of existence (initial growth phase)
-- `active`: Fully active, expanding at spread rate
+- `active`: Expanding radius at spread rate, blocks movement
 - `dissipated`: Expired (duration elapsed), no longer blocks movement
 
 **Validation**:

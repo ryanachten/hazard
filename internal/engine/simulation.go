@@ -8,11 +8,21 @@ import (
 
 // Simulation engine for hazards
 type Simulation struct {
+	State     SimulationState
 	TickCount uint64
 	Citizens  []Citizen
 	SafeZone  pf.Position
 	Grid      *pf.Grid
 }
+
+type SimulationState string
+
+const (
+	SimulationCreated   SimulationState = "created"
+	SimulationRunning   SimulationState = "running"
+	SimulationPaused    SimulationState = "paused"
+	SimulationCompleted SimulationState = "completed"
+)
 
 type SimulationConfig struct {
 	TickIntervalMs    int
@@ -50,6 +60,7 @@ func NewSimulation(config SimulationConfig) Simulation {
 	}
 
 	return Simulation{
+		State:     SimulationCreated,
 		TickCount: 0,
 		Citizens:  citizens,
 		Grid:      &grid,
@@ -58,8 +69,14 @@ func NewSimulation(config SimulationConfig) Simulation {
 }
 
 func (s *Simulation) Tick() {
+	if s.State == SimulationPaused || s.State == SimulationCompleted {
+		return
+	}
+
+	s.State = SimulationRunning
+
 	for i, citizen := range s.Citizens {
-		if citizen.CurrentPathIndex < len(citizen.CurrentPath) {
+		if citizen.CurrentPathIndex < len(citizen.CurrentPath)-1 {
 			s.Citizens[i].Status = CitizenNavigating
 			s.Citizens[i].CurrentPathIndex++
 

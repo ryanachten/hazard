@@ -54,16 +54,16 @@ description: "Task list for Hazard Simulation System - 9 progressive slices for 
 
 ## Phase 3: User Story 1 — Hazards + Envelopment (P1) 🎯 MVP SLICE 3/6
 
-**Goal**: Hazards emerge at scheduled ticks and expand their radius over time, blocking grid cells and forcing citizens to recalculate.
+**Goal**: Hazards emerge at regular intervals and expand their radius over time, blocking grid cells and forcing citizens to recalculate.
 
 **Independent Test**: Create a hazard at a known position with known spread rate, run N ticks, verify radius matches expected value and hazard cells block pathfinding.
 
 **Learning Outcome**: Concurrent state (via sequential tick), config-driven behavior, floating-point radius → grid-cell mapping
 
-- [ ] T015 [P] [US1] Implement `Hazard` struct with lifecycle state machine (`scheduled`, `active`, `dissipated`) and `HazardType` in `internal/engine/hazard.go`
+- [x] T015 [P] [US1] Implement `Hazard` struct (active when created, removed on expiry) and `HazardType` in `internal/engine/hazard.go`
 - [ ] T016 [US1] Implement hazard emergence scheduling and radius expansion logic in `Simulation.Tick()` in `internal/engine/simulation.go`
 - [ ] T017 [US1] Implement hazard-cell-to-Grid integration: mark cells within hazard radius as `CellHazard` so pathfinding avoids them, in `internal/engine/simulation.go`
-- [ ] T018 [US1] Write tests in `internal/engine/hazard_test.go` verifying: radius grows each tick, hazard cells block pathfinding, hazard dissipates after duration
+- [ ] T018 [US1] Write tests in `internal/engine/hazard_test.go` verifying: radius grows each tick, hazard cells block pathfinding, hazard is removed after duration expires
 
 **Checkpoint**: `go test -v ./internal/engine/` passes. You understand float-to-grid mapping and lifecycle management.
 

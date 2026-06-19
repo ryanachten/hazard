@@ -16,6 +16,8 @@ const (
 	CellOpen CellType = iota
 	// CellObstacle represents a blocked cell
 	CellObstacle
+	// CellHazard represents a cell occupied by a hazard
+	CellHazard
 )
 
 // Grid (2D) for positioning simulation entities
@@ -61,4 +63,9 @@ func (g *Grid) GetRandomPosition() Position {
 // InBounds returns true if the given position is within the grid bounds
 func (g *Grid) InBounds(p Position) bool {
 	return p.X >= 0 && p.X < g.Width && p.Y >= 0 && p.Y < g.Height
+}
+
+// UpdateCell to a given cell type
+func (g *Grid) UpdateCell(p Position, cellType CellType) {
+	g.Cells[p.Y][p.X] = cellType
 }

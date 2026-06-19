@@ -1,22 +1,16 @@
 package engine
 
+import (
+	pf "hazard/internal/pathfinding"
+	"math/rand"
+)
+
 // Hazard in a simulation
 type Hazard struct {
-	Type  HazardType
-	State HazardState
+	Type     HazardType
+	Duration int
+	Origin   pf.Position
 }
-
-// HazardState defines the lifecycle of a hazard
-type HazardState string
-
-const (
-	// HazardScheduled hazard is scheduled to appear in the future
-	HazardScheduled HazardState = "scheduled"
-	// HazardActive hazard is actively impacting map
-	HazardActive HazardState = "active"
-	// HazardDissipated hazard is no longer actively impacting map
-	HazardDissipated HazardState = "dissipated"
-)
 
 // HazardKind categorizes how a hazard behaves during simulation ticks.
 type HazardKind string
@@ -41,4 +35,31 @@ var HazardTypes = map[string]HazardType{
 	"fire":  {Name: "fire", Kind: HazardKindExpanding},
 	"flood": {Name: "flood", Kind: HazardKindExpanding},
 	"lava":  {Name: "lava", Kind: HazardKindExpanding},
+}
+
+func randomHazardType() HazardType {
+	keys := make([]string, 0, len(HazardTypes))
+	for k := range HazardTypes {
+		keys = append(keys, k)
+	}
+	k := keys[rand.Intn(len(keys))]
+	return HazardTypes[k]
+}
+
+func createHazard(config hazardConfig, grid pf.Grid) Hazard {
+	durationMin := config.HazardDurationRange[0]
+	durationMax := config.HazardDurationRange[1]
+	duration := durationMin + rand.Intn(durationMax-durationMin+1)
+
+	origin := grid.GetRandomPosition()
+
+	grid.UpdateCell(origin, pf.CellHazard)
+
+	hazard := Hazard{
+		Duration: duration,
+		Type:     randomHazardType(),
+		Origin:   origin,
+	}
+
+	return hazard
 }

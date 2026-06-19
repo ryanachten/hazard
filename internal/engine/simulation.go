@@ -8,11 +8,13 @@ import (
 
 // Simulation engine for hazards
 type Simulation struct {
-	State     SimulationState
-	TickCount uint64
-	Citizens  []Citizen
-	SafeZone  pf.Position
-	Grid      *pf.Grid
+	State        SimulationState
+	TickCount    uint64
+	Citizens     []Citizen
+	SafeZone     pf.Position
+	Grid         *pf.Grid
+	Hazards      []Hazard
+	HazardConfig hazardConfig
 }
 
 // SimulationState phases of a simulation
@@ -35,6 +37,13 @@ type SimulationConfig struct {
 	Width             int
 	Height            int
 	CitizenCountRange [2]int
+	Hazard            hazardConfig
+}
+
+type hazardConfig struct {
+	HazardDurationRange [2]int
+	HazardProbability   float32
+	MaxHazards          int
 }
 
 // NewSimulation creates a simulation based on configuration
@@ -50,39 +59,12 @@ func NewSimulation(config SimulationConfig) Simulation {
 
 	safeZone := grid.GetRandomPosition()
 
-	citizenMin := config.CitizenCountRange[0]
-	citizenMax := config.CitizenCountRange[1]
-	citizenCount := citizenMin + rand.Intn(citizenMax-citizenMin+1)
-	citizens := make([]Citizen, citizenCount)
-
-	pathfinder := pf.AStar{}
-
-	for i := range citizens {
-		startPosition := grid.GetRandomPosition()
-		path, err := pathfinder.FindPath(grid, startPosition, safeZone)
-		if err != nil {
-			log.Printf("Error creating path for citizen %v: %v", i, err)
-			citizens[i] = Citizen{
-				Status:           CitizenIdle,
-				CurrentPath:      []pf.Position{startPosition},
-				CurrentPathIndex: 0,
-			}
-			continue
-		}
-
-		citizens[i] = Citizen{
-			Status:           CitizenIdle,
-			CurrentPath:      path,
-			CurrentPathIndex: 0,
-		}
-	}
-
 	return Simulation{
 		State:     SimulationCreated,
 		TickCount: 0,
-		Citizens:  citizens,
 		Grid:      &grid,
 		SafeZone:  safeZone,
+		Citizens:  createCitizens(config.CitizenCountRange, grid, safeZone),
 	}
 }
 
@@ -91,14 +73,21 @@ func (s *Simulation) Tick() {
 	if s.State == SimulationPaused || s.State == SimulationCompleted {
 		return
 	}
-
 	s.State = SimulationRunning
 
+	// Randomly generate hazards within hazard limits
+	if len(s.Hazards) < s.HazardConfig.MaxHazards && rand.Float32() <= s.HazardConfig.HazardProbability {
+		s.Hazards = append(s.Hazards, createHazard(s.HazardConfig, *s.Grid))
+		// TODO: update citizen paths now that the path contains more obstacles?
+	}
+
+	// Update citizen pathfinding state
 	for i, citizen := range s.Citizens {
 		if citizen.CurrentPathIndex < len(citizen.CurrentPath)-1 {
 			s.Citizens[i].Status = CitizenNavigating
 			s.Citizens[i].CurrentPathIndex++
 
+			// TODO: when citizen steps into hazard cell, they should die
 			log.Printf("Citizen %v now at %v of %v steps", i, s.Citizens[i].CurrentPathIndex, len(citizen.CurrentPath))
 		}
 	}

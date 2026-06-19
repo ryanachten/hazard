@@ -151,7 +151,7 @@ Emitted after the generation phase completes. Contains the concrete values gener
 }
 ```
 
-### hazard.dissipated
+### hazard.dissipated (terminal — emitted before removal)
 
 ```json
 {

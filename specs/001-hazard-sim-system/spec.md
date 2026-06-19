@@ -114,7 +114,7 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 
 - **Simulation**: A single run encompassing environment configuration, citizens, hazards, safe zones, and the event stream. Has a lifecycle (created, running, paused, completed).
 - **Citizen**: An autonomous agent with start position, current position, status (navigating, escaped, dead), movement speed, autonomy profile, and goal of reaching any safe zone. Responds to hazards and obstacles by recalculating path.
-- **Hazard**: An obstacle with position, type (extensible — initially fire, flood, lava), initial radius, progression speed, maximum radius, severity, and lifecycle (scheduled, active, dissipated). Behavior governed by `HazardKind` (expanding, strike, global).
+- **Hazard**: An obstacle with position, type (extensible — initially fire, flood, lava), initial radius, progression speed, maximum radius, severity, duration, and creation tick. Created active at emergence and removed when expired. Behavior governed by `HazardKind` (expanding, strike, global).
 - **Safe Zone**: A designated area within the environment that citizens must reach to survive. Citizens are considered escaped upon entry.
 - **Environment**: A bounded 2D space with configurable width and height containing static obstacles, safe zones, citizens, and hazards.
 - **Static Obstacle**: Impassable terrain features (buildings, landscape) that block citizen movement and hazard progression. Defined at environment setup.

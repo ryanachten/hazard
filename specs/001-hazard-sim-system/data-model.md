@@ -126,19 +126,17 @@ type AutonomyProfile struct {
 
 ```go
 type Hazard struct {
-    ID              string        // UUID
-    SimulationID    string
-    Type            HazardType
-    Origin          Position
-    CurrentRadius   float64       // Expands over time
-    InitialRadius   float64
-    MaxRadius       float64
-    SpreadRate      float64       // Cells per tick
-    Severity        float64       // 0.0–1.0 (affects citizen death threshold)
-    State           HazardState   // scheduled, active, dissipated
-    EmergedAt       *time.Time
-    Duration        int           // Ticks before dissipation (0 = indefinite)
-    TicksActive     int
+    ID            string        // UUID
+    SimulationID  string
+    Type          HazardType
+    Origin        Position
+    CurrentRadius float64       // Expands over time
+    InitialRadius float64
+    MaxRadius     float64
+    SpreadRate    float64       // Cells per tick
+    Severity      float64       // 0.0–1.0 (affects citizen death threshold)
+    Duration      int           // Ticks before expiry (0 = indefinite)
+    CreatedTick   uint64        // Tick when hazard emerged
 }
 
 type HazardKind string
@@ -163,26 +161,14 @@ var HazardTypes = map[string]HazardType{
     "flood": {Name: "flood", Kind: HazardKindExpanding},
     "lava":  {Name: "lava",  Kind: HazardKindExpanding},
 }
-
-type HazardState string
-
-const (
-    HazardScheduled  HazardState = "scheduled"
-    HazardActive     HazardState = "active"
-    HazardDissipated HazardState = "dissipated"
-)
 ```
 
-**State transitions**: `scheduled → active → dissipated`
-
-- `scheduled`: Not yet emerged; will emerge at configured tick
-- `active`: Expanding radius at spread rate, blocks movement
-- `dissipated`: Expired (duration elapsed), no longer blocks movement
+**Lifecycle**: Hazards are created active at the tick they emerge and are removed from the simulation when their duration expires. No intermediate state machine.
 
 **Validation**:
 - Origin must be within grid bounds
 - Spread rate must be >= 0
-- Duration must be >= 0 (0 = does not dissipate)
+- Duration must be >= 0 (0 = indefinite)
 
 ## SafeZone
 

@@ -82,7 +82,7 @@ func testFindPath(t *testing.T, algo Pathfinder) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			path, err := algo.FindPath(test.grid, test.from, test.to)
+			path, err := algo.FindPath(&test.grid, test.from, test.to)
 
 			if test.expectedErr != nil {
 				require.ErrorIs(t, err, test.expectedErr)

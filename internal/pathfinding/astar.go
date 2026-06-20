@@ -15,7 +15,7 @@ func (a *AStar) Name() string {
 }
 
 // FindPath finds shortest path from a starting point to a given destination
-func (a *AStar) FindPath(grid Grid, from, to Position) ([]Position, error) {
+func (a *AStar) FindPath(grid *Grid, from, to Position) ([]Position, error) {
 	if !grid.InBounds(from) || !grid.InBounds(to) {
 		return nil, ErrPositionOutOfBounds
 	}
@@ -70,7 +70,7 @@ func (a *AStar) FindPath(grid Grid, from, to Position) ([]Position, error) {
 			}
 
 			// Skip obstacles
-			if grid.Cells[y][x] == CellObstacle {
+			if grid.Cells[y][x] == CellObstacle || grid.Cells[y][x] == CellHazard {
 				continue
 			}
 

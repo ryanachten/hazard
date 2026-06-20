@@ -2,6 +2,7 @@
 package engine
 
 import (
+	"fmt"
 	pf "hazard/internal/pathfinding"
 	"log"
 	"math/rand"
@@ -11,7 +12,7 @@ import (
 type Citizen struct {
 	ID               int
 	Status           CitizenStatus
-	CurrentPath      []pf.Position
+	Path             []pf.Position
 	CurrentPathIndex int
 	pathfinder       pf.Pathfinder
 }
@@ -30,7 +31,7 @@ const (
 	CitizenDead CitizenStatus = "dead"
 )
 
-func createCitizens(citizenCountRange [2]int, grid pf.Grid, safeZone pf.Position) []Citizen {
+func createCitizens(citizenCountRange [2]int, grid *pf.Grid, safeZone pf.Position) []Citizen {
 	citizenMin := citizenCountRange[0]
 	citizenMax := citizenCountRange[1]
 	citizenCount := citizenMin + rand.Intn(citizenMax-citizenMin+1)
@@ -39,28 +40,38 @@ func createCitizens(citizenCountRange [2]int, grid pf.Grid, safeZone pf.Position
 	pathfinder := pf.AStar{}
 
 	for i := range citizens {
-		startPosition := grid.GetRandomPosition()
+		startPosition, err := grid.GetRandomOpenPosition()
+		if err != nil {
+			log.Printf("error creating citizen %v: %v", i, err)
+			continue
+		}
+
 		citizen := Citizen{
 			ID:               i,
 			Status:           CitizenIdle,
 			CurrentPathIndex: 0,
 			pathfinder:       &pathfinder,
 		}
-		citizen.updatePath(grid, startPosition, safeZone, 0)
+		err = citizen.updatePath(grid, startPosition, safeZone)
+		if err != nil {
+			log.Printf("error updating citizen %v path: %v", i, err)
+		}
 	}
 
 	return citizens
 }
 
-func (c *Citizen) updatePath(grid pf.Grid, startPosition, endPosition pf.Position, attempts int) {
-	path, err := c.pathfinder.FindPath(grid, startPosition, endPosition)
-
-	if err != nil && attempts < 3 {
-		log.Printf("Error creating path for citizen %v: %v", c.ID, err)
-
-		c.updatePath(grid, startPosition, endPosition, attempts+1)
+func (c *Citizen) updatePath(grid *pf.Grid, start, end pf.Position) error {
+	var err error
+	for range 3 {
+		var path []pf.Position
+		path, err = c.pathfinder.FindPath(grid, start, end)
+		if err == nil {
+			c.Path = path
+			c.CurrentPathIndex = 0
+			return nil
+		}
 	}
 
-	c.CurrentPath = path
-	c.CurrentPathIndex = 0
+	return fmt.Errorf("pathfinding failed after 3 attempts: %w", err)
 }

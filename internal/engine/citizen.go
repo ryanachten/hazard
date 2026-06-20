@@ -46,13 +46,13 @@ func createCitizens(citizenCountRange [2]int, grid *pf.Grid, safeZone pf.Positio
 			continue
 		}
 
-		citizen := Citizen{
+		citizens[i] = Citizen{
 			ID:               i,
 			Status:           CitizenIdle,
 			CurrentPathIndex: 0,
 			pathfinder:       &pathfinder,
 		}
-		err = citizen.updatePath(grid, startPosition, safeZone)
+		err = citizens[i].updatePath(grid, startPosition, safeZone)
 		if err != nil {
 			log.Printf("error updating citizen %v path: %v", i, err)
 		}

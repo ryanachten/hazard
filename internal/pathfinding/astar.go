@@ -60,7 +60,7 @@ func (a *AStar) FindPath(grid Grid, from, to Position) ([]Position, error) {
 		}
 
 		// Explore neighbouring elements of index
-		for _, direction := range directions {
+		for _, direction := range Directions {
 			y := curPos.Y + direction.Y
 			x := curPos.X + direction.X
 

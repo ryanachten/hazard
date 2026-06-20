@@ -9,9 +9,11 @@ import (
 
 // Citizen subjected to a hazard
 type Citizen struct {
+	ID               int
 	Status           CitizenStatus
 	CurrentPath      []pf.Position
 	CurrentPathIndex int
+	pathfinder       pf.Pathfinder
 }
 
 // CitizenStatus defines the state of citizen activity
@@ -38,23 +40,27 @@ func createCitizens(citizenCountRange [2]int, grid pf.Grid, safeZone pf.Position
 
 	for i := range citizens {
 		startPosition := grid.GetRandomPosition()
-		path, err := pathfinder.FindPath(grid, startPosition, safeZone)
-		if err != nil {
-			log.Printf("Error creating path for citizen %v: %v", i, err)
-			citizens[i] = Citizen{
-				Status:           CitizenIdle,
-				CurrentPath:      []pf.Position{startPosition},
-				CurrentPathIndex: 0,
-			}
-			continue
-		}
-
-		citizens[i] = Citizen{
+		citizen := Citizen{
+			ID:               i,
 			Status:           CitizenIdle,
-			CurrentPath:      path,
 			CurrentPathIndex: 0,
+			pathfinder:       &pathfinder,
 		}
+		citizen.updatePath(grid, startPosition, safeZone, 0)
 	}
 
 	return citizens
+}
+
+func (c *Citizen) updatePath(grid pf.Grid, startPosition, endPosition pf.Position, attempts int) {
+	path, err := c.pathfinder.FindPath(grid, startPosition, endPosition)
+
+	if err != nil && attempts < 3 {
+		log.Printf("Error creating path for citizen %v: %v", c.ID, err)
+
+		c.updatePath(grid, startPosition, endPosition, attempts+1)
+	}
+
+	c.CurrentPath = path
+	c.CurrentPathIndex = 0
 }

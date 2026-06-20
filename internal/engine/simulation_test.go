@@ -7,6 +7,111 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSimulationConfig_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  SimulationConfig
+		wantErr string
+	}{
+		{
+			name: "valid config",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				Hazard: HazardConfig{
+					DurationRange: [2]int{1, 10},
+					Probability:   0.5,
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "zero width",
+			config: SimulationConfig{
+				Width:  0,
+				Height: 5,
+			},
+			wantErr: "width and height must be greater than zero",
+		},
+		{
+			name: "zero height",
+			config: SimulationConfig{
+				Width:  5,
+				Height: 0,
+			},
+			wantErr: "width and height must be greater than zero",
+		},
+		{
+			name: "negative width",
+			config: SimulationConfig{
+				Width:  -1,
+				Height: 5,
+			},
+			wantErr: "width and height must be greater than zero",
+		},
+		{
+			name: "citizen count min greater than max",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{5, 3},
+			},
+			wantErr: "CitizenCountRange[0] must be less than or equal to CitizenCountRange[1]",
+		},
+		{
+			name: "hazard duration min greater than max",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				Hazard: HazardConfig{
+					DurationRange: [2]int{10, 5},
+				},
+			},
+			wantErr: "Hazard.HazardDurationRange[0] must be less than or equal to Hazard.HazardDurationRange[1]",
+		},
+		{
+			name: "negative hazard probability",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				Hazard: HazardConfig{
+					DurationRange: [2]int{1, 10},
+					Probability:   -0.1,
+				},
+			},
+			wantErr: "Hazard.HazardProbability must be between 0.0 and 1.0",
+		},
+		{
+			name: "hazard probability greater than 1",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				Hazard: HazardConfig{
+					DurationRange: [2]int{1, 10},
+					Probability:   1.5,
+				},
+			},
+			wantErr: "Hazard.HazardProbability must be between 0.0 and 1.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validate()
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestNewSimulation_InitializesCoreState(t *testing.T) {
 	config := SimulationConfig{
 		TickIntervalMs:    100,
@@ -39,7 +144,9 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 }
 
 func TestTick_AdvancesCitizenOneStepPerTick(t *testing.T) {
+	grid := pf.NewGrid(3, 1, pf.CellOpen)
 	simulation := Simulation{
+		Grid: &grid,
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
@@ -65,7 +172,9 @@ func TestTick_AdvancesCitizenOneStepPerTick(t *testing.T) {
 }
 
 func TestTick_CitizenStopsAtGoal(t *testing.T) {
+	grid := pf.NewGrid(2, 1, pf.CellOpen)
 	simulation := Simulation{
+		Grid: &grid,
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
@@ -84,7 +193,9 @@ func TestTick_CitizenStopsAtGoal(t *testing.T) {
 }
 
 func TestTick_MultipleCitizensMoveIndependently(t *testing.T) {
+	grid := pf.NewGrid(4, 2, pf.CellOpen)
 	simulation := Simulation{
+		Grid: &grid,
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,

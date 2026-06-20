@@ -6,7 +6,7 @@ import "errors"
 // Pathfinder implementation of a pathfinding algorithm
 type Pathfinder interface {
 	Name() string
-	FindPath(grid Grid, from, to Position) ([]Position, error)
+	FindPath(grid *Grid, from, to Position) ([]Position, error)
 }
 
 // Directions to navigate a grid

@@ -15,7 +15,7 @@ func (d *Dijkstra) Name() string {
 }
 
 // FindPath finds shortest path from a starting point to a given destination
-func (d *Dijkstra) FindPath(grid Grid, from, to Position) ([]Position, error) {
+func (d *Dijkstra) FindPath(grid *Grid, from, to Position) ([]Position, error) {
 	if !grid.InBounds(from) || !grid.InBounds(to) {
 		return nil, ErrPositionOutOfBounds
 	}
@@ -71,7 +71,7 @@ func (d *Dijkstra) FindPath(grid Grid, from, to Position) ([]Position, error) {
 			}
 
 			// Skip obstacles
-			if grid.Cells[y][x] == CellObstacle {
+			if grid.Cells[y][x] == CellObstacle || grid.Cells[y][x] == CellHazard {
 				continue
 			}
 

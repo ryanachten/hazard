@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	pf "hazard/internal/pathfinding"
 	"log"
 	"math/rand"
@@ -41,18 +42,37 @@ type SimulationConfig struct {
 	Hazard            HazardConfig
 }
 
-// NewSimulation creates a simulation based on configuration
-func NewSimulation(config SimulationConfig) Simulation {
-	if config.Width <= 0 || config.Height <= 0 {
-		panic("simulation width and height must be greater than zero")
-	}
-	if config.CitizenCountRange[0] > config.CitizenCountRange[1] {
-		panic("CitizenCountRange[0] must be less than or equal to CitizenCountRange[1]")
+// Validate ensures configuration is valid prior to use
+func (s *SimulationConfig) Validate() error {
+	var err []error
+
+	if s.Width <= 0 || s.Height <= 0 {
+		err = append(err, errors.New("simulation width and height must be greater than zero"))
 	}
 
+	if s.CitizenCountRange[0] > s.CitizenCountRange[1] {
+		err = append(err, errors.New("CitizenCountRange[0] must be less than or equal to CitizenCountRange[1]"))
+	}
+
+	if s.Hazard.DurationRange[0] > s.Hazard.DurationRange[1] {
+		err = append(err, errors.New("Hazard.HazardDurationRange[0] must be less than or equal to Hazard.HazardDurationRange[1]"))
+	}
+
+	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {
+		err = append(err, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))
+	}
+
+	return errors.Join(err...)
+}
+
+// NewSimulation creates a simulation based on configuration
+func NewSimulation(config SimulationConfig) (Simulation, error) {
 	grid := pf.NewGrid(config.Width, config.Height, pf.CellOpen)
 
-	safeZone := grid.GetRandomPosition()
+	safeZone, err := grid.GetRandomOpenPosition()
+	if err != nil {
+		return Simulation{}, err
+	}
 
 	return Simulation{
 		Config:    config,
@@ -60,8 +80,8 @@ func NewSimulation(config SimulationConfig) Simulation {
 		TickCount: 0,
 		Grid:      &grid,
 		SafeZone:  safeZone,
-		Citizens:  createCitizens(config.CitizenCountRange, grid, safeZone),
-	}
+		Citizens:  createCitizens(config.CitizenCountRange, &grid, safeZone),
+	}, nil
 }
 
 // Tick increments a simulation by one tick
@@ -72,41 +92,46 @@ func (s *Simulation) Tick() {
 	s.State = SimulationRunning
 
 	hazardConfig := s.Config.Hazard
-	for i, hazard := range s.Hazards {
-		// If hazard has expired, remove it from the simulation
-		if s.TickCount > hazard.CreatedAt+uint64(hazard.Duration) {
-			hazard.removeHazard(*s.Grid)
+	for i := len(s.Hazards) - 1; i >= 0; i-- {
+		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
+			s.Hazards[i].removeHazard(s.Grid)
 			s.Hazards = slices.Delete(s.Hazards, i, i+1)
-			continue
+		} else {
+			s.Hazards[i].expandHazard(s.Grid)
 		}
-
-		hazard.expandHazard(*s.Grid)
 	}
 
 	// Randomly generate hazards within hazard limits
-	if len(s.Hazards) < hazardConfig.MaxHazards && rand.Float32() <= hazardConfig.HazardProbability {
-		hazard := createHazard(hazardConfig, *s.Grid)
-		hazard.CreatedAt = s.TickCount
-		s.Hazards = append(s.Hazards, hazard)
+	if len(s.Hazards) < hazardConfig.MaxHazards && rand.Float32() <= hazardConfig.Probability {
+		hazard, err := createHazard(hazardConfig, s.Grid)
+		if err != nil {
+			log.Printf("error creating hazard: %v", err)
+		} else {
+			hazard.CreatedAt = s.TickCount
+			s.Hazards = append(s.Hazards, hazard)
+		}
 	}
 
 	// Update citizen pathfinding state
 	for i, citizen := range s.Citizens {
 
 		// Check if any path intersects with hazards and needs recalculating
-		for _, pos := range citizen.CurrentPath {
+		for _, pos := range citizen.Path {
 			if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
-				citizen.updatePath(*s.Grid, citizen.CurrentPath[citizen.CurrentPathIndex], s.SafeZone, 0)
+				err := s.Citizens[i].updatePath(s.Grid, citizen.Path[citizen.CurrentPathIndex], s.SafeZone)
+				if err != nil {
+					log.Printf("error updating citizen %v path: %v", i, err)
+				}
 				break
 			}
 		}
 
 		// Increment citizen's position on path
-		if citizen.CurrentPathIndex < len(citizen.CurrentPath)-1 {
+		if citizen.CurrentPathIndex < len(citizen.Path)-1 {
 			s.Citizens[i].Status = CitizenNavigating
 			s.Citizens[i].CurrentPathIndex++
 
-			log.Printf("Citizen %v now at %v of %v steps", i, s.Citizens[i].CurrentPathIndex, len(citizen.CurrentPath))
+			log.Printf("Citizen %v now at %v of %v steps", i, s.Citizens[i].CurrentPathIndex, len(citizen.Path))
 		}
 	}
 

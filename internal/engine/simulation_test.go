@@ -15,8 +15,9 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 		CitizenCountRange: [2]int{3, 3},
 	}
 
-	simulation := NewSimulation(config)
+	simulation, err := NewSimulation(config)
 
+	require.Nil(t, err)
 	require.Equal(t, SimulationCreated, simulation.State)
 	require.Equal(t, uint64(0), simulation.TickCount)
 	require.NotNil(t, simulation.Grid)
@@ -32,8 +33,8 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 	for _, citizen := range simulation.Citizens {
 		require.Equal(t, CitizenIdle, citizen.Status)
 		require.Equal(t, 0, citizen.CurrentPathIndex)
-		require.NotEmpty(t, citizen.CurrentPath)
-		require.Equal(t, simulation.SafeZone, citizen.CurrentPath[len(citizen.CurrentPath)-1])
+		require.NotEmpty(t, citizen.Path)
+		require.Equal(t, simulation.SafeZone, citizen.Path[len(citizen.Path)-1])
 	}
 }
 
@@ -42,7 +43,7 @@ func TestTick_AdvancesCitizenOneStepPerTick(t *testing.T) {
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
-				CurrentPath: []pf.Position{
+				Path: []pf.Position{
 					{X: 0, Y: 0},
 					{X: 1, Y: 0},
 					{X: 2, Y: 0},
@@ -68,7 +69,7 @@ func TestTick_CitizenStopsAtGoal(t *testing.T) {
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
-				CurrentPath: []pf.Position{
+				Path: []pf.Position{
 					{X: 0, Y: 0},
 					{X: 1, Y: 0},
 				},
@@ -87,7 +88,7 @@ func TestTick_MultipleCitizensMoveIndependently(t *testing.T) {
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
-				CurrentPath: []pf.Position{
+				Path: []pf.Position{
 					{X: 0, Y: 0},
 					{X: 1, Y: 0},
 				},
@@ -95,7 +96,7 @@ func TestTick_MultipleCitizensMoveIndependently(t *testing.T) {
 			},
 			{
 				Status: CitizenIdle,
-				CurrentPath: []pf.Position{
+				Path: []pf.Position{
 					{X: 0, Y: 1},
 					{X: 1, Y: 1},
 					{X: 2, Y: 1},
@@ -134,7 +135,7 @@ func TestTick_DoesNothingWhenPaused(t *testing.T) {
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
-				CurrentPath: []pf.Position{
+				Path: []pf.Position{
 					{X: 0, Y: 0},
 					{X: 1, Y: 0},
 				},
@@ -157,7 +158,7 @@ func TestTick_DoesNothingWhenCompleted(t *testing.T) {
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
-				CurrentPath: []pf.Position{
+				Path: []pf.Position{
 					{X: 0, Y: 0},
 					{X: 1, Y: 0},
 				},

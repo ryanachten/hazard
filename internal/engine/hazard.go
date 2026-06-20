@@ -86,14 +86,12 @@ func (h *Hazard) removeHazard(grid *pf.Grid) {
 }
 
 func (h *Hazard) updateHazardCells(grid *pf.Grid, cellType pf.CellType) {
-	for _, direction := range pf.Directions {
-		newPosition := pf.Position{
-			X: h.Origin.X + direction.X*h.CurrentRadius,
-			Y: h.Origin.Y + direction.Y*h.CurrentRadius,
-		}
-
-		if grid.InBounds(newPosition) {
-			grid.UpdateCell(newPosition, cellType)
+	for dx := -h.CurrentRadius; dx <= h.CurrentRadius; dx++ {
+		for dy := -h.CurrentRadius; dy <= h.CurrentRadius; dy++ {
+			pos := pf.Position{X: h.Origin.X + dx, Y: h.Origin.Y + dy}
+			if grid.InBounds(pos) {
+				grid.UpdateCell(pos, cellType)
+			}
 		}
 	}
 }

@@ -31,11 +31,7 @@ type Grid struct {
 }
 
 // NewGrid creates a new Grid with the given dimensions, filled with the specified cell type.
-// Panics if width or height are less than or equal to zero.
 func NewGrid(width, height int, variant CellType) Grid {
-	if width <= 0 || height <= 0 {
-		panic("grid width and height must be greater than zero")
-	}
 	cells := make([][]CellType, height)
 	for y := range height {
 		cells[y] = make([]CellType, width)

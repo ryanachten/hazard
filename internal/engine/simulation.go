@@ -58,6 +58,10 @@ func (s *SimulationConfig) Validate() error {
 		err = append(err, errors.New("Hazard.HazardDurationRange[0] must be less than or equal to Hazard.HazardDurationRange[1]"))
 	}
 
+	if s.Hazard.DurationRange[0] <= 0 {
+		err = append(err, errors.New("Hazard.HazardDurationRange values must be above 0"))
+	}
+
 	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {
 		err = append(err, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))
 	}
@@ -113,12 +117,12 @@ func (s *Simulation) Tick() {
 	}
 
 	// Update citizen pathfinding state
-	for i, citizen := range s.Citizens {
+	for i := range s.Citizens {
 
 		// Check if any path intersects with hazards and needs recalculating
-		for _, pos := range citizen.Path {
+		for _, pos := range s.Citizens[i].Path {
 			if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
-				err := s.Citizens[i].updatePath(s.Grid, citizen.Path[citizen.CurrentPathIndex], s.SafeZone)
+				err := s.Citizens[i].updatePath(s.Grid, s.Citizens[i].Path[s.Citizens[i].CurrentPathIndex], s.SafeZone)
 				if err != nil {
 					log.Printf("error updating citizen %v path: %v", i, err)
 				}
@@ -127,11 +131,11 @@ func (s *Simulation) Tick() {
 		}
 
 		// Increment citizen's position on path
-		if citizen.CurrentPathIndex < len(citizen.Path)-1 {
+		if s.Citizens[i].CurrentPathIndex < len(s.Citizens[i].Path)-1 {
 			s.Citizens[i].Status = CitizenNavigating
 			s.Citizens[i].CurrentPathIndex++
 
-			log.Printf("Citizen %v now at %v of %v steps", i, s.Citizens[i].CurrentPathIndex, len(citizen.Path))
+			log.Printf("Citizen %v now at %v of %v steps", i, s.Citizens[i].CurrentPathIndex, len(s.Citizens[i].Path))
 		}
 	}
 

@@ -96,3 +96,58 @@ func testFindPath(t *testing.T, algo Pathfinder) {
 		})
 	}
 }
+
+func TestNewGrid_PanicsOnInvalidDimensions(t *testing.T) {
+	require.Panics(t, func() { NewGrid(0, 1, CellOpen) })
+	require.Panics(t, func() { NewGrid(1, 0, CellOpen) })
+	require.Panics(t, func() { NewGrid(-1, 1, CellOpen) })
+}
+
+func TestGrid_GetRandomOpenPosition(t *testing.T) {
+	t.Run("open grid returns valid position", func(t *testing.T) {
+		grid := NewGrid(5, 5, CellOpen)
+		pos, err := grid.GetRandomOpenPosition()
+		require.NoError(t, err)
+		require.True(t, grid.InBounds(pos))
+		require.Equal(t, CellOpen, grid.GetCell(pos))
+	})
+
+	t.Run("fully obstructed grid returns error", func(t *testing.T) {
+		grid := NewGrid(3, 3, CellObstacle)
+		_, err := grid.GetRandomOpenPosition()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no open cells available")
+	})
+
+	t.Run("single open cell is found", func(t *testing.T) {
+		grid := NewGrid(3, 3, CellObstacle)
+		grid.Cells[1][1] = CellOpen
+		pos, err := grid.GetRandomOpenPosition()
+		require.NoError(t, err)
+		require.Equal(t, Position{X: 1, Y: 1}, pos)
+	})
+}
+
+func TestGrid_GetCellAndUpdateCell(t *testing.T) {
+	grid := NewGrid(3, 3, CellOpen)
+	pos := Position{X: 1, Y: 1}
+
+	require.Equal(t, CellOpen, grid.GetCell(pos))
+
+	grid.UpdateCell(pos, CellObstacle)
+	require.Equal(t, CellObstacle, grid.GetCell(pos))
+
+	grid.UpdateCell(pos, CellHazard)
+	require.Equal(t, CellHazard, grid.GetCell(pos))
+
+	grid.UpdateCell(pos, CellOpen)
+	require.Equal(t, CellOpen, grid.GetCell(pos))
+}
+
+func TestAStar_Name(t *testing.T) {
+	require.Equal(t, "a*", (&AStar{}).Name())
+}
+
+func TestDijkstra_Name(t *testing.T) {
+	require.Equal(t, "dijkstra", (&Dijkstra{}).Name())
+}

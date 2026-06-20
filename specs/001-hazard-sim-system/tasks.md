@@ -63,7 +63,7 @@ description: "Task list for Hazard Simulation System - 9 progressive slices for 
 - [x] T015 [P] [US1] Implement `Hazard` struct (active when created, removed on expiry) and `HazardType` in `internal/engine/hazard.go`
 - [x] T016 [US1] Implement hazard emergence scheduling and radius expansion logic in `Simulation.Tick()` in `internal/engine/simulation.go`
 - [x] T017 [US1] Implement hazard-cell-to-Grid integration: mark cells within hazard radius as `CellHazard` so pathfinding avoids them, in `internal/engine/simulation.go`
-- [ ] T018 [US1] Write tests in `internal/engine/hazard_test.go` verifying: radius grows each tick, hazard cells block pathfinding, hazard is removed after duration expires
+- [x] T018 [US1] Write tests in `internal/engine/hazard_test.go` verifying: radius grows each tick, hazard cells block pathfinding, hazard is removed after duration expires
 
 **Checkpoint**: `go test -v ./internal/engine/` passes. You understand float-to-grid mapping and lifecycle management.
 

@@ -7,9 +7,18 @@ import (
 
 // Hazard in a simulation
 type Hazard struct {
-	Type     HazardType
-	Duration int
-	Origin   pf.Position
+	Type          HazardType
+	CreatedAt     uint64
+	Duration      int
+	Origin        pf.Position
+	CurrentRadius int
+}
+
+// HazardConfig configures a hazard
+type HazardConfig struct {
+	HazardDurationRange [2]int
+	HazardProbability   float32
+	MaxHazards          int
 }
 
 // HazardKind categorizes how a hazard behaves during simulation ticks.
@@ -46,7 +55,7 @@ func randomHazardType() HazardType {
 	return HazardTypes[k]
 }
 
-func createHazard(config hazardConfig, grid pf.Grid) Hazard {
+func createHazard(config HazardConfig, grid pf.Grid) Hazard {
 	durationMin := config.HazardDurationRange[0]
 	durationMax := config.HazardDurationRange[1]
 	duration := durationMin + rand.Intn(durationMax-durationMin+1)
@@ -56,10 +65,33 @@ func createHazard(config hazardConfig, grid pf.Grid) Hazard {
 	grid.UpdateCell(origin, pf.CellHazard)
 
 	hazard := Hazard{
-		Duration: duration,
-		Type:     randomHazardType(),
-		Origin:   origin,
+		Duration:      duration,
+		Type:          randomHazardType(),
+		Origin:        origin,
+		CurrentRadius: 0,
 	}
 
 	return hazard
+}
+
+func (h *Hazard) expandHazard(grid pf.Grid) {
+	h.CurrentRadius++
+	h.updateHazardCells(grid, pf.CellHazard)
+}
+
+func (h *Hazard) removeHazard(grid pf.Grid) {
+	h.updateHazardCells(grid, pf.CellOpen)
+}
+
+func (h *Hazard) updateHazardCells(grid pf.Grid, cellType pf.CellType) {
+	for _, direction := range pf.Directions {
+		newPosition := pf.Position{
+			X: h.Origin.X + direction.X*h.CurrentRadius,
+			Y: h.Origin.Y + direction.Y*h.CurrentRadius,
+		}
+
+		if grid.InBounds(newPosition) {
+			grid.UpdateCell(newPosition, cellType)
+		}
+	}
 }

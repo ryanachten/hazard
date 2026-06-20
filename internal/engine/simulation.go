@@ -4,17 +4,18 @@ import (
 	pf "hazard/internal/pathfinding"
 	"log"
 	"math/rand"
+	"slices"
 )
 
 // Simulation engine for hazards
 type Simulation struct {
-	State        SimulationState
-	TickCount    uint64
-	Citizens     []Citizen
-	SafeZone     pf.Position
-	Grid         *pf.Grid
-	Hazards      []Hazard
-	HazardConfig hazardConfig
+	Config    SimulationConfig
+	State     SimulationState
+	TickCount uint64
+	Citizens  []Citizen
+	SafeZone  pf.Position
+	Grid      *pf.Grid
+	Hazards   []Hazard
 }
 
 // SimulationState phases of a simulation
@@ -37,13 +38,7 @@ type SimulationConfig struct {
 	Width             int
 	Height            int
 	CitizenCountRange [2]int
-	Hazard            hazardConfig
-}
-
-type hazardConfig struct {
-	HazardDurationRange [2]int
-	HazardProbability   float32
-	MaxHazards          int
+	Hazard            HazardConfig
 }
 
 // NewSimulation creates a simulation based on configuration
@@ -60,6 +55,7 @@ func NewSimulation(config SimulationConfig) Simulation {
 	safeZone := grid.GetRandomPosition()
 
 	return Simulation{
+		Config:    config,
 		State:     SimulationCreated,
 		TickCount: 0,
 		Grid:      &grid,
@@ -75,19 +71,41 @@ func (s *Simulation) Tick() {
 	}
 	s.State = SimulationRunning
 
+	hazardConfig := s.Config.Hazard
+	for i, hazard := range s.Hazards {
+		// If hazard has expired, remove it from the simulation
+		if s.TickCount > hazard.CreatedAt+uint64(hazard.Duration) {
+			hazard.removeHazard(*s.Grid)
+			s.Hazards = slices.Delete(s.Hazards, i, i+1)
+			continue
+		}
+
+		hazard.expandHazard(*s.Grid)
+	}
+
 	// Randomly generate hazards within hazard limits
-	if len(s.Hazards) < s.HazardConfig.MaxHazards && rand.Float32() <= s.HazardConfig.HazardProbability {
-		s.Hazards = append(s.Hazards, createHazard(s.HazardConfig, *s.Grid))
-		// TODO: update citizen paths now that the path contains more obstacles?
+	if len(s.Hazards) < hazardConfig.MaxHazards && rand.Float32() <= hazardConfig.HazardProbability {
+		hazard := createHazard(hazardConfig, *s.Grid)
+		hazard.CreatedAt = s.TickCount
+		s.Hazards = append(s.Hazards, hazard)
 	}
 
 	// Update citizen pathfinding state
 	for i, citizen := range s.Citizens {
+
+		// Check if any path intersects with hazards and needs recalculating
+		for _, pos := range citizen.CurrentPath {
+			if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
+				citizen.updatePath(*s.Grid, citizen.CurrentPath[citizen.CurrentPathIndex], s.SafeZone, 0)
+				break
+			}
+		}
+
+		// Increment citizen's position on path
 		if citizen.CurrentPathIndex < len(citizen.CurrentPath)-1 {
 			s.Citizens[i].Status = CitizenNavigating
 			s.Citizens[i].CurrentPathIndex++
 
-			// TODO: when citizen steps into hazard cell, they should die
 			log.Printf("Citizen %v now at %v of %v steps", i, s.Citizens[i].CurrentPathIndex, len(citizen.CurrentPath))
 		}
 	}

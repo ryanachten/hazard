@@ -72,6 +72,18 @@ func TestSimulationConfig_Validate(t *testing.T) {
 			wantErr: "Hazard.HazardDurationRange[0] must be less than or equal to Hazard.HazardDurationRange[1]",
 		},
 		{
+			name: "hazard duration range zero",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				Hazard: HazardConfig{
+					DurationRange: [2]int{0, 0},
+				},
+			},
+			wantErr: "Hazard.HazardDurationRange values must be above 0",
+		},
+		{
 			name: "negative hazard probability",
 			config: SimulationConfig{
 				Width:             5,

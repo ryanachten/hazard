@@ -98,6 +98,13 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 
 	sim.Tick()
 	require.Len(t, sim.Hazards, 0)
+
+	require.Equal(t, pf.CellOpen, sim.Grid.GetCell(pf.Position{X: 5, Y: 5}),
+		"origin cell must be restored to open after hazard removal")
+	require.Equal(t, pf.CellOpen, sim.Grid.GetCell(pf.Position{X: 5, Y: 4}),
+		"expanded cell at radius 1 must be restored to open")
+	require.Equal(t, pf.CellOpen, sim.Grid.GetCell(pf.Position{X: 5, Y: 3}),
+		"expanded cell at radius 2 must be restored to open")
 }
 
 func TestCreateHazard(t *testing.T) {

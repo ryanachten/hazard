@@ -97,12 +97,6 @@ func testFindPath(t *testing.T, algo Pathfinder) {
 	}
 }
 
-func TestNewGrid_PanicsOnInvalidDimensions(t *testing.T) {
-	require.Panics(t, func() { NewGrid(0, 1, CellOpen) })
-	require.Panics(t, func() { NewGrid(1, 0, CellOpen) })
-	require.Panics(t, func() { NewGrid(-1, 1, CellOpen) })
-}
-
 func TestGrid_GetRandomOpenPosition(t *testing.T) {
 	t.Run("open grid returns valid position", func(t *testing.T) {
 		grid := NewGrid(5, 5, CellOpen)

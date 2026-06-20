@@ -56,7 +56,7 @@ type SimulationConfig struct {
     HazardIntervalRange     [2]int           // [min, max] ticks between emergence
     MaxHazards              int              // Maximum concurrent hazards
     HazardSpreadRateRange   [2]float64       // [min, max] cells per tick
-    HazardDurationRange     [2]int           // [min, max] ticks, 0 = indefinite
+    HazardDurationRange     [2]int           // [min, max] ticks
     HazardTypeNames         []string         // Names from built-in registry for weighted random selection
     SafeZoneCountRange      [2]int           // [min, max] safe zones to generate
     SafeZoneRadiusRange     [2]int           // [min, max] radius in cells
@@ -135,7 +135,7 @@ type Hazard struct {
     MaxRadius     float64
     SpreadRate    float64       // Cells per tick
     Severity      float64       // 0.0–1.0 (affects citizen death threshold)
-    Duration      int           // Ticks before expiry (0 = indefinite)
+    Duration      int           // Ticks before expiry
     CreatedTick   uint64        // Tick when hazard emerged
 }
 
@@ -168,7 +168,7 @@ var HazardTypes = map[string]HazardType{
 **Validation**:
 - Origin must be within grid bounds
 - Spread rate must be >= 0
-- Duration must be >= 0 (0 = indefinite)
+- Duration must be > 0
 
 ## SafeZone
 

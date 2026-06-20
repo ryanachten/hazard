@@ -5,12 +5,12 @@
 
 ## Summary
 
-A 2D grid-based hazard simulation system where citizens navigate around static obstacles and expanding hazard zones to reach safe zones. Built with Go + Kafka for event-driven architecture, featuring real-time WebSocket visualization. Developed in 10 progressive slices, each independently testable, to build Go proficiency while exploring event streaming and pathfinding algorithms.
+A 2D grid-based hazard simulation system where citizens navigate around static obstacles and expanding hazard zones to reach safe zones. Built with Go + Kafka for event-driven architecture, featuring real-time WebSocket visualization. Developed in 11 progressive slices, each independently testable, to build Go proficiency while exploring event streaming and pathfinding algorithms.
 
 ## Technical Context
 
-**Language/Version**: Go 1.26+ (per constitution)  
-**Primary Dependencies**: Apache Kafka (event backbone), Go Kafka client — `github.com/twmb/franz-go` (per research), Go WebSocket library — `github.com/coder/websocket` (per research), no external pathfinding/graph library (per constitution)  
+**Language/Version**: Go 1.26+ (per constitution), TypeScript (frontend), Bun (build tool)  
+**Primary Dependencies**: Apache Kafka (event backbone), Go Kafka client — `github.com/twmb/franz-go` (per research), Go WebSocket library — `github.com/coder/websocket` (per research), no external pathfinding/graph library (per constitution), Bun (`bun build` for TS→JS)  
 **Storage**: Kafka topics for event stream (persisted for replay); no RDBMS for v1  
 **Testing**: Go standard `testing` package, table-driven tests, `go test -race` (per constitution)  
 **Target Platform**: macOS/Linux development machine, web browser (visualization)  
@@ -84,10 +84,12 @@ cmd/
 └── simviz/              # Web server for visualization
     └── main.go
 
-web/                     # Frontend visualization (HTML/CSS/JS)
-├── index.html
-├── canvas.js
-└── style.css
+web/                     # Frontend visualization (HTML/CSS/TS)
+├── index.html           # Static HTML (references compiled JS)
+├── style.css            # Static CSS
+├── canvas.js            # Compiled output from src/canvas.ts (bun build)
+└── src/
+    └── canvas.ts        # TypeScript source
 ```
 
 **Structure Decision**: Standard Go monorepo layout with `cmd/` for entry points and `internal/` for private packages. Frontend visualization lives in `web/` as static assets served by the `simviz` binary.
@@ -97,16 +99,16 @@ web/                     # Frontend visualization (HTML/CSS/JS)
 Each slice is independently testable and introduces one new concept. Developed in order — no skipping ahead until the current slice is working.
 
 | # | Slice | What You Build | Go Concepts | Verified By |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | 1 | Grid + A* Pathfinding | 2D grid, A* algorithm, path reconstruction | Structs, slices, interfaces, unit tests, `go test` | Path from (0,0) to (5,5) avoiding obstacles |
 | 2 | Citizen Movement | Citizens follow paths, tick loop | Methods, tick timers, state mutation, `go vet` | Citizens move toward goals each tick |
-| 3 | Hazards + Envelopment | Emergency emergence, radius expansion, grid blocking | Concurrent state, config-driven behavior, edge cases | Hazard cells block pathfinding, radius grows |
-| 4 | Safe Zones + Death | Citizens escape or die, simulation completion | State machine, event emission, multiple termination conditions | Simulation ends when all citizens resolved |
-| 5 | Kafka Integration | Produce/consume simulation events | `franz-go` producer/consumer, `docker-compose`, event serialization | Events appear in Kafka topic |
-| 6 | WebSocket Broadcast | Stream events to browser clients | `coder/websocket`, hub-and-spoke pattern, HTTP integration | Multiple browsers see same events |
-| 7 | HTML Canvas Viz | Real-time browser visualization | Canvas 2D API, JSON parsing, requestAnimationFrame | Citizens and hazards rendered and moving |
-| 8 | CLI Controls | `simctl` start, pause, stop, status | `flag` package, signal handling, command pattern | `simctl start --config x.json` runs simulation |
-| 9 | Event History | Full event replay from Kafka topic | Consumer groups, offset management, event sourcing order | Replayed events match original sequence |
+| 3 | Hazards + Envelopment | Hazard emergence, radius expansion, grid blocking | Concurrent state, config-driven behavior, edge cases | Hazard cells block pathfinding, radius grows |
+| 4 | Safe Zones + Death | Citizens escape or die, simulation completion | State machine, multiple termination conditions | Simulation ends when all citizens resolved |
+| 5 | Event Emission | Event type constructors, tick integration, in-memory storage | `time.Time`, UUID, event patterns | Complete event log for any run |
+| 6 | Browser Viz (HTTP poll) | Simulation state exposed as JSON, Canvas rendering via TypeScript | `net/http`, `bun build`, Canvas 2D API, `requestAnimationFrame` | Browser shows live simulation state |
+| 7 | CLI Controls | `simctl` start, pause, stop, status | `flag` package, JSON config, signal handling | `simctl start --config x.json` runs simulation |
+| 8 | WebSocket Upgrade | Replace HTTP polling with WebSocket push in TypeScript frontend | `coder/websocket`, hub-and-spoke pattern, `bun build` | Live updates without polling |
+| 9 | Kafka Integration | Produce/consume simulation events | `franz-go` producer/consumer, `docker-compose`, event serialization | Events appear in Kafka topic |
 | 10 | Autonomy + Performance | Risk tolerance, path preference, 100+ citizens | A* variants (weighted), benchmarking, `pprof` | Citizens take different paths, 100 citizens at <2x real-time |
 
 ## Complexity Tracking

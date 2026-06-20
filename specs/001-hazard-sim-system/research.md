@@ -87,7 +87,36 @@ services:
 
 ---
 
-## 5. Kafka Topics Design
+## 5. Frontend Build Tool
+
+**Decision**: TypeScript + Bun (`bun build`)
+
+**Rationale**:
+- TypeScript gives type safety for the Canvas 2D rendering code and WebSocket/HTTP client logic
+- Bun's built-in bundler (`bun build`) compiles TypeScript to a single static JS file with zero config
+- No package.json or node_modules required for this project — the frontend has no runtime dependencies (Canvas 2D is a browser API; WebSocket is built-in)
+- Build command is trivial: `bun build ./web/src/canvas.ts --outdir ./web`
+- Output JS is served as a static asset by the Go `simviz` binary
+- Fast builds (<50ms) keep the edit-rebuild-refresh cycle tight
+
+**Alternatives considered**:
+- **Plain JS**: Simpler but loses type safety, autocomplete, and inline documentation that TS provides for Canvas 2D APIs
+- **Deno**: Viable alternative with `deno bundle`/`deno pack`, but Bun's bundler is more established for this use case and slightly simpler to invoke
+- **esbuild/webpack/vite**: Overkill for a single-file frontend with no framework, no npm dependencies, no CSS preprocessing
+- **tsc only**: Requires separate bundler; Bun replaces both compiler and bundler in one tool
+
+**Workflow**:
+```bash
+# Build frontend assets
+bun build ./web/src/canvas.ts --outdir ./web
+
+# Run the Go server (which serves web/ as static files)
+go run ./cmd/simviz
+```
+
+---
+
+## 6. Kafka Topics Design
 
 **Decision**: Single topic `simulation-events` for v1
 

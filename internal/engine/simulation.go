@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"errors"
 	pf "hazard/internal/pathfinding"
 	"log"
 	"math/rand"
@@ -32,42 +31,6 @@ const (
 	// SimulationCompleted simulation completed
 	SimulationCompleted SimulationState = "completed"
 )
-
-// SimulationConfig configuration for a simulation
-type SimulationConfig struct {
-	TickIntervalMs    int
-	Width             int
-	Height            int
-	CitizenCountRange [2]int
-	Hazard            HazardConfig
-}
-
-// Validate ensures configuration is valid prior to use
-func (s *SimulationConfig) Validate() error {
-	var err []error
-
-	if s.Width <= 0 || s.Height <= 0 {
-		err = append(err, errors.New("simulation width and height must be greater than zero"))
-	}
-
-	if s.CitizenCountRange[0] > s.CitizenCountRange[1] {
-		err = append(err, errors.New("CitizenCountRange[0] must be less than or equal to CitizenCountRange[1]"))
-	}
-
-	if s.Hazard.DurationRange[0] > s.Hazard.DurationRange[1] {
-		err = append(err, errors.New("Hazard.HazardDurationRange[0] must be less than or equal to Hazard.HazardDurationRange[1]"))
-	}
-
-	if s.Hazard.DurationRange[0] <= 0 {
-		err = append(err, errors.New("Hazard.HazardDurationRange values must be above 0"))
-	}
-
-	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {
-		err = append(err, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))
-	}
-
-	return errors.Join(err...)
-}
 
 // NewSimulation creates a simulation based on configuration
 func NewSimulation(config SimulationConfig) (Simulation, error) {

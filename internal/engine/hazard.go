@@ -14,13 +14,6 @@ type Hazard struct {
 	CurrentRadius int
 }
 
-// HazardConfig configures a hazard
-type HazardConfig struct {
-	DurationRange [2]int
-	Probability   float32
-	MaxHazards    int
-}
-
 // HazardKind categorizes how a hazard behaves during simulation ticks.
 type HazardKind string
 

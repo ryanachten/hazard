@@ -13,6 +13,16 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 		Width:             8,
 		Height:            6,
 		CitizenCountRange: [2]int{3, 3},
+		SafeZone: SafeZoneConfig{
+			Probability: 0,
+			CountRange:  [2]int{1, 1},
+			RadiusRange: [2]int{0, 0},
+		},
+		Hazard: HazardConfig{
+			Probability:   0,
+			CountRange:    [2]int{0, 0},
+			DurationRange: [2]int{1, 1},
+		},
 	}
 
 	simulation, err := NewSimulation(config)
@@ -24,17 +34,18 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 	require.Equal(t, config.Width, simulation.Grid.Width)
 	require.Equal(t, config.Height, simulation.Grid.Height)
 	require.Len(t, simulation.Citizens, 3)
+	require.Len(t, simulation.SafeZones, 1)
 
-	require.GreaterOrEqual(t, simulation.SafeZone.X, 0)
-	require.Less(t, simulation.SafeZone.X, simulation.Grid.Width)
-	require.GreaterOrEqual(t, simulation.SafeZone.Y, 0)
-	require.Less(t, simulation.SafeZone.Y, simulation.Grid.Height)
+	require.GreaterOrEqual(t, simulation.SafeZones[0].Position.X, 0)
+	require.Less(t, simulation.SafeZones[0].Position.X, simulation.Grid.Width)
+	require.GreaterOrEqual(t, simulation.SafeZones[0].Position.Y, 0)
+	require.Less(t, simulation.SafeZones[0].Position.Y, simulation.Grid.Height)
 
 	for _, citizen := range simulation.Citizens {
 		require.Equal(t, CitizenIdle, citizen.Status)
 		require.Equal(t, 0, citizen.CurrentPathIndex)
 		require.NotEmpty(t, citizen.Path)
-		require.Equal(t, simulation.SafeZone, citizen.Path[len(citizen.Path)-1])
+		require.Equal(t, simulation.SafeZones[0].Position, citizen.Path[len(citizen.Path)-1])
 	}
 }
 

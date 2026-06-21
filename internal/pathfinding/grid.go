@@ -21,6 +21,8 @@ const (
 	CellObstacle
 	// CellHazard represents a cell occupied by a hazard
 	CellHazard
+	// CellSafeZone represents a cell occupied by a safe zone
+	CellSafeZone
 )
 
 // Grid (2D) for positioning simulation entities

@@ -9,13 +9,15 @@ import (
 
 // Simulation engine for hazards
 type Simulation struct {
-	Config    SimulationConfig
-	State     SimulationState
-	TickCount uint64
-	Citizens  []Citizen
-	SafeZone  pf.Position
-	Grid      *pf.Grid
-	Hazards   []Hazard
+	Config       SimulationConfig
+	State        SimulationState
+	TickCount    uint64
+	Grid         *pf.Grid
+	Citizens     []Citizen
+	MaxHazards   int
+	Hazards      []Hazard
+	MaxSafeZones int
+	SafeZones    []SafeZone
 }
 
 // SimulationState phases of a simulation
@@ -36,18 +38,20 @@ const (
 func NewSimulation(config SimulationConfig) (Simulation, error) {
 	grid := pf.NewGrid(config.Width, config.Height, pf.CellOpen)
 
-	safeZone, err := grid.GetRandomOpenPosition()
+	safeZone, err := createSafeZone(config.SafeZone, &grid)
 	if err != nil {
 		return Simulation{}, err
 	}
 
 	return Simulation{
-		Config:    config,
-		State:     SimulationCreated,
-		TickCount: 0,
-		Grid:      &grid,
-		SafeZone:  safeZone,
-		Citizens:  createCitizens(config.CitizenCountRange, &grid, safeZone),
+		Config:       config,
+		State:        SimulationCreated,
+		TickCount:    0,
+		Grid:         &grid,
+		MaxHazards:   randIntInRange(config.Hazard.CountRange),
+		MaxSafeZones: randIntInRange(config.SafeZone.CountRange),
+		SafeZones:    []SafeZone{safeZone},
+		Citizens:     createCitizens(config.CitizenCountRange, &grid),
 	}, nil
 }
 
@@ -58,6 +62,7 @@ func (s *Simulation) Tick() {
 	}
 	s.State = SimulationRunning
 
+	// Update or remove hazards
 	hazardConfig := s.Config.Hazard
 	for i := len(s.Hazards) - 1; i >= 0; i-- {
 		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
@@ -69,7 +74,7 @@ func (s *Simulation) Tick() {
 	}
 
 	// Randomly generate hazards within hazard limits
-	if len(s.Hazards) < hazardConfig.MaxHazards && rand.Float32() <= hazardConfig.Probability {
+	if len(s.Hazards) < s.MaxHazards && rand.Float32() <= hazardConfig.Probability {
 		hazard, err := createHazard(hazardConfig, s.Grid)
 		if err != nil {
 			log.Printf("error creating hazard: %v", err)
@@ -79,27 +84,43 @@ func (s *Simulation) Tick() {
 		}
 	}
 
+	// Randomly generate safe zones within hazard limits
+	safeZoneConfig := s.Config.SafeZone
+	safeZoneCreated := false
+	if len(s.SafeZones) < s.MaxSafeZones && rand.Float32() <= safeZoneConfig.Probability {
+		safeZone, err := createSafeZone(safeZoneConfig, s.Grid)
+		if err != nil {
+			log.Printf("error creating safe zone: %v", err)
+		} else {
+			s.SafeZones = append(s.SafeZones, safeZone)
+			safeZoneCreated = true
+		}
+	}
+
 	// Update citizen pathfinding state
 	for i := range s.Citizens {
 
-		// Check if any path intersects with hazards and needs recalculating
-		for _, pos := range s.Citizens[i].Path {
-			if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
-				err := s.Citizens[i].updatePath(s.Grid, s.Citizens[i].Path[s.Citizens[i].CurrentPathIndex], s.SafeZone)
-				if err != nil {
-					log.Printf("error updating citizen %v path: %v", i, err)
+		// If a new safe zone has been added, we need to determine which safe zone is closest
+		if safeZoneCreated {
+			err := s.Citizens[i].findNearestSafeZone(s.Grid)
+			if err != nil {
+				log.Printf("error finding safe zone for citizen %v path: %v", i, err)
+			}
+		} else {
+			// Check if any path intersects with hazards and needs recalculating
+			for _, pos := range s.Citizens[i].Path {
+				if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
+					err := s.Citizens[i].updatePath(s.Grid)
+					if err != nil {
+						log.Printf("error updating citizen %v path: %v", i, err)
+					}
+					break
 				}
-				break
 			}
 		}
 
 		// Increment citizen's position on path
-		if s.Citizens[i].CurrentPathIndex < len(s.Citizens[i].Path)-1 {
-			s.Citizens[i].Status = CitizenNavigating
-			s.Citizens[i].CurrentPathIndex++
-
-			log.Printf("Citizen %v now at %v of %v steps", i, s.Citizens[i].CurrentPathIndex, len(s.Citizens[i].Path))
-		}
+		s.Citizens[i].incrementLocation()
 	}
 
 	s.TickCount++

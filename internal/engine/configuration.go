@@ -1,6 +1,9 @@
 package engine
 
-import "errors"
+import (
+	"errors"
+	"math/rand"
+)
 
 // SimulationConfig configuration for a simulation
 type SimulationConfig struct {
@@ -14,13 +17,14 @@ type SimulationConfig struct {
 
 // HazardConfig configures simulation hazards
 type HazardConfig struct {
-	DurationRange [2]int
 	Probability   float32
-	MaxHazards    int
+	CountRange    [2]int
+	DurationRange [2]int
 }
 
 // SafeZoneConfig configures simulation safe zones
 type SafeZoneConfig struct {
+	Probability float32
 	CountRange  [2]int
 	RadiusRange [2]int
 }
@@ -49,6 +53,10 @@ func (s *SimulationConfig) Validate() error {
 		err = append(err, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))
 	}
 
+	if s.SafeZone.Probability < 0 || s.SafeZone.Probability > 1 {
+		err = append(err, errors.New("SafeZone.Probability must be between 0.0 and 1.0"))
+	}
+
 	if s.SafeZone.RadiusRange[0] > s.SafeZone.RadiusRange[1] {
 		err = append(err, errors.New("SafeZone.RadiusRange[0] must be less than or equal to SafeZone.RadiusRange[1]"))
 	}
@@ -58,4 +66,10 @@ func (s *SimulationConfig) Validate() error {
 	}
 
 	return errors.Join(err...)
+}
+
+func randIntInRange(valueRange [2]int) int {
+	configMin := valueRange[0]
+	configMax := valueRange[1]
+	return configMin + rand.Intn(configMax-configMin+1)
 }

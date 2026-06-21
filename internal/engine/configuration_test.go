@@ -108,6 +108,54 @@ func TestSimulationConfig_Validate(t *testing.T) {
 			},
 			wantErr: "Hazard.HazardProbability must be between 0.0 and 1.0",
 		},
+		{
+			name: "safe zone probability negative",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				SafeZone: SafeZoneConfig{
+					Probability: -0.1,
+				},
+			},
+			wantErr: "SafeZone.Probability must be between 0.0 and 1.0",
+		},
+		{
+			name: "safe zone probability greater than 1",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				SafeZone: SafeZoneConfig{
+					Probability: 1.5,
+				},
+			},
+			wantErr: "SafeZone.Probability must be between 0.0 and 1.0",
+		},
+		{
+			name: "safe zone radius range min greater than max",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				SafeZone: SafeZoneConfig{
+					RadiusRange: [2]int{5, 3},
+				},
+			},
+			wantErr: "SafeZone.RadiusRange[0] must be less than or equal to SafeZone.RadiusRange[1]",
+		},
+		{
+			name: "safe zone count range min greater than max",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				SafeZone: SafeZoneConfig{
+					CountRange: [2]int{5, 3},
+				},
+			},
+			wantErr: "SafeZone.CountRange[0] must be less than or equal to SafeZone.CountRange[1]",
+		},
 	}
 
 	for _, tt := range tests {

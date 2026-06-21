@@ -9,11 +9,6 @@ import (
 // AStar implementation of the pathfinding algorithm
 type AStar struct{}
 
-// Name returns the given name of a pathfinding algorithm
-func (a *AStar) Name() string {
-	return "a*"
-}
-
 // FindPath finds shortest path from a starting point to a given destination
 func (a *AStar) FindPath(grid *Grid, from, to Position) ([]Position, error) {
 	if !grid.InBounds(from) || !grid.InBounds(to) {

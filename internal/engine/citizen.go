@@ -93,11 +93,20 @@ func (c *Citizen) updatePath(grid *pf.Grid) error {
 }
 
 func (c *Citizen) incrementLocation() {
+	if c.Status == CitizenEscaped || c.Status == CitizenDead {
+		return
+	}
+
 	if c.CurrentPathIndex < len(c.Path)-1 {
-		c.Status = CitizenNavigating
 		c.CurrentPathIndex++
 		c.CurrentPosition = c.Path[c.CurrentPathIndex]
 
 		log.Printf("Citizen %v now at %v of %v steps", c.ID, c.CurrentPathIndex, len(c.Path))
+	}
+
+	if c.CurrentPathIndex == len(c.Path)-1 {
+		c.Status = CitizenEscaped
+	} else {
+		c.Status = CitizenNavigating
 	}
 }

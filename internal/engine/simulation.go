@@ -9,15 +9,17 @@ import (
 
 // Simulation engine for hazards
 type Simulation struct {
-	Config       SimulationConfig
-	State        SimulationState
-	TickCount    uint64
-	Grid         *pf.Grid
-	Citizens     []Citizen
-	MaxHazards   int
-	Hazards      []Hazard
-	MaxSafeZones int
-	SafeZones    []SafeZone
+	Config               SimulationConfig
+	State                SimulationState
+	TickCount            uint64
+	Grid                 *pf.Grid
+	Citizens             []Citizen
+	DeadCitizensCount    int
+	EscapedCitizensCount int
+	MaxHazards           int
+	Hazards              []Hazard
+	MaxSafeZones         int
+	SafeZones            []SafeZone
 }
 
 // SimulationState phases of a simulation
@@ -100,7 +102,19 @@ func (s *Simulation) Tick() {
 	// Update citizen pathfinding state
 	for i := range s.Citizens {
 
-		// If a new safe zone has been added, we need to determine which safe zone is closest
+		// Skip dead and escaped citizens
+		if s.Citizens[i].Status == CitizenDead || s.Citizens[i].Status == CitizenEscaped {
+			continue
+		}
+
+		// If a hazard has caught up with a citizen, they're now dead
+		if s.Grid.GetCell(s.Citizens[i].CurrentPosition) == pf.CellHazard {
+			s.Citizens[i].Status = CitizenDead
+			s.DeadCitizensCount++
+			continue
+		}
+
+		// If new safe zone added, determine which safe zone is closest
 		if safeZoneCreated {
 			err := s.Citizens[i].findNearestSafeZone(s.Grid)
 			if err != nil {
@@ -121,6 +135,14 @@ func (s *Simulation) Tick() {
 
 		// Increment citizen's position on path
 		s.Citizens[i].incrementLocation()
+		if s.Citizens[i].Status == CitizenEscaped {
+			s.EscapedCitizensCount++
+		}
+	}
+
+	if s.DeadCitizensCount+s.EscapedCitizensCount == len(s.Citizens) {
+		s.State = SimulationCompleted
+		return
 	}
 
 	s.TickCount++

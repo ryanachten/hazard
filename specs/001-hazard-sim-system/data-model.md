@@ -32,7 +32,7 @@ type Simulation struct {
 **State transitions**: `created → running ⇄ paused → completed`
 
 - `created`: Environment configured, citizens seeded, waiting for start
-- `running`: Tick loop active; citizens idle (random movement) until the first hazard emerges, then navigate to safe zones as hazards expand
+- `running`: Tick loop active; citizens idle (random movement) until the first hazard emerges, then navigate to safe zones as hazards expand. Additional safe zones may emerge at a configurable interval.
 - `paused`: Tick loop suspended, state preserved
 - `completed`: All citizens escaped or dead
 
@@ -58,9 +58,9 @@ type SimulationConfig struct {
     HazardSpreadRateRange   [2]float64       // [min, max] cells per tick
     HazardDurationRange     [2]int           // [min, max] ticks
     HazardTypeNames         []string         // Names from built-in registry for weighted random selection
-    SafeZoneCountRange      [2]int           // [min, max] safe zones to generate
-    SafeZoneRadiusRange     [2]int           // [min, max] radius in cells
-    SafeZonePlacement       string           // "far_from_start" | "random" | "corners"
+    SafeZoneRadiusRange            [2]int    // [min, max] radius in cells
+    SafeZonePlacement               string    // "far_from_start" | "random" | "corners" (initial + dynamic zones)
+    SafeZoneEmergenceIntervalRange  [2]int    // [min, max] ticks between dynamic safe zone appearances
     ObstacleCountRange      [2]int           // [min, max] obstacles to generate
     ObstacleSizeRange       SizeRange        // Width/height ranges
     ObstacleTypes           []string         // Names from built-in registry for random assignment
@@ -174,15 +174,19 @@ var HazardTypes = map[string]HazardType{
 
 ```go
 type SafeZone struct {
-    ID       string   // UUID
-    Position Position
-    Radius   int      // In grid cells
+    ID          string   // UUID
+    Position    Position
+    Radius      int      // In grid cells
+    CreatedTick uint64   // Tick when this zone appeared (0 for the initial pre-simulation zone)
 }
 ```
+
+**Lifecycle**: The simulation always starts with exactly one safe zone placed before tick 0. Additional safe zones may emerge dynamically at a configurable interval during the simulation (similar to hazard emergence, but zones persist indefinitely once placed). When a new safe zone appears, all `navigating` citizens recalculate their path toward the nearest safe zone.
 
 **Validation**:
 - Must be within grid bounds
 - Must not overlap with static obstacles
+- Initial safe zone must be placed before simulation start (CreatedTick == 0)
 
 ## StaticObstacle
 
@@ -264,11 +268,28 @@ const (
     EventCitizenDied         EventType = "citizen.died"
     EventCitizenRecalculated EventType = "citizen.recalculated"
     EventCitizenAlerted      EventType = "citizen.alerted"
+    EventSafeZoneEmerged     EventType = "safezone.emerged"
     EventHazardEmerged       EventType = "hazard.emerged"
     EventHazardExpanded      EventType = "hazard.expanded"
     EventHazardDissipated    EventType = "hazard.dissipated"
 )
 ```
+
+## Future Considerations
+
+These are not implemented in v1 but are documented for potential later enhancement.
+
+### Safe Zone Capacity
+
+The v1 model treats safe zones as infinite-capacity areas (complementary to the dynamic emergence mechanic — citizens have more options over time, but no slot contention). A future iteration could add:
+
+- `MaxOccupants int` to `SafeZone` — maximum number of citizens that can occupy the zone
+- `OccupantIDs []string` — tracking which citizens are currently inside
+- Behavior: when a safe zone reaches capacity, citizens targeting it must recalculate toward other safe zones (or wait for a spot if a citizen inside dies or another escapes later)
+
+This would add strategic depth — citizens compete for finite safety — but was deferred to keep Slice 4 (Safe Zones + Death) focused on the basic entry/detection mechanic. Best added as a discrete enhancement after Slice 4 is complete. Dynamic emergence and capacity are fully complementary: the former creates more options over time, the latter incentivizes spreading out across them.
+
+---
 
 ## Edge Case Handling
 
@@ -285,4 +306,6 @@ const (
 | Zero citizens | Simulation starts and immediately completes (FR-009: all citizens either escaped or dead — vacuously true) |
 | Hazard on top of citizen at emergence | Citizen dies on that tick (FR-008) |
 | Safe zone enveloped before citizens reach | Citizens recalculate (FR-007); if all safe zones blocked, citizens are trapped |
+| New safe zone appears mid-simulation | Citizens recalculate toward the nearest safe zone (including the new one); may cause path shifts mid-route |
+| All safe zones are unreachable | Citizens recalculate each tick; when no path exists, they stay in place until either a path opens or hazard overtakes them |
 | Idle citizen with no unblocked adjacent cell | Citizen stays in place for that tick (all directions blocked by obstacles or grid boundary) |

@@ -9,19 +9,17 @@ import (
 // Dijkstra implementation of the pathfinding algorithm
 type Dijkstra struct{}
 
-// Name returns the given name of a pathfinding algorithm
-func (d *Dijkstra) Name() string {
-	return "dijkstra"
-}
+// GoalPredicate defines when a goal has been reached
+type GoalPredicate func(pos Position) bool
 
-// FindPath finds shortest path from a starting point to a given destination
-func (d *Dijkstra) FindPath(grid *Grid, from, to Position) ([]Position, error) {
-	if !grid.InBounds(from) || !grid.InBounds(to) {
+// FindPathToGoal finds shortest path from a starting point to any location matching a given predicate
+func (d *Dijkstra) FindPathToGoal(grid *Grid, from Position, isGoal GoalPredicate) ([]Position, error) {
+	if !grid.InBounds(from) {
 		return nil, ErrPositionOutOfBounds
 	}
 
-	// If from and to are the same node, then short-circuit
-	if from == to {
+	// If the source is already at goal, then short circuit
+	if isGoal(from) {
 		return []Position{from}, nil
 	}
 
@@ -50,10 +48,18 @@ func (d *Dijkstra) FindPath(grid *Grid, from, to Position) ([]Position, error) {
 		priority: 0,
 	})
 
-	// Process queue until we have determined distances
+	// Process queue until we have fulfilled the goal
+	var goalPosition Position
+	found := false
 	for pq.Len() > 0 {
 		curItem := heap.Pop(&pq).(*Item)
 		curPos := curItem.value
+
+		if isGoal(curPos) {
+			goalPosition = curPos
+			found = true
+			break
+		}
 
 		// If it's not the shortest distance for this node, skip it
 		if curItem.priority > distances[curPos.Y][curPos.X] {
@@ -97,13 +103,14 @@ func (d *Dijkstra) FindPath(grid *Grid, from, to Position) ([]Position, error) {
 		}
 	}
 
-	curNode := traversalPath[to.Y][to.X]
-	if curNode == nil {
+	if !found {
 		return nil, ErrDestinationUnreachable
 	}
 
+	curNode := traversalPath[goalPosition.Y][goalPosition.X]
+
 	result := make([]Position, 0)
-	result = append(result, to)
+	result = append(result, goalPosition)
 
 	for curNode != nil {
 		result = append(result, *curNode)

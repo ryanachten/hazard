@@ -103,13 +103,19 @@ Each slice is independently testable and introduces one new concept. Developed i
 | 1 | Grid + A* Pathfinding | 2D grid, A* algorithm, path reconstruction | Structs, slices, interfaces, unit tests, `go test` | Path from (0,0) to (5,5) avoiding obstacles |
 | 2 | Citizen Movement | Citizens follow paths, tick loop | Methods, tick timers, state mutation, `go vet` | Citizens move toward goals each tick |
 | 3 | Hazards + Envelopment | Hazard emergence, radius expansion, grid blocking | Concurrent state, config-driven behavior, edge cases | Hazard cells block pathfinding, radius grows |
-| 4 | Safe Zones + Death | Citizens escape or die, simulation completion | State machine, multiple termination conditions | Simulation ends when all citizens resolved |
+| 4 | Safe Zones + Death | Citizens escape or die, simulation completion; dynamic safe zone emergence | State machine, multiple termination conditions, scheduled emergence | Simulation ends when all citizens resolved; new safe zones appear mid-run |
 | 5 | Event Emission | Event type constructors, tick integration, in-memory storage | `time.Time`, UUID, event patterns | Complete event log for any run |
 | 6 | Browser Viz (HTTP poll) | Simulation state exposed as JSON, Canvas rendering via TypeScript | `net/http`, `bun build`, Canvas 2D API, `requestAnimationFrame` | Browser shows live simulation state |
 | 7 | CLI Controls | `simctl` start, pause, stop, status | `flag` package, JSON config, signal handling | `simctl start --config x.json` runs simulation |
 | 8 | WebSocket Upgrade | Replace HTTP polling with WebSocket push in TypeScript frontend | `coder/websocket`, hub-and-spoke pattern, `bun build` | Live updates without polling |
 | 9 | Kafka Integration | Produce/consume simulation events | `franz-go` producer/consumer, `docker-compose`, event serialization | Events appear in Kafka topic |
 | 10 | Autonomy + Performance | Risk tolerance, path preference, 100+ citizens | A* variants (weighted), benchmarking, `pprof` | Citizens take different paths, 100 citizens at <2x real-time |
+
+## Future Enhancements
+
+The following are deferred from v1 but documented for potential later iteration:
+
+- **Safe Zone Capacity**: Add `MaxOccupants` and `OccupantIDs` to `SafeZone`. Citizens targeting a full zone recalculate. Best implemented as a discrete enhancement after Slice 4 (Safe Zones + Death). Fully complementary with dynamic emergence (more zones + capacity limits = citizens spread out).
 
 ## Complexity Tracking
 

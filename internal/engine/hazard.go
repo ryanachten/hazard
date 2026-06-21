@@ -49,9 +49,7 @@ func randomHazardType() HazardType {
 }
 
 func createHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
-	durationMin := config.DurationRange[0]
-	durationMax := config.DurationRange[1]
-	duration := durationMin + rand.Intn(durationMax-durationMin+1)
+	duration := randIntInRange(config.DurationRange)
 
 	origin, err := grid.GetRandomOpenPosition()
 	if err != nil {
@@ -71,19 +69,19 @@ func createHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
 
 func (h *Hazard) expandHazard(grid *pf.Grid) {
 	h.CurrentRadius++
-	h.updateHazardCells(grid, pf.CellHazard)
+	h.updateCells(grid, pf.CellOpen, pf.CellHazard)
 }
 
 func (h *Hazard) removeHazard(grid *pf.Grid) {
-	h.updateHazardCells(grid, pf.CellOpen)
+	h.updateCells(grid, pf.CellHazard, pf.CellOpen)
 }
 
-func (h *Hazard) updateHazardCells(grid *pf.Grid, cellType pf.CellType) {
+func (h *Hazard) updateCells(grid *pf.Grid, oldType, newType pf.CellType) {
 	for dx := -h.CurrentRadius; dx <= h.CurrentRadius; dx++ {
 		for dy := -h.CurrentRadius; dy <= h.CurrentRadius; dy++ {
 			pos := pf.Position{X: h.Origin.X + dx, Y: h.Origin.Y + dy}
-			if grid.InBounds(pos) {
-				grid.UpdateCell(pos, cellType)
+			if grid.InBounds(pos) && grid.GetCell(pos) == oldType {
+				grid.UpdateCell(pos, newType)
 			}
 		}
 	}

@@ -91,12 +91,12 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 ### Functional Requirements
 
 - **FR-001**: Operators MUST be able to define a 2D simulation environment with configurable dimensions and place static obstacles (e.g., buildings, terrain features) that block movement
-- **FR-002**: Operators MUST be able to place one or more safe zones in the environment
+- **FR-002**: Operators MUST be able to place one or more safe zones in the environment. At least one safe zone MUST be present at simulation start; additional safe zones MAY emerge dynamically during the simulation
 - **FR-003**: Operators MUST be able to seed citizens in the environment before hazards emerge, each with a start position and the goal of reaching any safe zone
 - **FR-004**: Hazards MUST emerge at configurable regular intervals after citizens have been seeded, with each hazard having a position, initial radius, progression speed, duration, and type
 - **FR-005**: Hazards MUST support configurable progressive envelopment — expanding their effective radius over time to cover additional area
 - **FR-006**: Citizens MUST autonomously navigate from their start position toward safe zones while avoiding static obstacles and active hazard zones
-- **FR-007**: Citizens MUST recalculate their route when a new hazard emerges or an existing hazard expands to block their current path
+- **FR-007**: Citizens MUST recalculate their route when a new hazard emerges, a new safe zone appears, or an existing hazard expands to block their current path
 - **FR-008**: If a hazard overtakes a citizen (citizen cannot outpace or avoid the expanding hazard), the citizen MUST be marked as dead
 - **FR-009**: The simulation MUST end automatically when all citizens have either reached a safe zone or died
 - **FR-010**: Operators MUST be able to start, pause, and stop a simulation
@@ -115,7 +115,7 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 - **Simulation**: A single run encompassing environment configuration, citizens, hazards, safe zones, and the event stream. Has a lifecycle (created, running, paused, completed).
 - **Citizen**: An autonomous agent with start position, current position, status (navigating, escaped, dead), movement speed, autonomy profile, and goal of reaching any safe zone. Responds to hazards and obstacles by recalculating path.
 - **Hazard**: An obstacle with position, type (extensible — initially fire, flood, lava), initial radius, progression speed, maximum radius, severity, duration, and creation tick. Created active at emergence and removed when expired. Behavior governed by `HazardKind` (expanding, strike, global).
-- **Safe Zone**: A designated area within the environment that citizens must reach to survive. Citizens are considered escaped upon entry.
+- **Safe Zone**: A designated area within the environment that citizens must reach to survive. At least one safe zone is placed before simulation start; additional safe zones may emerge dynamically mid-simulation. Citizens are considered escaped upon entry.
 - **Environment**: A bounded 2D space with configurable width and height containing static obstacles, safe zones, citizens, and hazards.
 - **Static Obstacle**: Impassable terrain features (buildings, landscape) that block citizen movement and hazard progression. Defined at environment setup.
 - **Simulation Event**: A time-stamped record of any state change. Includes event type, entity ID, timestamp, and payload describing the change.
@@ -139,10 +139,10 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 - The simulation uses a 2D grid-based environment for pathfinding
 - Citizens move a configurable number of grid cells per simulation tick
 - Hazards expand outward from their origin point at a configurable rate
-- Safe zones are static and placed before simulation start
+- At least one safe zone is placed before simulation start; additional safe zones may emerge dynamically mid-simulation
 - Static obstacles are impassable to both citizens and hazards
 - The visualisation is rendered in a web browser using simple canvas or SVG graphics
 - The simulation runs on a single machine for the initial version
 - Standard grid-based pathfinding algorithms (e.g., A*) are sufficient for citizen navigation in initial versions
 - Citizens have basic autonomy — they can choose between multiple viable paths based on configurable preferences (e.g., shortest path vs. safest path)
-- The system will be built in progressive phases: (1) basic movement + static obstacles + expanding hazards, (2) citizen death + safe zones, (3) hazard types + progressive envelopment, (4) citizen autonomy, (5) additional hazard kinds (strike, global)
+- The system will be built in progressive phases: (1) basic movement + static obstacles + expanding hazards, (2) citizen death + dynamic safe zones, (3) hazard types + progressive envelopment, (4) citizen autonomy, (5) additional hazard kinds (strike, global)

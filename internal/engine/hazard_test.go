@@ -15,7 +15,12 @@ func newTestSim() (Simulation, error) {
 		Hazard: HazardConfig{
 			DurationRange: [2]int{100, 100},
 			Probability:   0,
-			MaxHazards:    0,
+			CountRange:    [2]int{0, 0},
+		},
+		SafeZone: SafeZoneConfig{
+			Probability: 0,
+			CountRange:  [2]int{1, 1},
+			RadiusRange: [2]int{1, 1},
 		},
 	})
 }
@@ -112,7 +117,7 @@ func TestCreateHazard(t *testing.T) {
 	config := HazardConfig{
 		DurationRange: [2]int{5, 10},
 		Probability:   0.5,
-		MaxHazards:    5,
+		CountRange:    [2]int{0, 0},
 	}
 
 	hazard, err := createHazard(config, &grid)
@@ -153,7 +158,12 @@ func TestHazard_CreationViaTick(t *testing.T) {
 		Hazard: HazardConfig{
 			DurationRange: [2]int{10, 10},
 			Probability:   1.0,
-			MaxHazards:    5,
+			CountRange:    [2]int{5, 5},
+		},
+		SafeZone: SafeZoneConfig{
+			Probability: 0,
+			CountRange:  [2]int{0, 0},
+			RadiusRange: [2]int{1, 1},
 		},
 	})
 	require.NoError(t, err)
@@ -178,7 +188,7 @@ func TestHazard_CreationViaTick(t *testing.T) {
 
 func TestHazard_BlocksCitizenPath(t *testing.T) {
 	grid := pf.NewGrid(5, 5, pf.CellOpen)
-	safeZone := pf.Position{X: 4, Y: 4}
+	destination := pf.Position{X: 4, Y: 4}
 
 	path := []pf.Position{
 		{X: 0, Y: 0},
@@ -194,22 +204,31 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 
 	sim := Simulation{
 		Config: SimulationConfig{
+			SafeZone: SafeZoneConfig{
+				CountRange:  [2]int{1, 1},
+				RadiusRange: [2]int{1, 1},
+			},
 			Hazard: HazardConfig{
 				DurationRange: [2]int{100, 100},
 				Probability:   0,
-				MaxHazards:    0,
+				CountRange:    [2]int{0, 0},
 			},
 		},
-		State:    SimulationCreated,
-		Grid:     &grid,
-		SafeZone: safeZone,
+		State:        SimulationCreated,
+		Grid:         &grid,
+		MaxHazards:   0,
+		MaxSafeZones: 1,
+		SafeZones: []SafeZone{
+			{Position: destination, Radius: 1},
+		},
 		Citizens: []Citizen{
 			{
-				ID:               0,
-				Status:           CitizenIdle,
-				Path:             path,
-				CurrentPathIndex: 0,
-				pathfinder:       &pf.AStar{},
+				ID:                 0,
+				Status:             CitizenIdle,
+				CurrentPosition:    pf.Position{X: 0, Y: 0},
+				CurrentDestination: destination,
+				Path:               path,
+				CurrentPathIndex:   0,
 			},
 		},
 		Hazards: []Hazard{},
@@ -230,6 +249,6 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		"recalculated path must avoid hazard cell")
 	require.Equal(t, 1, sim.Citizens[0].CurrentPathIndex,
 		"citizen advanced one step after recalculation")
-	require.Equal(t, safeZone, sim.Citizens[0].Path[len(sim.Citizens[0].Path)-1],
-		"recalculated path must still lead to safe zone")
+	require.Equal(t, destination, sim.Citizens[0].Path[len(sim.Citizens[0].Path)-1],
+		"recalculated path must still lead to destination")
 }

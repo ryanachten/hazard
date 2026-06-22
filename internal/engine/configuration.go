@@ -49,6 +49,10 @@ func (s *SimulationConfig) Validate() error {
 		err = append(err, errors.New("Hazard.HazardDurationRange values must be above 0"))
 	}
 
+	if s.Hazard.CountRange[0] > s.Hazard.CountRange[1] {
+		err = append(err, errors.New("Hazard.CountRange[0] must be less than or equal to Hazard.CountRange[1]"))
+	}
+
 	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {
 		err = append(err, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))
 	}
@@ -63,6 +67,10 @@ func (s *SimulationConfig) Validate() error {
 
 	if s.SafeZone.CountRange[0] > s.SafeZone.CountRange[1] {
 		err = append(err, errors.New("SafeZone.CountRange[0] must be less than or equal to SafeZone.CountRange[1]"))
+	}
+
+	if s.SafeZone.CountRange[1] < 1 {
+		err = append(err, errors.New("SafeZone.CountRange[1] must be at least 1"))
 	}
 
 	return errors.Join(err...)

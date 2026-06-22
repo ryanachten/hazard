@@ -22,6 +22,9 @@ func TestSimulationConfig_Validate(t *testing.T) {
 					DurationRange: [2]int{1, 10},
 					Probability:   0.5,
 				},
+				SafeZone: SafeZoneConfig{
+					CountRange: [2]int{1, 1},
+				},
 			},
 			wantErr: "",
 		},
@@ -81,6 +84,19 @@ func TestSimulationConfig_Validate(t *testing.T) {
 				},
 			},
 			wantErr: "Hazard.HazardDurationRange values must be above 0",
+		},
+		{
+			name: "hazard count min greater than max",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				Hazard: HazardConfig{
+					DurationRange: [2]int{1, 1},
+					CountRange:    [2]int{5, 3},
+				},
+			},
+			wantErr: "Hazard.CountRange[0] must be less than or equal to Hazard.CountRange[1]",
 		},
 		{
 			name: "negative hazard probability",
@@ -155,6 +171,18 @@ func TestSimulationConfig_Validate(t *testing.T) {
 				},
 			},
 			wantErr: "SafeZone.CountRange[0] must be less than or equal to SafeZone.CountRange[1]",
+		},
+		{
+			name: "safe zone max count less than 1",
+			config: SimulationConfig{
+				Width:             5,
+				Height:            5,
+				CitizenCountRange: [2]int{1, 5},
+				SafeZone: SafeZoneConfig{
+					CountRange: [2]int{0, 0},
+				},
+			},
+			wantErr: "SafeZone.CountRange[1] must be at least 1",
 		},
 	}
 

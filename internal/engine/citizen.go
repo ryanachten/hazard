@@ -78,18 +78,14 @@ func (c *Citizen) findNearestSafeZone(grid *pf.Grid) error {
 func (c *Citizen) updatePath(grid *pf.Grid) error {
 	aStar := pf.AStar{}
 
-	var err error
-	for range 3 {
-		var path []pf.Position
-		path, err = aStar.FindPath(grid, c.CurrentPosition, c.CurrentDestination)
-		if err == nil {
-			c.Path = path
-			c.CurrentPathIndex = 0
-			return nil
-		}
+	path, err := aStar.FindPath(grid, c.CurrentPosition, c.CurrentDestination)
+	if err != nil {
+		return fmt.Errorf("pathfinding failed: %w", err)
 	}
 
-	return fmt.Errorf("pathfinding failed after 3 attempts: %w", err)
+	c.Path = path
+	c.CurrentPathIndex = 0
+	return nil
 }
 
 func (c *Citizen) incrementLocation() {

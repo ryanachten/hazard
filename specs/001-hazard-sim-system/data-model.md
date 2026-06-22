@@ -177,7 +177,6 @@ type SafeZone struct {
     ID          string   // UUID
     Position    Position
     Radius      int      // In grid cells
-    CreatedTick uint64   // Tick when this zone appeared (0 for the initial pre-simulation zone)
 }
 ```
 
@@ -186,7 +185,6 @@ type SafeZone struct {
 **Validation**:
 - Must be within grid bounds
 - Must not overlap with static obstacles
-- Initial safe zone must be placed before simulation start (CreatedTick == 0)
 
 ## StaticObstacle
 

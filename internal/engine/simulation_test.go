@@ -191,3 +191,163 @@ func TestTick_DoesNothingWhenCompleted(t *testing.T) {
 	require.Equal(t, 0, simulation.Citizens[0].CurrentPathIndex)
 	require.Equal(t, CitizenIdle, simulation.Citizens[0].Status)
 }
+
+func TestTick_CitizenReachesSafeZoneAndEscapes(t *testing.T) {
+	grid := pf.NewGrid(3, 1, pf.CellOpen)
+	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
+
+	sim := Simulation{
+		Grid: &grid,
+		Citizens: []Citizen{
+			{
+				Status:          CitizenIdle,
+				CurrentPosition: pf.Position{X: 0, Y: 0},
+				Path: []pf.Position{
+					{X: 0, Y: 0},
+					{X: 1, Y: 0},
+					{X: 2, Y: 0},
+				},
+				CurrentPathIndex: 0,
+			},
+		},
+	}
+
+	sim.Tick()
+	require.Equal(t, CitizenNavigating, sim.Citizens[0].Status)
+	require.Equal(t, pf.Position{X: 1, Y: 0}, sim.Citizens[0].CurrentPosition)
+	require.Equal(t, 0, sim.EscapedCitizensCount)
+
+	sim.Tick()
+	require.Equal(t, CitizenEscaped, sim.Citizens[0].Status)
+	require.Equal(t, pf.Position{X: 2, Y: 0}, sim.Citizens[0].CurrentPosition)
+	require.Equal(t, 1, sim.EscapedCitizensCount)
+	require.Equal(t, pf.CellSafeZone, sim.Grid.GetCell(sim.Citizens[0].CurrentPosition))
+}
+
+func TestTick_CitizenOvertakenByHazardDies(t *testing.T) {
+	grid := pf.NewGrid(3, 1, pf.CellOpen)
+	grid.UpdateCell(pf.Position{X: 0, Y: 0}, pf.CellHazard)
+
+	sim := Simulation{
+		Grid: &grid,
+		Citizens: []Citizen{
+			{
+				Status:          CitizenIdle,
+				CurrentPosition: pf.Position{X: 0, Y: 0},
+				Path: []pf.Position{
+					{X: 0, Y: 0},
+					{X: 1, Y: 0},
+				},
+				CurrentPathIndex: 0,
+			},
+		},
+	}
+
+	sim.Tick()
+	require.Equal(t, CitizenDead, sim.Citizens[0].Status)
+	require.Equal(t, pf.Position{X: 0, Y: 0}, sim.Citizens[0].CurrentPosition)
+	require.Equal(t, 1, sim.DeadCitizensCount)
+}
+
+func TestTick_NewSafeZoneAppearsOnSchedule(t *testing.T) {
+	config := SimulationConfig{
+		Width:             10,
+		Height:            10,
+		CitizenCountRange: [2]int{1, 1},
+		SafeZone: SafeZoneConfig{
+			Probability: 1.0,
+			CountRange:  [2]int{2, 2},
+			RadiusRange: [2]int{1, 1},
+		},
+		Hazard: HazardConfig{
+			Probability:   0,
+			CountRange:    [2]int{0, 0},
+			DurationRange: [2]int{1, 1},
+		},
+	}
+
+	sim, err := NewSimulation(config)
+	require.NoError(t, err)
+	require.Len(t, sim.SafeZones, 1)
+
+	sim.Tick()
+
+	require.Len(t, sim.SafeZones, 2)
+	for _, sz := range sim.SafeZones {
+		require.True(t, sim.Grid.InBounds(sz.Position))
+	}
+}
+
+func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
+	grid := pf.NewGrid(10, 10, pf.CellOpen)
+
+	// Place initial safe zone at far corner
+	grid.UpdateCell(pf.Position{X: 9, Y: 9}, pf.CellSafeZone)
+
+	sim := Simulation{
+		Config: SimulationConfig{
+			SafeZone: SafeZoneConfig{
+				Probability: 1.0,
+				CountRange:  [2]int{2, 2},
+				RadiusRange: [2]int{1, 1},
+			},
+			Hazard: HazardConfig{
+				Probability:   0,
+				CountRange:    [2]int{0, 0},
+				DurationRange: [2]int{1, 1},
+			},
+		},
+		Grid:         &grid,
+		MaxSafeZones: 2,
+		SafeZones: []SafeZone{
+			{Position: pf.Position{X: 9, Y: 9}, Radius: 1},
+		},
+		Citizens: []Citizen{
+			{
+				ID:               0,
+				Status:           CitizenIdle,
+				CurrentPosition:  pf.Position{X: 0, Y: 0},
+				Path:             []pf.Position{{X: 0, Y: 0}},
+				CurrentPathIndex: 0,
+			},
+		},
+	}
+
+	sim.Tick()
+
+	require.Len(t, sim.SafeZones, 2)
+
+	dest := sim.Citizens[0].Path[len(sim.Citizens[0].Path)-1]
+	require.Equal(t, pf.CellSafeZone, sim.Grid.GetCell(dest),
+		"citizen must recalculate path toward nearest safe zone after emergence")
+}
+
+func TestTick_SimulationCompletesWhenAllResolved(t *testing.T) {
+	grid := pf.NewGrid(3, 1, pf.CellOpen)
+
+	sim := Simulation{
+		Grid:              &grid,
+		DeadCitizensCount: 1,
+		Citizens: []Citizen{
+			{
+				Status: CitizenDead,
+			},
+			{
+				Status:          CitizenIdle,
+				CurrentPosition: pf.Position{X: 0, Y: 0},
+				Path: []pf.Position{
+					{X: 0, Y: 0},
+					{X: 1, Y: 0},
+				},
+				CurrentPathIndex: 0,
+			},
+		},
+	}
+
+	sim.Tick()
+
+	require.Equal(t, CitizenEscaped, sim.Citizens[1].Status)
+	require.Equal(t, 1, sim.EscapedCitizensCount)
+	require.Equal(t, 1, sim.DeadCitizensCount)
+	require.Equal(t, SimulationCompleted, sim.State)
+}

@@ -140,10 +140,9 @@ func (s *Simulation) Tick() {
 		}
 	}
 
-	if s.DeadCitizensCount+s.EscapedCitizensCount == len(s.Citizens) {
-		s.State = SimulationCompleted
-		return
-	}
-
 	s.TickCount++
+
+	if len(s.Citizens) > 0 && s.DeadCitizensCount+s.EscapedCitizensCount == len(s.Citizens) {
+		s.State = SimulationCompleted
+	}
 }

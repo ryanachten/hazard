@@ -6,7 +6,6 @@ import (
 
 // SafeZone represents an area safe from hazards for citizens to navigate to
 type SafeZone struct {
-	ID       int
 	Position pf.Position
 	Radius   int
 }

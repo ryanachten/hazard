@@ -79,7 +79,7 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 **Learning Outcome**: Multiple termination conditions, collision detection, scheduled emergence, path recalculation triggers
 
-- [x] T019 [P] [US1] Implement `SafeZone` struct with `CreatedTick` and environment generation (initial safe zone placement, obstacle placement, citizen seeding) in `internal/engine/environment.go`
+- [x] T019 [P] [US1] Implement `SafeZone` struct and environment generation (initial safe zone placement, obstacle placement, citizen seeding) in `internal/engine/safe_zone.go`
 - [x] T020 [US1] Implement escape detection (citizen position within safe zone radius) and death detection (hazard radius reaches citizen position) in `Simulation.Tick()`
 - [x] T021 [US1] Implement dynamic safe zone emergence scheduling: at a configurable interval, place a new safe zone at a random valid position, mark its cells on the grid, and trigger citizen path recalculation toward the nearest zone
 - [x] T022 [US1] Implement simulation completion: detect when all citizens are `escaped` or `dead`, set simulation state to `completed` in `internal/engine/simulation.go`

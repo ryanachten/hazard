@@ -3,7 +3,7 @@
 **Feature Branch**: `001-hazard-sim-system`  
 **Created**: 2026-06-13  
 **Status**: Draft  
-**Input**: User description: "lets define the plan for a hazard simulation system. I want to create a system that will allow us to simulate hazards and guide citizens to avoid these hazards. The objective of this system will be for me to gain greater familiarity with golang, kafka, event streaming, event driven development practices and pathfinding algorithms. The system will also have a visual component to it, where we can visualise the citizens, their movements and the emergence of hazards, likely using websockets and some simple form of rendered output."
+**Input**: User description: "lets define the plan for a hazard simulation system. I want to create a system that will allow us to simulate hazards and guide citizens to avoid these hazards. The objective of this system will be for me to gain greater familiarity with golang, event streaming with NATS/JetStream, event driven development practices and pathfinding algorithms. The system will also have a visual component to it, where we can visualise the citizens, their movements and the emergence of hazards, likely using websockets and some simple form of rendered output."
 
 ## User Scenarios & Testing
 

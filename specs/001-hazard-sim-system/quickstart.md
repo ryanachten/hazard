@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Go 1.26+
-- Docker (for Kafka)
+- Docker (for NATS, or run `nats-server` directly)
 - `gofmt`, `go vet`, `staticcheck` (install: `go install honnef.co/go/tools/cmd/staticcheck@latest`)
 
 ## Setup
@@ -12,11 +12,11 @@
 # Clone and enter the project
 git checkout 001-hazard-sim-system
 
-# Start Kafka
+# Start NATS with JetStream
 docker compose up -d
 
-# Verify Kafka is running
-docker compose logs kafka | head -5
+# Verify NATS is running
+docker compose logs nats | head -5
 
 # Run tests
 go test ./...
@@ -67,12 +67,12 @@ go test -race ./...
 ├── internal/
 │   ├── engine/           # Core simulation loop
 │   ├── pathfinding/      # A* pathfinder
-│   ├── messaging/        # Kafka producer/consumer
+│   ├── messaging/        # NATS JetStream producer/consumer
 │   ├── events/           # Event types
 │   ├── vis/              # WebSocket hub
 │   └── config/           # Config loading
 ├── web/                  # HTML/Canvas frontend
-├── docker-compose.yml    # Kafka for development
+├── docker-compose.yml    # NATS for development
 └── specs/001-hazard-sim-system/
     ├── plan.md
     ├── research.md
@@ -90,9 +90,9 @@ This project is built in small, progressive slices. Each slice is independently 
 | 2 | Citizen Movement | Citizens move along paths on the grid | Go methods, tick loop, state management |
 | 3 | Hazards + Envelopment | Hazard emergence, radius expansion, grid blocking | Concurrent state, tick-based simulation |
 | 4 | Safe Zones + Death | Citizens escape or die, simulation completion | State machines, edge cases |
-| 5 | Kafka Integration | Produce/consume events via Kafka | franz-go, event streaming, docker-compose |
+| 5 | NATS/JetStream Integration | Produce/consume events via NATS JetStream | nats.go, event streaming, docker-compose |
 | 6 | WebSocket Broadcast | Stream events to browser clients | coder/websocket, hub pattern |
 | 7 | HTML Canvas Viz | Real-time visualization in browser | Canvas API, JSON event rendering |
 | 8 | CLI Controls | Start, pause, stop simulation via CLI | CLI construction, signal handling |
-| 9 | Event History | Full event replay from Kafka | Consumer groups, event sourcing |
+| 9 | Event History | Full event replay from JetStream | Consumer groups, event sourcing |
 | 10 | Autonomy + Scaling | Multi-path preference, 100+ citizens | A* variants, performance optimization |

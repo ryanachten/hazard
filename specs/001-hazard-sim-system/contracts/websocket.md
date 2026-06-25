@@ -8,7 +8,7 @@
 
 ## Server-to-Client Messages
 
-Messages are identical to the Kafka event format, streamed in real-time as they occur.
+Messages use the same event envelope as JetStream events, streamed in real-time as they occur.
 
 ```json
 {

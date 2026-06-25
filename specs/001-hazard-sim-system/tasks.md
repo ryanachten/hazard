@@ -1,5 +1,5 @@
 ---
-description: "Task list for Hazard Simulation System - 11 progressive slices for learning Go, Kafka, and event-driven architecture"
+description: "Task list for Hazard Simulation System - 11 progressive slices for learning Go, NATS/JetStream, and event-driven architecture"
 ---
 
 # Tasks: Hazard Simulation System
@@ -9,7 +9,7 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 **Learning Path**: 11 progressive slices, each introducing new Go concepts. Build in order — no skipping ahead.
 
-> **Note**: Old Phases 1 (Setup) and 2 (Foundational types in isolation) were collapsed into Phase 1. Empty directory structures and Docker Compose for Kafka add no value early. Types are defined alongside the code that uses them.
+> **Note**: Old Phases 1 (Setup) and 2 (Foundational types in isolation) were collapsed into Phase 1. Empty directory structures and Docker Compose for NATS add no value early. Types are defined alongside the code that uses them.
 >
 > **Reorder**: Event emission (was Phase 6) and browser visualization (was Phase 7) are brought forward to Phases 5 and 6 to provide visual feedback earlier. CLI controls are deferred to Phase 7. The WebSocket upgrade (part of old Phase 7) becomes Phase 8.
 
@@ -83,7 +83,7 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 - [x] T020 [US1] Implement escape detection (citizen position within safe zone radius) and death detection (hazard radius reaches citizen position) in `Simulation.Tick()`
 - [x] T021 [US1] Implement dynamic safe zone emergence scheduling: at a configurable interval, place a new safe zone at a random valid position, mark its cells on the grid, and trigger citizen path recalculation toward the nearest zone
 - [x] T022 [US1] Implement simulation completion: detect when all citizens are `escaped` or `dead`, set simulation state to `completed` in `internal/engine/simulation.go`
-- [ ] T023 [US1] Write tests in `internal/engine/simulation_test.go` verifying: citizen reaches safe zone and escapes, citizen overtaken by hazard dies, new safe zone appears on schedule, citizens recalculate toward nearest zone after emergence, simulation completes when all resolved
+- [x] T023 [US1] Write tests in `internal/engine/simulation_test.go` verifying: citizen reaches safe zone and escapes, citizen overtaken by hazard dies, new safe zone appears on schedule, citizens recalculate toward nearest zone after emergence, simulation completes when all resolved
 
 **Checkpoint**: `go test -v ./internal/engine/` passes. You understand state machines, scheduled emergence, and multiple termination flows.
 
@@ -93,7 +93,7 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 ## Phase 5: User Story 1 — Event Emission (P1) 🎯 MVP SLICE 5/7
 
-**Goal**: The simulation emits structured events for every state change, stored in-memory. This is the bridge to visualization, CLI output, and Kafka.
+**Goal**: The simulation emits structured events for every state change, stored in-memory. This is the bridge to visualization, CLI output, and NATS JetStream.
 
 **Independent Test**: Run a simulation and verify that events are produced for: simulation start, citizen moves, citizen escapes/deaths, hazard emergence/expansion, simulation completion.
 
@@ -161,21 +161,21 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 ---
 
-## Phase 9: User Story 3 — Kafka Integration + Event History (P3) 📡
+## Phase 9: User Story 3 — NATS/JetStream Integration + Event History (P3) 📡
 
-**Goal**: Simulation events are published to Kafka and can be replayed after the simulation ends.
+**Goal**: Simulation events are published to NATS JetStream and can be replayed after the simulation ends.
 
-**Independent Test**: Start Kafka via docker-compose, run a simulation, consume events from the `simulation-events` topic, verify complete ordered sequence.
+**Independent Test**: Start NATS via docker-compose, run a simulation, consume events from the `simulation-events` stream, verify complete ordered sequence.
 
-**Learning Outcome**: `franz-go` Kafka client, event streaming, consumer groups, offset management, `context.Context`
+**Learning Outcome**: `nats.go` JetStream client, event streaming, consumer management, ordered delivery, `context.Context`
 
-- [ ] T042 [P] [US3] Implement Kafka producer in `internal/messaging/producer.go` — connect to broker, produce JSON-serialized `SimulationEvent` to `simulation-events` topic
-- [ ] T043 [P] [US3] Implement Kafka consumer in `internal/messaging/consumer.go` — subscribe to topic, consume events in order with configurable consumer group
-- [ ] T044 [US3] Integrate Kafka producer into simulation tick loop — emit events to Kafka instead of (or in addition to) in-memory storage in `internal/engine/simulation.go`
-- [ ] T045 [US3] Implement event replay in `cmd/simctl/main.go` — add `replay` command that consumes events from Kafka and prints or saves them in order
-- [ ] T046 [US3] Write tests in `internal/messaging/producer_test.go` and `consumer_test.go` — use a mock Kafka or verify serialization/deserialization round-trip
+- [ ] T042 [P] [US3] Implement JetStream producer in `internal/messaging/producer.go` — connect to NATS, create JetStream context, publish JSON-serialized `SimulationEvent` to `simulation-events.stream` subject
+- [ ] T043 [P] [US3] Implement JetStream consumer in `internal/messaging/consumer.go` — subscribe to stream, consume events in order with configurable durable consumer name
+- [ ] T044 [US3] Integrate JetStream producer into simulation tick loop — publish events to JetStream instead of (or in addition to) in-memory storage in `internal/engine/simulation.go`
+- [ ] T045 [US3] Implement event replay in `cmd/simctl/main.go` — add `replay` command that creates a JetStream consumer and prints or saves events in order
+- [ ] T046 [US3] Write tests in `internal/messaging/producer_test.go` and `consumer_test.go` — use an embedded NATS server (`github.com/nats-io/nats-server/v2/server`) for integration tests or verify serialization/deserialization round-trip
 
-**Checkpoint**: Events flow through Kafka. You can replay a simulation from the event stream. You understand producers, consumers, and event sourcing.
+**Checkpoint**: Events flow through NATS JetStream. You can replay a simulation from the event stream. You understand JetStream producers, consumers, and event sourcing.
 
 ---
 
@@ -201,7 +201,7 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 **Purpose**: Final quality pass, documentation, and end-to-end validation
 
 - [ ] T051 Run full validation: `gofmt -s -w . && go vet ./... && staticcheck ./... && go test -race ./...` — fix all issues
-- [ ] T052 Validate all quickstart.md steps work end-to-end: Kafka up → simctl start → events in Kafka → simviz → browser shows simulation
+- [ ] T052 Validate all quickstart.md steps work end-to-end: NATS up → simctl start → events in JetStream → simviz → browser shows simulation
 
 ---
 
@@ -226,7 +226,7 @@ Phase 7: US1 CLI — depends on Phase 5 (needs events for output)
     ↓
 Phase 8: US2 WebSocket — depends on Phase 6 (replaces polling in viz)
     ↓
-Phase 9: US3 Kafka — depends on Phase 5 (needs events)
+Phase 9: US3 NATS/JetStream — depends on Phase 5 (needs events)
     ↓
 Phase 10: US4 Autonomy — depends on Phase 4 (needs full simulation)
     ↓
@@ -237,7 +237,7 @@ Phase 11: Polish — depends on all phases
 
 - **US1 (P1)**: Core simulation — no dependencies on other stories. Must be 100% complete first. Phases 4–7 (Safe Zones, Events, Viz, CLI) complete US1.
 - **US2 (P2)**: WebSocket/Viz — depends on US1 event emission (Phase 5) and Phase 6 viz scaffolding. Phase 8 upgrades the viz from HTTP polling to WebSocket.
-- **US3 (P3)**: Kafka/History — depends on US1 event emission (Phase 5). Events flow to Kafka.
+- **US3 (P3)**: NATS/JetStream — depends on US1 event emission (Phase 5). Events flow to JetStream.
 - **US4 (P3)**: Autonomy/Scale — depends on US1 core engine (Phase 4). Extends citizen behavior.
 
 ### Within Each User Story Phase
@@ -254,7 +254,7 @@ Phase 11: Polish — depends on all phases
 - Phase 6 (US1/Viz): T028, T029, T030 can all run in parallel (web/ assets)
 - Phase 7 (US1/CLI): All tasks are sequential
 - Phase 8 (US2/WebSocket): T037, T038 can run in parallel
-- Phase 9 (US3/Kafka): T042, T043 can run in parallel
+- Phase 9 (US3/NATS/JetStream): T042, T043 can run in parallel
 - Phase 10 (US4/Autonomy): T047 is independent
 
 ---
@@ -298,7 +298,7 @@ The MVP covers Phases 1-7 (T008–T036). This delivers:
 | 6 | `net/http` JSON serving, Canvas 2D | Browser shows live simulation |
 | 7 | `flag` package, JSON unmarshal, signal handling | `./simctl start --config x.json` works |
 | 8 | WebSocket, hub pattern, event push | Live updates without polling |
-| 9 | Kafka producer/consumer, context | Events streaming through Kafka |
+| 9 | JetStream producer/consumer, context | Events streaming through NATS JetStream |
 | 10 | weighted algorithms, benchmarks, pprof | 100 citizens at <2x real-time |
 
 ### Incremental Delivery
@@ -308,7 +308,7 @@ The MVP covers Phases 1-7 (T008–T036). This delivers:
 3. Complete Phases 1–6 → Simulation with live browser visualization (**huge win!**)
 4. Complete Phases 1–7 → Full US1 MVP with CLI
 5. Add Phase 8 → Real-time WebSocket updates
-6. Add Phase 9 → Kafka event streaming (core learning goal)
+6. Add Phase 9 → NATS JetStream event streaming (core learning goal)
 7. Add Phase 10 → Scale and autonomy (polish)
 
 ### Validation

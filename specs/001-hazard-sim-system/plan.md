@@ -5,15 +5,16 @@
 
 ## Summary
 
-A 2D grid-based hazard simulation system where citizens navigate around static obstacles and expanding hazard zones to reach safe zones. Built with Go + Kafka for event-driven architecture, featuring real-time WebSocket visualization. Developed in 11 progressive slices, each independently testable, to build Go proficiency while exploring event streaming and pathfinding algorithms.
+A 2D grid-based hazard simulation system where citizens navigate around static obstacles and expanding hazard zones to reach safe zones. Built with Go + NATS/JetStream for event-driven architecture, featuring real-time WebSocket visualization. Developed in 11 progressive slices, each independently testable, to build Go proficiency while exploring event streaming and pathfinding algorithms.
 
 ## Technical Context
 
 **Language/Version**: Go 1.26+ (per constitution), TypeScript (frontend), Bun (build tool)  
-**Primary Dependencies**: Apache Kafka (event backbone), Go Kafka client — `github.com/twmb/franz-go` (per research), Go WebSocket library — `github.com/coder/websocket` (per research), no external pathfinding/graph library (per constitution), Bun (`bun build` for TS→JS)  
-**Storage**: Kafka topics for event stream (persisted for replay); no RDBMS for v1  
+**Primary Dependencies**: NATS/JetStream (event backbone), Go NATS client — `github.com/nats-io/nats.go` (per research), Go WebSocket library — `github.com/coder/websocket` (per research), no external pathfinding/graph library (per constitution), Bun (`bun build` for TS→JS)  
+**Storage**: JetStream streams for event persistence (built-in with NATS); no RDBMS for v1  
 **Testing**: Go standard `testing` package, table-driven tests, `go test -race` (per constitution)  
-**Target Platform**: macOS/Linux development machine, web browser (visualization)  
+**Target Platform**: macOS/Linux development machine, web browser (visualization)
+**NATS Dev Setup**: Single `nats-server` binary or `docker compose up -d` — no CGo, zero-config JetStream enabled by default in `nats-server v2.10+`  
 **Project Type**: CLI (simulation operator) + Web service (WebSocket visualization server)  
 **Performance Goals**: 100 citizens + 10 hazards at <2x real-time (SC-001); state changes reflected within 1s (SC-003)  
 **Constraints**: Single machine for v1 (per spec assumption); 2D grid-based; no external graph deps; `gofmt -s`, `go vet`, `staticcheck` must pass (per constitution)  
@@ -33,7 +34,7 @@ User writes all production code; agents review. Code review feedback addressed b
 All code passes `gofmt -s`, `go vet`, `staticcheck`. Proper error handling, interface usage, idiomatic naming. No external pathfinding libraries.
 
 ### Principle IV — Event-Driven Architecture ✅
-Kafka as event backbone. Components communicate through events. Event schemas versioned and backward-compatible. Consumers independently testable with simulated event streams.
+NATS/JetStream as event backbone. Components communicate through events. Event schemas versioned and backward-compatible. Consumers independently testable with simulated event streams.
 
 ### Principle V — Pathfinding & Autonomy ✅
 Self-contained pathfinding module with well-defined interface. Layered autonomy: reactive → deliberative → event-driven coordination. Algorithm selection documented with trade-off rationale.
@@ -67,7 +68,7 @@ internal/
 ├── pathfinding/         # A* and alternative pathfinding implementations
 │   ├── astar.go
 │   └── interface.go
-├── messaging/           # Kafka producer/consumer wrappers
+├── messaging/           # NATS JetStream producer/consumer wrappers
 │   ├── producer.go
 │   └── consumer.go
 ├── events/              # Event type definitions and serialization
@@ -108,7 +109,7 @@ Each slice is independently testable and introduces one new concept. Developed i
 | 6 | Browser Viz (HTTP poll) | Simulation state exposed as JSON, Canvas rendering via TypeScript | `net/http`, `bun build`, Canvas 2D API, `requestAnimationFrame` | Browser shows live simulation state |
 | 7 | CLI Controls | `simctl` start, pause, stop, status | `flag` package, JSON config, signal handling | `simctl start --config x.json` runs simulation |
 | 8 | WebSocket Upgrade | Replace HTTP polling with WebSocket push in TypeScript frontend | `coder/websocket`, hub-and-spoke pattern, `bun build` | Live updates without polling |
-| 9 | Kafka Integration | Produce/consume simulation events | `franz-go` producer/consumer, `docker-compose`, event serialization | Events appear in Kafka topic |
+| 9 | NATS/JetStream Integration | Produce/consume simulation events | `nats.go` JetStream producer/consumer, `docker-compose`, event serialization | Events appear in JetStream stream |
 | 10 | Autonomy + Performance | Risk tolerance, path preference, 100+ citizens | A* variants (weighted), benchmarking, `pprof` | Citizens take different paths, 100 citizens at <2x real-time |
 
 ## Future Enhancements

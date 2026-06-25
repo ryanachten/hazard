@@ -1,41 +1,47 @@
 # Research: Hazard Simulation System
 
-## 1. Go Kafka Client Library
+## 1. Go NATS/JetStream Client Library
 
-**Decision**: franz-go (`github.com/twmb/franz-go`)
+**Decision**: `github.com/nats-io/nats.go`
 
 **Rationale**:
+- Official Go client maintained by Synadia — same team as the NATS server itself
 - Pure Go — no CGo, `CGO_ENABLED=0` safe, trivial cross-compilation, fast builds
-- Modern, idiomatic API with functional options and `context.Context` support
-- Single `kgo.Client` can both produce and consume — simplifies `internal/messaging/`
-- Consistently fastest Go Kafka client in benchmarks
-- KIP-comprehensive (all client features from Kafka 0.8 to 4.2+)
-- Small dependency footprint — single `go get github.com/twmb/franz-go`
-- Built-in schema registry client (`pkg/sr`) for future schema evolution
+- JetStream is built into NATS Server — no separate broker, no additional infrastructure
+- Single `nats.Conn` handles core pub/sub, JetStream streaming, and key-value store
+- Actively developed — v1.40+ with full JetStream API, consumer management, and pull/push subscriptions
+- Lighter weight than Kafka: NATS server is a single ~20MB binary, starts in <100ms
+- Subjects use hierarchical dot notation (`hazard.sim.events.>`) — simpler than Kafka topic config
+- No partition/replication factor management for dev — JetStream streams are ready with a single `nats.Conn.AddStream()`
+- Composable: JetStream consumers can be ordered, durable, or ephemeral — matches Kafka consumer group semantics
+- Context-aware API — `JetStreamContext.PublishAsync()`, `SubscribeSync()`, `ChanSubscribe()`
 
 **Alternatives considered**:
-- **sarama** (`github.com/IBM/sarama`): Larger community, more tutorials, but heavier API with separate producer/consumer clients and struct-based config. More historical edge-case bugs. Good backup choice.
-- **confluent-kafka-go** (`github.com/confluentinc/confluent-kafka-go`): Requires CGo (librdkafka). Adds build complexity, prevents `CGO_ENABLED=0`, complicates cross-compilation. Avoid for this project.
+- **franz-go / sarama (Kafka)**: Kafka requires a separate broker (JVM-based), heavier dev setup, more configuration overhead. Good for production-scale systems but overkill for a learning project. NATS gives the same event sourcing patterns with a fraction of the operational complexity.
+- **RabbitMQ + STOMP**: Strong broker but lacks built-in streaming persistence (needs shovel/federation plugins). JetStream provides Kafka-like retention, replay, and consumer groups out of the box.
+- **Redis Streams**: Simple but no consumer group semantics as robust as JetStream; persistence model differs from typical event sourcing.
 
 **Local development**:
 ```yaml
-# docker-compose.yml — single-node Kafka for development
+# docker-compose.yml — single-node NATS with JetStream for development
 services:
-  kafka:
-    image: apache/kafka:4.1.0
+  nats:
+    image: nats:2.10-alpine
     ports:
-      - "9092:9092"
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      - "4222:4222"   # client connections
+      - "8222:8222"   # HTTP monitoring
+    command: ["-js", "-sd", "/data"]
+    volumes:
+      - nats_data:/data
+
+volumes:
+  nats_data:
+```
+
+Optionally, run the NATS server directly without Docker:
+```bash
+# Download single binary from https://nats.io/download/
+nats-server -js
 ```
 
 ---
@@ -70,7 +76,7 @@ services:
 - Human-readable for debugging during development
 - `encoding/json` is in the Go standard library
 - `coder/websocket`'s `wsjson` subpackage handles marshaling natively
-- Can evolve to Avro/Protobuf with franz-go's schema registry client if needed later
+- Can evolve to Avro/Protobuf via NATS message headers or schema registry if needed later
 
 ---
 
@@ -82,7 +88,7 @@ services:
 - Balances visual smoothness with per-tick computational cost
 - Citizens move a configurable number of grid cells per tick
 - Each tick: simulate citizen movement, hazard expansion, event emission
-- Kafka events are batched per-tick, not per-movement
+- JetStream events are batched per-tick, not per-movement
 - Visualization interpolates between tick states for smooth rendering
 
 ---
@@ -116,18 +122,29 @@ go run ./cmd/simviz
 
 ---
 
-## 6. Kafka Topics Design
+## 6. JetStream Stream Configuration
 
-**Decision**: Single topic `simulation-events` for v1
+**Decision**: Single stream `simulation-events` with one subject for v1
 
 **Rationale**:
 - Simplified producer/consumer setup for learning
-- Partition by simulation run ID for ordering guarantees within a run
+- JetStream provides ordered delivery, persistence, and replay — core event sourcing primitives
 - Event envelope includes type discriminator (client-side routing)
-- Can split into domain topics (citizen-events, hazard-events, sim-lifecycle) in v2 if needed
+- Can split into domain subjects (`citizen.events.>`, `hazard.events.>`, `sim.events.>`) within the same stream in v2 if needed
 
-**Topic config**:
+**Stream config**:
 - Name: `simulation-events`
-- Partitions: 1 (single machine, single simulation)
-- Replication factor: 1 (single broker)
-- Cleanup policy: `delete` with retention (configurable, default 1 hour)
+- Subjects: `simulation-events.>` (hierarchical subjects allow sub-topics if needed later)
+- Storage: file (persisted to disk)
+- Retention: `limits` (age-based, configurable default 1h)
+- MaxAge: 1h (configurable)
+- Storage: `FileStorage` (survives restarts)
+
+**NATS subject hierarchy** (future expansion):
+```
+simulation-events.start          → simulation.started
+simulation-events.citizen.move   → citizen.moved
+simulation-events.citizen.escape → citizen.escaped
+simulation-events.hazard.emer    → hazard.emerged
+simulation-events.hazard.expand  → hazard.expanded
+```

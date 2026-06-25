@@ -1,8 +1,9 @@
 # Event Contracts
 
-## Kafka Topic: `simulation-events`
+## JetStream Stream: `simulation-events`
 
-All simulation state changes are published as JSON events to a single Kafka topic.
+All simulation state changes are published as JSON events to a single NATS JetStream stream.
+When using subject hierarchy, events are published to `simulation-events.<event_type>` (e.g., `simulation-events.citizen.moved`).
 
 ## Event Envelope
 

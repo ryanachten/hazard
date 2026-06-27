@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"testing"
 
@@ -53,7 +54,8 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 func TestTick_AdvancesCitizenOneStepPerTick(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 	simulation := Simulation{
-		Grid: &grid,
+		Grid:         &grid,
+		EventEmitter: &events.InMemoryEventLog{},
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
@@ -81,7 +83,8 @@ func TestTick_AdvancesCitizenOneStepPerTick(t *testing.T) {
 func TestTick_CitizenStopsAtGoal(t *testing.T) {
 	grid := pf.NewGrid(2, 1, pf.CellOpen)
 	simulation := Simulation{
-		Grid: &grid,
+		Grid:         &grid,
+		EventEmitter: &events.InMemoryEventLog{},
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
@@ -102,7 +105,8 @@ func TestTick_CitizenStopsAtGoal(t *testing.T) {
 func TestTick_MultipleCitizensMoveIndependently(t *testing.T) {
 	grid := pf.NewGrid(4, 2, pf.CellOpen)
 	simulation := Simulation{
-		Grid: &grid,
+		Grid:         &grid,
+		EventEmitter: &events.InMemoryEventLog{},
 		Citizens: []Citizen{
 			{
 				Status: CitizenIdle,
@@ -198,7 +202,8 @@ func TestTick_CitizenReachesSafeZoneAndEscapes(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
 
 	sim := Simulation{
-		Grid: &grid,
+		Grid:         &grid,
+		EventEmitter: &events.InMemoryEventLog{},
 		Citizens: []Citizen{
 			{
 				Status:          CitizenIdle,
@@ -230,7 +235,8 @@ func TestTick_CitizenOvertakenByHazardDies(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 0, Y: 0}, pf.CellHazard)
 
 	sim := Simulation{
-		Grid: &grid,
+		Grid:         &grid,
+		EventEmitter: &events.InMemoryEventLog{},
 		Citizens: []Citizen{
 			{
 				Status:          CitizenIdle,
@@ -299,6 +305,7 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 			},
 		},
 		Grid:         &grid,
+		EventEmitter: &events.InMemoryEventLog{},
 		MaxSafeZones: 2,
 		SafeZones: []SafeZone{
 			{Position: pf.Position{X: 9, Y: 9}, Radius: 1},
@@ -328,6 +335,7 @@ func TestTick_SimulationCompletesWhenAllResolved(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
+		EventEmitter:      &events.InMemoryEventLog{},
 		DeadCitizensCount: 1,
 		Citizens: []Citizen{
 			{

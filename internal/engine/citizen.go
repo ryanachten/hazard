@@ -5,11 +5,13 @@ import (
 	"fmt"
 	pf "hazard/internal/pathfinding"
 	"log"
+
+	"github.com/google/uuid"
 )
 
 // Citizen subjected to a hazard
 type Citizen struct {
-	ID                 int
+	ID                 uuid.UUID
 	Status             CitizenStatus
 	CurrentPosition    pf.Position
 	CurrentDestination pf.Position
@@ -38,12 +40,12 @@ func createCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 	for i := range citizens {
 		startPosition, err := grid.GetRandomOpenPosition()
 		if err != nil {
-			log.Printf("error creating citizen %v: %v", i, err)
+			log.Printf("error getting position for citizen at index %v: %v", i, err)
 			continue
 		}
 
 		citizens[i] = Citizen{
-			ID:               i,
+			ID:               uuid.New(),
 			Status:           CitizenIdle,
 			CurrentPosition:  startPosition,
 			CurrentPathIndex: 0,
@@ -51,7 +53,7 @@ func createCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 
 		err = citizens[i].findNearestSafeZone(grid)
 		if err != nil {
-			log.Printf("error updating citizen %v path: %v", i, err)
+			log.Printf("error updating citizen %v path: %v", citizens[i].ID, err)
 		}
 	}
 
@@ -88,9 +90,11 @@ func (c *Citizen) updatePath(grid *pf.Grid) error {
 	return nil
 }
 
-func (c *Citizen) incrementLocation() {
+func (c *Citizen) incrementLocation() bool {
+	hasMoved := false
+
 	if c.Status == CitizenEscaped || c.Status == CitizenDead {
-		return
+		return hasMoved
 	}
 
 	if c.CurrentPathIndex < len(c.Path)-1 {
@@ -98,6 +102,7 @@ func (c *Citizen) incrementLocation() {
 		c.CurrentPosition = c.Path[c.CurrentPathIndex]
 
 		log.Printf("Citizen %v now at %v of %v steps", c.ID, c.CurrentPathIndex, len(c.Path))
+		hasMoved = true
 	}
 
 	if c.CurrentPathIndex == len(c.Path)-1 {
@@ -105,4 +110,6 @@ func (c *Citizen) incrementLocation() {
 	} else {
 		c.Status = CitizenNavigating
 	}
+
+	return hasMoved
 }

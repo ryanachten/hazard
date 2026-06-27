@@ -1,14 +1,18 @@
 package engine
 
 import (
+	"hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"log"
 	"math/rand"
 	"slices"
+
+	"github.com/google/uuid"
 )
 
 // Simulation engine for hazards
 type Simulation struct {
+	ID                   uuid.UUID
 	Config               SimulationConfig
 	State                SimulationState
 	TickCount            uint64
@@ -20,6 +24,7 @@ type Simulation struct {
 	Hazards              []Hazard
 	MaxSafeZones         int
 	SafeZones            []SafeZone
+	Events               events.EventLog
 }
 
 // SimulationState phases of a simulation
@@ -45,7 +50,7 @@ func NewSimulation(config SimulationConfig) (Simulation, error) {
 		return Simulation{}, err
 	}
 
-	return Simulation{
+	var simulation = Simulation{
 		Config:       config,
 		State:        SimulationCreated,
 		TickCount:    0,
@@ -54,7 +59,10 @@ func NewSimulation(config SimulationConfig) (Simulation, error) {
 		MaxSafeZones: randIntInRange(config.SafeZone.CountRange),
 		SafeZones:    []SafeZone{safeZone},
 		Citizens:     createCitizens(config.CitizenCountRange, &grid),
-	}, nil
+		Events:       events.EventLog{},
+	}
+
+	return simulation, nil
 }
 
 // Tick increments a simulation by one tick
@@ -111,6 +119,7 @@ func (s *Simulation) Tick() {
 		if s.Grid.GetCell(s.Citizens[i].CurrentPosition) == pf.CellHazard {
 			s.Citizens[i].Status = CitizenDead
 			s.DeadCitizensCount++
+			s.Events.CitizenDied(s.Citizens[i].ID, s.getEventMetadata())
 			continue
 		}
 
@@ -134,8 +143,13 @@ func (s *Simulation) Tick() {
 		}
 
 		// Increment citizen's position on path
-		s.Citizens[i].incrementLocation()
+		hasMoved := s.Citizens[i].incrementLocation()
+		if hasMoved {
+			s.Events.CitizenMoved(s.Citizens[i].ID, s.Citizens[i].CurrentPosition, s.getEventMetadata())
+		}
+
 		if s.Citizens[i].Status == CitizenEscaped {
+			s.Events.CitizenEscaped(s.Citizens[i].ID, s.getEventMetadata())
 			s.EscapedCitizensCount++
 		}
 	}
@@ -143,6 +157,14 @@ func (s *Simulation) Tick() {
 	s.TickCount++
 
 	if len(s.Citizens) > 0 && s.DeadCitizensCount+s.EscapedCitizensCount == len(s.Citizens) {
+		s.Events.SimulationCompleted(s.getEventMetadata())
 		s.State = SimulationCompleted
+	}
+}
+
+func (s *Simulation) getEventMetadata() events.EventMetadata {
+	return events.EventMetadata{
+		SimulationID: s.ID,
+		Tick:         s.TickCount,
 	}
 }

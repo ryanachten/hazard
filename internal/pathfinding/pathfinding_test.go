@@ -6,15 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type pathfinder interface {
-	FindPath(grid *Grid, from, to Position) ([]Position, error)
-}
-
 func TestAStar_FindPath(t *testing.T) {
-	testFindPath(t, &AStar{})
-}
-
-func testFindPath(t *testing.T, algo pathfinder) {
 	tests := []struct {
 		name        string
 		grid        Grid
@@ -82,7 +74,7 @@ func testFindPath(t *testing.T, algo pathfinder) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			path, err := algo.FindPath(&test.grid, test.from, test.to)
+			path, err := FindPath(&test.grid, test.from, test.to)
 
 			if test.expectedErr != nil {
 				require.ErrorIs(t, err, test.expectedErr)
@@ -98,12 +90,10 @@ func testFindPath(t *testing.T, algo pathfinder) {
 }
 
 func TestDijkstra_FindPathToGoal(t *testing.T) {
-	d := &Dijkstra{}
-
 	t.Run("adjacent cells", func(t *testing.T) {
 		grid := NewGrid(3, 3, CellOpen)
 		grid.Cells[0][1] = CellSafeZone
-		path, err := d.FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
+		path, err := FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
 			return grid.GetCell(pos) == CellSafeZone
 		})
 		require.NoError(t, err)
@@ -115,7 +105,7 @@ func TestDijkstra_FindPathToGoal(t *testing.T) {
 	t.Run("non-trivial navigation", func(t *testing.T) {
 		grid := NewGrid(6, 6, CellOpen)
 		grid.Cells[5][5] = CellSafeZone
-		path, err := d.FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
+		path, err := FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
 			return grid.GetCell(pos) == CellSafeZone
 		})
 		require.NoError(t, err)
@@ -127,7 +117,7 @@ func TestDijkstra_FindPathToGoal(t *testing.T) {
 	t.Run("from is already at goal", func(t *testing.T) {
 		grid := NewGrid(3, 3, CellOpen)
 		grid.Cells[0][0] = CellSafeZone
-		path, err := d.FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
+		path, err := FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
 			return grid.GetCell(pos) == CellSafeZone
 		})
 		require.NoError(t, err)
@@ -137,7 +127,7 @@ func TestDijkstra_FindPathToGoal(t *testing.T) {
 
 	t.Run("from is out of bounds (negative)", func(t *testing.T) {
 		grid := NewGrid(3, 3, CellOpen)
-		_, err := d.FindPathToGoal(&grid, Position{X: -1, Y: 0}, func(pos Position) bool {
+		_, err := FindPathToGoal(&grid, Position{X: -1, Y: 0}, func(pos Position) bool {
 			return grid.GetCell(pos) == CellSafeZone
 		})
 		require.ErrorIs(t, err, ErrPositionOutOfBounds)
@@ -145,7 +135,7 @@ func TestDijkstra_FindPathToGoal(t *testing.T) {
 
 	t.Run("from is out of bounds (exceeds width)", func(t *testing.T) {
 		grid := NewGrid(3, 3, CellOpen)
-		_, err := d.FindPathToGoal(&grid, Position{X: 5, Y: 0}, func(pos Position) bool {
+		_, err := FindPathToGoal(&grid, Position{X: 5, Y: 0}, func(pos Position) bool {
 			return grid.GetCell(pos) == CellSafeZone
 		})
 		require.ErrorIs(t, err, ErrPositionOutOfBounds)
@@ -153,7 +143,7 @@ func TestDijkstra_FindPathToGoal(t *testing.T) {
 
 	t.Run("goal unreachable (no safe zone)", func(t *testing.T) {
 		grid := NewGrid(2, 2, CellOpen)
-		_, err := d.FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
+		_, err := FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
 			return grid.GetCell(pos) == CellSafeZone
 		})
 		require.ErrorIs(t, err, ErrDestinationUnreachable)
@@ -164,7 +154,7 @@ func TestDijkstra_FindPathToGoal(t *testing.T) {
 		grid.Cells[0][1] = CellObstacle
 		grid.Cells[1][0] = CellObstacle
 		grid.Cells[2][2] = CellSafeZone
-		_, err := d.FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
+		_, err := FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
 			return grid.GetCell(pos) == CellSafeZone
 		})
 		require.ErrorIs(t, err, ErrDestinationUnreachable)

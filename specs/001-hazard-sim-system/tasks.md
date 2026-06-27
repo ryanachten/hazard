@@ -1,5 +1,5 @@
 ---
-description: "Task list for Hazard Simulation System - 11 progressive slices for learning Go, NATS/JetStream, and event-driven architecture"
+description: "Task list for Hazard Simulation System - 12 progressive slices for learning Go, NATS/JetStream, and event-driven architecture"
 ---
 
 # Tasks: Hazard Simulation System
@@ -7,11 +7,11 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 **Input**: Design documents from `specs/001-hazard-sim-system/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
 
-**Learning Path**: 11 progressive slices, each introducing new Go concepts. Build in order — no skipping ahead.
+**Learning Path**: 12 progressive slices, each introducing new Go concepts. Build in order — no skipping ahead.
 
 > **Note**: Old Phases 1 (Setup) and 2 (Foundational types in isolation) were collapsed into Phase 1. Empty directory structures and Docker Compose for NATS add no value early. Types are defined alongside the code that uses them.
 >
-> **Reorder**: Event emission (was Phase 6) and browser visualization (was Phase 7) are brought forward to Phases 5 and 6 to provide visual feedback earlier. CLI controls are deferred to Phase 7. The WebSocket upgrade (part of old Phase 7) becomes Phase 8.
+> **Reorder**: Event emission was brought forward to Phase 5 to enable earlier testing. The TUI was split into two phases: core grid rendering (Phase 6) and config sidebar (Phase 7). CLI controls were deferred to Phase 9 (P2) after Event Fan-Out.
 
 **Organization**: Tasks are grouped by user story. Each user story is independently testable.
 
@@ -108,7 +108,7 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 ---
 
-## Phase 6: User Story 1 — Terminal TUI (Bubbletea) (P1) 🎯 MVP SLICE 6/7
+## Phase 6: User Story 1 — Terminal TUI (Bubbletea) — Core (P1) 🎯 MVP SLICE 6/7
 
 **Goal**: Simulation state renders in a terminal UI via Bubbletea. The TUI connects to the simulation engine through a Go channel, renders the grid using the design-language glyphs and colors (via Lipgloss), and accepts keyboard input for start/pause/quit.
 
@@ -117,30 +117,30 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 **Learning Outcome**: External Go library integration, Bubbletea Elm architecture (Model/Update/View), Lipgloss composable styles, terminal event handling, `tea.Program`, alt-screen rendering
 
 - [ ] T028 [P] [US1] Define Bubbletea model struct — simulation state, grid dimensions, viewport offset, keyboard mode — in `internal/tui/model.go`
-- [ ] T029 [P] [US1] Implement grid view rendering — iterate over grid cells, apply design-language glyphs and Lipgloss colors, compose into a styled string using `lipgloss.JoinVertical`/`JoinHorizontal` in `internal/tui/grid_view.go`
+- [ ] T029 [P] [US1] Implement grid view rendering — iterate over grid cells, apply design-language glyphs and Lipgloss colors, compose into a styled string in `internal/tui/grid_view.go`
 - [ ] T030 [P] [US1] Implement keyboard controls — Enter starts simulation, Space pauses/resumes, q/Esc quits, r restarts — in `internal/tui/controls.go`
 - [ ] T031 [P] [US1] Define Lipgloss style constants mapping design-language colors (e.g., `styleFire = lipgloss.NewStyle().Foreground(lipgloss.Color("#ef4444"))`) in `internal/tui/styles.go`
 - [ ] T032 [US1] Implement `cmd/simviz/main.go` — create simulation instance, start tick loop in goroutine, pipe events to Bubbletea program via channel, run `tea.NewProgram(model)`
-- [ ] T033 [US1] Wire end-to-end: verify TUI starts, renders initial grid, responds to keyboard, simulation state updates on each tick
+- [ ] T033 [US1] Wire end-to-end: verify TUI starts, renders grid, responds to keyboard, simulation state updates on each tick
 
 **Checkpoint**: You can SEE your simulation running in a terminal. Glyphs and colors match the design language. You understand Bubbletea's Elm architecture and Lipgloss styling.
 
 ---
 
-## Phase 7: User Story 1 — CLI Controls (P1) 🎯 MVP SLICE 7/7
+## Phase 7: User Story 1 — Config Sidebar (P1) 🎯 MVP SLICE 7/7
 
-**Goal**: An operator can start, pause, resume, stop, and check status of a simulation via a CLI tool.
+**Goal**: A configuration sidebar sits alongside the grid, exposing live-adjustable simulation parameters mapped to `SimulationConfig`. Fields use Bubble Tea `textinput`-style controls with Tab focus cycling and ↑↓ adjustment.
 
-**Independent Test**: Run `go build ./cmd/simctl && ./simctl start --config examples/simple-sim.json` and verify simulation runs, then `./simctl status` shows progress.
+**Independent Test**: Start `simviz`, verify the config sidebar renders alongside the grid. Verify Tab cycles focus through fields and ↑↓ adjusts values. Verify adjusted values take effect on the next tick.
 
-**Learning Outcome**: Go `flag` package, JSON config loading, signal handling, CLI patterns
+**Learning Outcome**: Horizontal split-pane composition with Lipgloss, focus management, config-as-UI mapping
 
-- [ ] T033 [US1] Create `cmd/simctl/main.go` with command structure and `flag`-based subcommand parsing for `start`, `pause`, `resume`, `stop`, `status`
-- [ ] T034 [US1] Implement config loading from JSON file path in `internal/config/config.go` — read file, unmarshal into `SimulationConfig`, validate required fields
-- [ ] T035 [US1] Implement simulation lifecycle commands: `start` kicks off tick loop in goroutine, `pause`/`resume` toggle state, `stop` terminates, `status` prints summary
-- [ ] T036 [US1] Add `examples/simple-sim.json` with a minimal working config (1 citizen, 1 safe zone, 1 hazard, small grid) and verify end-to-end: build, run, status, stop
+- [ ] T034 [P] [US1] Implement config sidebar view — render config sections (Simulation, Hazard, Safe Zone) with adjustable `textinput`-style fields for each `SimulationConfig` value, apply focus highlight on active field in `internal/tui/config_view.go`
+- [ ] T035 [US1] Add config focus/adjust keyboard controls — Tab cycles focus focusable fields, ↑↓ adjusts the focused field value — extend controls in `internal/tui/controls.go`
+- [ ] T036 [US1] Compose split-pane layout — join grid and config sidebar horizontally with `lipgloss.JoinHorizontal(lipgloss.Top, gridView, sidebarView)`, add status bar above and help bar below in `internal/tui/model.go`
+- [ ] T037 [US1] Wire and verify: start `simviz`, confirm split-pane layout renders, config sidebar responds to Tab/↑↓, values propagate to simulation engine
 
-**Checkpoint**: `go build ./cmd/simctl` succeeds. `./simctl start --config examples/simple-sim.json` runs a simulation. You understand CLI construction and JSON config.
+**Checkpoint**: The TUI shows a live config sidebar alongside the simulation grid. You understand split-pane composition with Lipgloss and keyboard-driven focus management.
 
 ---
 
@@ -152,17 +152,34 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 **Learning Outcome**: Go channels for fan-out, hub-and-spoke pattern (in-process), optional `net/http` + `coder/websocket` for remote observers
 
-- [ ] T037 [P] [US2] Implement event hub in `internal/tui/hub.go` — register/unregister subscribers, broadcast `SimulationEvent` to all subscribers via buffered channels
-- [ ] T038 [US2] Wire hub into `cmd/simviz/main.go` — engine publishes events to hub, TUI subscribes as a hub client
-- [ ] T039 [US2] Integration test: create hub, register mock subscribers, emit events, verify all subscribers receive them in order
-- [ ] T040 [P] [US2, optional stretch] Implement optional WebSocket remote observer — add `cmd/simobs/main.go` with HTTP server, WebSocket endpoint (using `coder/websocket`), subscribe to hub, stream JSON events to connected clients
-- [ ] T041 [US2, optional stretch] Integration test: run `simviz` with WS server enabled, connect mock WebSocket client, emit events, verify client receives them
+- [ ] T038 [P] [US2] Implement event hub in `internal/tui/hub.go` — register/unregister subscribers, broadcast `SimulationEvent` to all subscribers via buffered channels
+- [ ] T039 [US2] Wire hub into `cmd/simviz/main.go` — engine publishes events to hub, TUI subscribes as a hub client
+- [ ] T040 [US2] Integration test: create hub, register mock subscribers, emit events, verify all subscribers receive them in order
+- [ ] T041 [P] [US2, optional stretch] Implement optional WebSocket remote observer — add `cmd/simobs/main.go` with HTTP server, WebSocket endpoint (using `coder/websocket`), subscribe to hub, stream JSON events to connected clients
+- [ ] T042 [US2, optional stretch] Integration test: run `simviz` with WS server enabled, connect mock WebSocket client, emit events, verify client receives them
 
 **Checkpoint**: Events fan out to the TUI in real-time via the hub pattern. Optional: remote clients observe the simulation via WebSocket. You understand Go channel-based fan-out and hub-spoke architecture.
 
 ---
 
-## Phase 9: User Story 3 — NATS/JetStream Integration + Event History (P3) 📡
+## Phase 9: User Story 1 — CLI Controls (P2)
+
+**Goal**: An operator can start, pause, resume, stop, and check status of a simulation via a CLI tool.
+
+**Independent Test**: Run `go build ./cmd/simctl && ./simctl start --config examples/simple-sim.json` and verify simulation runs, then `./simctl status` shows progress.
+
+**Learning Outcome**: Go `flag` package, JSON config loading, signal handling, CLI patterns
+
+- [ ] T043 [US1] Create `cmd/simctl/main.go` with command structure and `flag`-based subcommand parsing for `start`, `pause`, `resume`, `stop`, `status`
+- [ ] T044 [US1] Implement config loading from JSON file path in `internal/config/config.go` — read file, unmarshal into `SimulationConfig`, validate required fields
+- [ ] T045 [US1] Implement simulation lifecycle commands: `start` kicks off tick loop in goroutine, `pause`/`resume` toggle state, `stop` terminates, `status` prints summary
+- [ ] T046 [US1] Add `examples/simple-sim.json` with a minimal working config (1 citizen, 1 safe zone, 1 hazard, small grid) and verify end-to-end: build, run, status, stop
+
+**Checkpoint**: `go build ./cmd/simctl` succeeds. `./simctl start --config examples/simple-sim.json` runs a simulation. You understand CLI construction and JSON config.
+
+---
+
+## Phase 10: User Story 3 — NATS/JetStream Integration + Event History (P3) 📡
 
 **Goal**: Simulation events are published to NATS JetStream and can be replayed after the simulation ends.
 
@@ -170,17 +187,17 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 **Learning Outcome**: `nats.go` JetStream client, event streaming, consumer management, ordered delivery, `context.Context`
 
-- [ ] T042 [P] [US3] Implement JetStream producer in `internal/messaging/producer.go` — connect to NATS, create JetStream context, publish JSON-serialized `SimulationEvent` to `simulation-events.<event_type>` subject (e.g., `simulation-events.citizen.moved`)
-- [ ] T043 [P] [US3] Implement JetStream consumer in `internal/messaging/consumer.go` — subscribe to stream, consume events in order with configurable durable consumer name
-- [ ] T044 [US3] Integrate JetStream producer into simulation tick loop — publish events to JetStream instead of (or in addition to) in-memory storage in `internal/engine/simulation.go`
-- [ ] T045 [US3] Implement event replay in `cmd/simctl/main.go` — add `replay` command that creates a JetStream consumer and prints or saves events in order
-- [ ] T046 [US3] Write tests in `internal/messaging/producer_test.go` and `consumer_test.go` — use an embedded NATS server (`github.com/nats-io/nats-server/v2/server`) for integration tests or verify serialization/deserialization round-trip
+- [ ] T047 [P] [US3] Implement JetStream producer in `internal/messaging/producer.go` — connect to NATS, create JetStream context, publish JSON-serialized `SimulationEvent` to `simulation-events.<event_type>` subject (e.g., `simulation-events.citizen.moved`)
+- [ ] T048 [P] [US3] Implement JetStream consumer in `internal/messaging/consumer.go` — subscribe to stream, consume events in order with configurable durable consumer name
+- [ ] T049 [US3] Integrate JetStream producer into simulation tick loop — publish events to JetStream instead of (or in addition to) in-memory storage in `internal/engine/simulation.go`
+- [ ] T050 [US3] Implement event replay — add `replay` command to `cmd/simctl/main.go` that creates a JetStream consumer and prints or saves events in order
+- [ ] T051 [US3] Write tests in `internal/messaging/producer_test.go` and `consumer_test.go` — use an embedded NATS server (`github.com/nats-io/nats-server/v2/server`) for integration tests or verify serialization/deserialization round-trip
 
 **Checkpoint**: Events flow through NATS JetStream. You can replay a simulation from the event stream. You understand JetStream producers, consumers, and event sourcing.
 
 ---
 
-## Phase 10: User Story 4 — Autonomy + Performance (P3) ⚡
+## Phase 11: User Story 4 — Autonomy + Performance (P3) ⚡
 
 **Goal**: Citizens have varied behaviors (risk tolerance, path preference) and the system handles 100+ citizens at <2x real-time.
 
@@ -188,21 +205,21 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 **Learning Outcome**: Weighted A*, benchmarking (`go test -bench`), `pprof`, algorithm optimization
 
-- [ ] T047 [P] [US4] Implement weighted A* variant in `internal/pathfinding/astar.go` — accept a weight function to penalize cells near hazards for "safest" path preference
-- [ ] T048 [US4] Implement autonomy profile integration — use citizen's `RiskTolerance`, `SpeedVariation`, and `PathPreference` to influence movement and path selection in `internal/engine/citizen.go`
-- [ ] T049 [US4] Add benchmarks in `internal/pathfinding/astar_bench_test.go` and `internal/engine/simulation_bench_test.go` — measure pathfinding time for 100 citizens, measure simulation tick time
-- [ ] T050 [US4] Optimize: profile with `pprof`, identify bottlenecks, optimize hot paths (grid cell allocation, path copying, hazard cell marking) to meet <2x real-time target
+- [ ] T052 [P] [US4] Implement weighted A* variant in `internal/pathfinding/astar.go` — accept a weight function to penalize cells near hazards for "safest" path preference
+- [ ] T053 [US4] Implement autonomy profile integration — use citizen's `RiskTolerance`, `SpeedVariation`, and `PathPreference` to influence movement and path selection in `internal/engine/citizen.go`
+- [ ] T054 [US4] Add benchmarks in `internal/pathfinding/astar_bench_test.go` and `internal/engine/simulation_bench_test.go` — measure pathfinding time for 100 citizens, measure simulation tick time
+- [ ] T055 [US4] Optimize: profile with `pprof`, identify bottlenecks, optimize hot paths (grid cell allocation, path copying, hazard cell marking) to meet <2x real-time target
 
 **Checkpoint**: `go test -bench=. -benchtime=10x ./...` shows acceptable performance. 100 citizens navigate with varied behaviors.
 
 ---
 
-## Phase 11: Polish & Cross-Cutting Concerns ✨
+## Phase 12: Polish & Cross-Cutting Concerns ✨
 
 **Purpose**: Final quality pass, documentation, and end-to-end validation
 
-- [ ] T051 Run full validation: `gofmt -s -w . && go vet ./... && staticcheck ./... && go test -race ./...` — fix all issues
-- [ ] T052 Validate all quickstart.md steps work end-to-end: NATS up → simctl start → events in JetStream → simviz → TUI shows simulation
+- [ ] T056 Run full validation: `gofmt -s -w . && go vet ./... && staticcheck ./... && go test -race ./...` — fix all issues
+- [ ] T057 Validate all quickstart.md steps work end-to-end: NATS up → simctl start → events in JetStream → simviz → TUI shows simulation
 
 ---
 
@@ -221,22 +238,24 @@ Phase 4: US1 Safe Zones — depends on Phase 3 (uses Hazards)
     ↓
 Phase 5: US1 Events — depends on Phase 4 (needs full simulation state)
     ↓
-Phase 6: US1 TUI — depends on Phase 5 (needs events to display)
+Phase 6: US1 Core TUI — depends on Phase 5 (needs events to display)
     ↓
-Phase 7: US1 CLI — depends on Phase 5 (needs events for output)
+Phase 7: US1 Config Sidebar — depends on Phase 6 (extends TUI layout)
     ↓
 Phase 8: US2 Event Fan-Out — depends on Phase 6 (decouples TUI from engine)
     ↓
-Phase 9: US3 NATS/JetStream — depends on Phase 5 (needs events)
+Phase 9: US1 CLI Controls — depends on Phase 5 (needs events for output)
     ↓
-Phase 10: US4 Autonomy — depends on Phase 4 (needs full simulation)
+Phase 10: US3 NATS/JetStream — depends on Phase 5 (needs events)
     ↓
-Phase 11: Polish — depends on all phases
+Phase 11: US4 Autonomy — depends on Phase 4 (needs full simulation)
+    ↓
+Phase 12: Polish — depends on all phases
 ```
 
 ### User Story Dependencies
 
-- **US1 (P1)**: Core simulation — no dependencies on other stories. Must be 100% complete first. Phases 4–7 (Safe Zones, Events, Viz, CLI) complete US1.
+- **US1 (P1)**: Core simulation — no dependencies on other stories. Phases 1–7 (Grid, Movement, Hazards, Safe Zones, Events, Core TUI, Config Sidebar) complete the P1 MVP. CLI Controls (Phase 9) is P2.
 - **US2 (P2)**: Event fan-out + optional remote observer — depends on US1 event emission (Phase 5) and Phase 6 TUI. Phase 8 decouples the TUI from the engine via an event hub and optionally adds a WebSocket remote observer.
 - **US3 (P3)**: NATS/JetStream — depends on US1 event emission (Phase 5). Events flow to JetStream.
 - **US4 (P3)**: Autonomy/Scale — depends on US1 core engine (Phase 4). Extends citizen behavior.
@@ -252,40 +271,52 @@ Phase 11: Polish — depends on all phases
 
 - Phase 1 (US1/Grid): T008, T009 can run in parallel (interface + implementation)
 - Phase 3 (US1/Hazards): T015 is independent
-- Phase 6 (US1/TUI): T028, T029, T030, T031 can all run in parallel (different tui/ files)
-- Phase 7 (US1/CLI): All tasks are sequential
-- Phase 8 (US2/Event Fan-Out): T037 is independent; T040 is stretch
-- Phase 9 (US3/NATS/JetStream): T042, T043 can run in parallel
-- Phase 10 (US4/Autonomy): T047 is independent
+- Phase 6 (US1/TUI Core): T028, T029, T030, T031 can all run in parallel (different tui/ files)
+- Phase 7 (US1/Config Sidebar): T034 is independent; T034, T035 can run in parallel
+- Phase 8 (US2/Event Fan-Out): T038 is independent; T041 is stretch
+- Phase 9 (US1/CLI): All tasks are sequential
+- Phase 10 (US3/NATS/JetStream): T047, T048 can run in parallel
+- Phase 11 (US4/Autonomy): T052 is independent
 
 ---
 
-## Parallel Example: Phase 6 (Terminal TUI)
+## Parallel Example: Phase 6 (Terminal TUI Core)
 
 ```bash
 # Launch all parallel tasks for Phase 6 together:
-# Task T028 + T029 + T030 + T031: tui/ components (model + view + controls + styles)
+# Task T028 + T029 + T030 + T031: tui/ components (model + grid + controls + styles)
 
 # Then assemble:
-# Task T032: simviz main.go (depends on all of the above)
+# Task T032: simviz main.go (depends on T028, T029, T030, T031)
 # Task T033: end-to-end verification
+```
+
+## Parallel Example: Phase 7 (Config Sidebar)
+
+```bash
+# Launch all parallel tasks for Phase 7 together:
+# Task T034: config sidebar view
+# Task T035: focus/adjust keyboard controls
+
+# Then assemble:
+# Task T036: compose split-pane layout (depends on T034, T035, plus Phase 6 T028, T029)
+# Task T037: wire and verify
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP Scope (User Story 1 Only)
+### MVP Scope (User Story 1, P1 Only)
 
-The MVP covers Phases 1-7 (T008–T036). This delivers:
+The core MVP covers Phases 1–7 (T008–T037). This delivers:
 - A working simulation with citizens, hazards, safe zones
 - A* pathfinding with obstacle avoidance
 - Event emission in memory
-- Terminal TUI visualization with keyboard controls
-- CLI controls (start, pause, stop, status)
+- Terminal TUI with grid visualization and config sidebar
 - All testable via `go test ./...`
 
-**Do NOT skip ahead to US2/US3/US4 until all US1 phases are complete.**
+**Do NOT skip ahead to US2/US3/US4 until Phases 1–7 are complete.**
 
 ### Learning Milestones
 
@@ -297,20 +328,22 @@ The MVP covers Phases 1-7 (T008–T036). This delivers:
 | 4 | termination conditions, scheduled emergence, edge cases | Simulation auto-completes; safe zones appear mid-run |
 | 5 | event emission, UUID, time | Complete event log for any run |
 | 6 | Bubbletea Elm architecture, Lipgloss styling, terminal rendering | TUI shows live simulation with keyboard controls |
-| 7 | `flag` package, JSON unmarshal, signal handling | `./simctl start --config x.json` works |
+| 7 | split-pane composition, focus management, config-as-UI mapping | TUI shows live config sidebar alongside grid |
 | 8 | Go channels for fan-out, hub-spoke pattern | Events reach TUI via hub; optional WS remote observer |
-| 9 | JetStream producer/consumer, context | Events streaming through NATS JetStream |
-| 10 | weighted algorithms, benchmarks, pprof | 100 citizens at <2x real-time |
+| 9 | `flag` package, JSON unmarshal, signal handling | `./simctl start --config x.json` works |
+| 10 | JetStream producer/consumer, context | Events streaming through NATS JetStream |
+| 11 | weighted algorithms, benchmarks, pprof | 100 citizens at <2x real-time |
 
 ### Incremental Delivery
 
 1. Complete Phase 1 → Grid + A* pathfinding ready
 2. Complete Phases 1–4 → Full simulation with escape/death/completion
 3. Complete Phases 1–6 → Simulation with live terminal TUI (**huge win!**)
-4. Complete Phases 1–7 → Full US1 MVP with CLI
+4. Complete Phases 1–7 → Full P1 MVP with config sidebar
 5. Add Phase 8 → In-process event hub + optional remote observer
-6. Add Phase 9 → NATS JetStream event streaming (core learning goal)
-7. Add Phase 10 → Scale and autonomy (polish)
+6. Add Phase 9 → CLI controls (headless operation)
+7. Add Phase 10 → NATS JetStream event streaming (core learning goal)
+8. Add Phase 11 → Scale and autonomy (polish)
 
 ### Validation
 

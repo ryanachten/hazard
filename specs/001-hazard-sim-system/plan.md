@@ -75,6 +75,7 @@ internal/
 ├── tui/                 # Bubbletea TUI components
 │   ├── model.go         # Main model, update, view
 │   ├── grid_view.go     # Grid rendering with lipgloss
+│   ├── config_view.go   # Configuration sidebar rendering
 │   ├── controls.go      # Keybinding helpers
 │   └── styles.go        # Lipgloss style definitions
 └── config/              # Simulation configuration loading
@@ -94,17 +95,18 @@ cmd/
 Each slice is independently testable and introduces one new concept. Developed in order — no skipping ahead until the current slice is working.
 
 | # | Slice | What You Build | Go Concepts | Verified By |
-|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|
 | 1 | Grid + A* Pathfinding | 2D grid, A* algorithm, path reconstruction | Structs, slices, interfaces, unit tests, `go test` | Path from (0,0) to (5,5) avoiding obstacles |
 | 2 | Citizen Movement | Citizens follow paths, tick loop | Methods, tick timers, state mutation, `go vet` | Citizens move toward goals each tick |
 | 3 | Hazards + Envelopment | Hazard emergence, radius expansion, grid blocking | Concurrent state, config-driven behavior, edge cases | Hazard cells block pathfinding, radius grows |
 | 4 | Safe Zones + Death | Citizens escape or die, simulation completion; dynamic safe zone emergence | State machine, multiple termination conditions, scheduled emergence | Simulation ends when all citizens resolved; new safe zones appear mid-run |
 | 5 | Event Emission | Event type constructors, tick integration, in-memory storage | `time.Time`, UUID, event patterns | Complete event log for any run |
-| 6 | Terminal TUI (Bubbletea) | Bubbletea model/view/update, lipgloss grid rendering, keyboard controls (start/pause/quit) | External Go libraries, Elm architecture, `lipgloss` styling, event-driven UI | TUI shows live simulation, responds to keyboard input |
-| 7 | CLI Controls | `simctl` start, pause, stop, status | `flag` package, JSON config, signal handling | `simctl start --config x.json` runs simulation |
-| 8 | Event Fan-Out + Optional Remote Observer | In-process event hub broadcasting to TUI + optional subscribers; optional HTTP/WebSocket for remote observation | Go channels for fan-out, hub-and-spoke pattern, optional `coder/websocket` | Events fanned out to TUI and optional remote client |
-| 9 | NATS/JetStream Integration | Produce/consume simulation events | `nats.go` JetStream producer/consumer, `docker-compose`, event serialization | Events appear in JetStream stream |
-| 10 | Autonomy + Performance | Risk tolerance, path preference, 100+ citizens | A* variants (weighted), benchmarking, `pprof` | Citizens take different paths, 100 citizens at <2x real-time |
+| 6 | Terminal TUI — Core | Bubbletea model/view/update, lipgloss grid rendering, keyboard controls (start/pause/quit) | External Go libraries, Elm architecture, `lipgloss` styling, event-driven UI | TUI shows live simulation, responds to keyboard input |
+| 7 | Config Sidebar | Split-pane layout (grid + config panel), live-adjustable `SimulationConfig` fields with focus cycling | `lipgloss.JoinHorizontal`, focus management, config-as-UI mapping | Config sidebar renders alongside grid, Tab/↑↓ adjust values |
+| 8 | CLI Controls (P2) | `simctl` start, pause, stop, status | `flag` package, JSON config, signal handling | `simctl start --config x.json` runs simulation |
+| 9 | Event Fan-Out + Optional Remote Observer (P2) | In-process event hub broadcasting to TUI + optional subscribers; optional HTTP/WebSocket for remote observation | Go channels for fan-out, hub-and-spoke pattern, optional `coder/websocket` | Events fanned out to TUI and optional remote client |
+| 10 | NATS/JetStream Integration (P3) | Produce/consume simulation events | `nats.go` JetStream producer/consumer, `docker-compose`, event serialization | Events appear in JetStream stream |
+| 11 | Autonomy + Performance (P3) | Risk tolerance, path preference, 100+ citizens | A* variants (weighted), benchmarking, `pprof` | Citizens take different paths, 100 citizens at <2x real-time |
 
 ## Future Enhancements
 

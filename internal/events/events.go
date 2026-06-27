@@ -11,12 +11,13 @@ import (
 
 // SimulationEvent represents a domain event that occurred during a simulation
 type SimulationEvent struct {
-	ID        uuid.UUID
-	EventType eventType
-	Timestamp time.Time
-	EntityID  uuid.UUID
-	Metadata  EventMetadata
-	Payload   []byte
+	ID           uuid.UUID       `json:"id"`
+	EventType    eventType       `json:"eventType"`
+	SimulationID uuid.UUID       `json:"simulationId"`
+	Tick         uint64          `json:"tick"`
+	Timestamp    time.Time       `json:"timestamp"`
+	EntityID     uuid.UUID       `json:"entityId"`
+	Payload      json.RawMessage `json:"payload"`
 }
 
 // EventMetadata common for all simulation events
@@ -62,11 +63,12 @@ func createEvent(eventType eventType, entityID uuid.UUID, metadata EventMetadata
 	}
 
 	return SimulationEvent{
-		ID:        uuid.New(),
-		Timestamp: time.Now().UTC(),
-		EventType: eventType,
-		EntityID:  entityID,
-		Metadata:  metadata,
-		Payload:   jsonPayload,
+		ID:           uuid.New(),
+		Timestamp:    time.Now().UTC(),
+		SimulationID: metadata.SimulationID,
+		Tick:         metadata.Tick,
+		EventType:    eventType,
+		EntityID:     entityID,
+		Payload:      json.RawMessage(jsonPayload),
 	}, nil
 }

@@ -55,8 +55,8 @@ func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 	for _, e := range evts {
 		if string(e.EventType) == "citizen.moved" {
 			foundMove = true
-			require.Equal(t, sim.ID, e.Metadata.SimulationID)
-			require.Equal(t, uint64(0), e.Metadata.Tick)
+			require.Equal(t, sim.ID, e.SimulationID)
+			require.Equal(t, uint64(0), e.Tick)
 			break
 		}
 	}
@@ -157,7 +157,7 @@ func TestTick_EmitsHazardExpandedEvents(t *testing.T) {
 	for _, e := range evts {
 		if string(e.EventType) == "hazard.expanded" {
 			foundExpanded = true
-			require.Equal(t, uint64(0), e.Metadata.Tick, "hazard expansion event tick should match current tick")
+			require.Equal(t, uint64(0), e.Tick, "hazard expansion event tick should match current tick")
 			break
 		}
 	}
@@ -219,10 +219,10 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 
 	var prevTick uint64
 	for i, e := range evts {
-		require.GreaterOrEqual(t, e.Metadata.Tick, prevTick,
+		require.GreaterOrEqual(t, e.Tick, prevTick,
 			"event %d (type=%s) at tick %d is out of order with previous tick %d",
-			i, string(e.EventType), e.Metadata.Tick, prevTick)
-		prevTick = e.Metadata.Tick
+			i, string(e.EventType), e.Tick, prevTick)
+		prevTick = e.Tick
 	}
 }
 
@@ -424,8 +424,8 @@ func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 	for _, e := range evts {
 		if string(e.EventType) == "citizen.died" {
 			require.Equal(t, citizenID, e.EntityID, "citizen.died event entity ID should match citizen")
-			require.Equal(t, simID, e.Metadata.SimulationID, "citizen.died metadata should contain simulation ID")
-			require.Equal(t, uint64(0), e.Metadata.Tick, "citizen.died should be associated with the correct tick")
+			require.Equal(t, simID, e.SimulationID, "citizen.died metadata should contain simulation ID")
+			require.Equal(t, uint64(0), e.Tick, "citizen.died should be associated with the correct tick")
 			return
 		}
 	}

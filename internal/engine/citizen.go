@@ -35,26 +35,29 @@ const (
 
 func createCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 	citizenCount := randIntInRange(citizenCountRange)
-	citizens := make([]Citizen, citizenCount)
+	citizens := make([]Citizen, 0, citizenCount)
 
-	for i := range citizens {
+	for range citizenCount {
 		startPosition, err := grid.GetRandomOpenPosition()
 		if err != nil {
-			log.Printf("error getting position for citizen at index %v: %v", i, err)
+			log.Printf("error getting position for citizen: %v", err)
 			continue
 		}
 
-		citizens[i] = Citizen{
+		citizen := Citizen{
 			ID:               uuid.New(),
 			Status:           CitizenIdle,
 			CurrentPosition:  startPosition,
 			CurrentPathIndex: 0,
 		}
 
-		err = citizens[i].findNearestSafeZone(grid)
+		err = citizen.findNearestSafeZone(grid)
 		if err != nil {
-			log.Printf("error updating citizen %v path: %v", citizens[i].ID, err)
+			log.Printf("error updating citizen %v path: %v", citizen.ID, err)
+			continue
 		}
+
+		citizens = append(citizens, citizen)
 	}
 
 	return citizens

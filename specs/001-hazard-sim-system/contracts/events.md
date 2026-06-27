@@ -12,11 +12,11 @@ Every event follows this envelope structure:
 ```json
 {
   "id": "evt_01J...",
-  "simulation_id": "sim_01J...",
+  "simulationId": "sim_01J...",
   "timestamp": "2026-06-13T12:00:00.000Z",
   "tick": 42,
-  "event_type": "citizen.moved",
-  "entity_id": "cit_01J...",
+  "eventType": "citizen.moved",
+  "entityId": "cit_01J...",
   "payload": { }
 }
 ```
@@ -29,16 +29,16 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "simulation.started",
-  "entity_id": "<simulation_id>",
+  "eventType": "simulation.started",
+  "entityId": "<simulation_id>",
   "payload": {
     "seed": 42,
     "width": 100,
     "height": 100,
-    "tick_interval_ms": 100,
-    "citizen_count": 10,
-    "obstacle_count": 2,
-    "safe_zone_count": 1
+    "tickIntervalMs": 100,
+    "citizenCount": 10,
+    "obstacleCount": 2,
+    "safeZoneCount": 1
   }
 }
 ```
@@ -47,13 +47,13 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "simulation.paused",
-  "entity_id": "<simulation_id>",
+  "eventType": "simulation.paused",
+  "entityId": "<simulation_id>",
   "payload": {
     "tick": 42,
-    "escaped_count": 3,
-    "dead_count": 1,
-    "navigating_count": 6
+    "escapedCount": 3,
+    "deadCount": 1,
+    "navigatingCount": 6
   }
 }
 ```
@@ -62,8 +62,8 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "citizen.moved",
-  "entity_id": "<citizen_id>",
+  "eventType": "citizen.moved",
+  "entityId": "<citizen_id>",
   "payload": {
     "from": { "x": 5, "y": 10 },
     "to": { "x": 5, "y": 11 },
@@ -76,12 +76,12 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "citizen.escaped",
-  "entity_id": "<citizen_id>",
+  "eventType": "citizen.escaped",
+  "entityId": "<citizen_id>",
   "payload": {
-    "final_position": { "x": 42, "y": 38 },
-    "safe_zone_id": "<safe_zone_id>",
-    "ticks_survived": 87
+    "finalPosition": { "x": 42, "y": 38 },
+    "safeZoneId": "<safe_zone_id>",
+    "ticksSurvived": 87
   }
 }
 ```
@@ -90,12 +90,12 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "citizen.died",
-  "entity_id": "<citizen_id>",
+  "eventType": "citizen.died",
+  "entityId": "<citizen_id>",
   "payload": {
     "position": { "x": 20, "y": 15 },
-    "killed_by_hazard": "<hazard_id>",
-    "ticks_survived": 65
+    "killedByHazard": "<hazard_id>",
+    "ticksSurvived": 65
   }
 }
 ```
@@ -104,13 +104,13 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "citizen.recalculated",
-  "entity_id": "<citizen_id>",
+  "eventType": "citizen.recalculated",
+  "entityId": "<citizen_id>",
   "payload": {
-    "reason": "hazard_blocked_path",
-    "previous_target_zone": "<safe_zone_id>",
-    "new_target_zone": "<safe_zone_id>",
-    "path_length": 28
+    "reason": "hazardBlockedPath",
+    "previousTargetZone": "<safe_zone_id>",
+    "newTargetZone": "<safe_zone_id>",
+    "pathLength": 28
   }
 }
 ```
@@ -119,14 +119,14 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "hazard.emerged",
-  "entity_id": "<hazard_id>",
+  "eventType": "hazard.emerged",
+  "entityId": "<hazard_id>",
   "payload": {
     "position": { "x": 30, "y": 25 },
-    "initial_radius": 3.0,
-    "spread_rate": 0.5,
-    "max_radius": 15.0,
-    "hazard_type": {
+    "initialRadius": 3.0,
+    "spreadRate": 0.5,
+    "maxRadius": 15.0,
+    "hazardType": {
       "name": "fire",
       "kind": "expanding"
     }
@@ -138,12 +138,12 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "hazard.expanded",
-  "entity_id": "<hazard_id>",
+  "eventType": "hazard.expanded",
+  "entityId": "<hazard_id>",
   "payload": {
-    "previous_radius": 3.0,
-    "current_radius": 3.5,
-    "cells_affected": [
+    "previousRadius": 3.0,
+    "currentRadius": 3.5,
+    "cellsAffected": [
       {"x": 30, "y": 25},
       {"x": 31, "y": 25},
       {"x": 30, "y": 26}
@@ -156,11 +156,11 @@ Emitted after the generation phase completes. Contains the concrete values gener
 
 ```json
 {
-  "event_type": "hazard.dissipated",
-  "entity_id": "<hazard_id>",
+  "eventType": "hazard.dissipated",
+  "entityId": "<hazard_id>",
   "payload": {
-    "final_radius": 12.0,
-    "ticks_active": 200
+    "finalRadius": 12.0,
+    "ticksActive": 200
   }
 }
 ```

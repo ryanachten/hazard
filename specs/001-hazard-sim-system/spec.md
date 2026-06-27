@@ -141,7 +141,7 @@ An operator creates a dense simulation with multiple concurrent hazards (with va
 - Hazards expand outward from their origin point at a configurable rate
 - At least one safe zone is placed before simulation start; additional safe zones may emerge dynamically mid-simulation
 - Static obstacles are impassable to both citizens and hazards
-- The visualisation is rendered in a web browser using simple canvas or SVG graphics
+- The visualisation is rendered in a terminal emulator using a TUI framework (Bubbletea)
 - The simulation runs on a single machine for the initial version
 - Standard grid-based pathfinding algorithms (e.g., A*) are sufficient for citizen navigation in initial versions
 - Citizens have basic autonomy — they can choose between multiple viable paths based on configurable preferences (e.g., shortest path vs. safest path)

@@ -46,24 +46,21 @@ nats-server -js
 
 ---
 
-## 2. Go WebSocket Library
+## 2. Go WebSocket Library (optional / remote observation)
 
-**Decision**: `github.com/coder/websocket` (formerly `nhooyr.io/websocket`)
+**Decision**: `github.com/coder/websocket` (formerly `nhooyr.io/websocket`) — deferred to stretch goal
 
 **Rationale**:
-- Actively maintained by Coder (v1.8.14, Sep 2025, with ongoing commits into 2026)
-- Minimal, idiomatic Go API with `context.Context` throughout
-- Concurrent write safe — no panics, no extra synchronization needed
-- `wsjson` subpackage provides zero-alloc JSON reads/writes
-- Composes naturally with standard `net/http` — `websocket.Accept(w, r, nil)` is a single call
-- Used by Traefik, Vault, Cloudflare in production
-- Full permessage-deflate compression, WASM compilation support, `net.Conn` wrapper
+- The primary visualization is the TUI (Bubbletea), which communicates with the engine via Go channels
+- WebSocket is only needed if remote observation (browser or second terminal) is desired
+- When needed, `coder/websocket` remains the recommended choice for the same reasons as originally documented
+- See Phase 8 for the optional remote observer implementation
 
 **Alternatives considered**:
 - **gorilla/websocket**: Dormant maintenance cycle; no `context.Context` support; concurrent writes panic (requires manual synchronization). Avoid for new projects.
 - **golang.org/x/net/websocket**: Officially deprecated by Go team. Violates RFC 6455 on message framing.
 
-**Broadcast pattern**: Hub-and-spoke. The hub runs a single goroutine for client registration/unregistration. `coder/websocket`'s concurrent write safety enables `range clients { wsjson.Write(ctx, conn, event) }` without per-client write goroutines or mutexes.
+**Broadcast pattern**: Hub-and-spoke. The hub runs a single goroutine for client registration/unregistration. In the TUI path, the hub uses Go channels instead of WebSocket connections.
 
 ---
 
@@ -93,31 +90,34 @@ nats-server -js
 
 ---
 
-## 5. Frontend Build Tool
+## 5. Go TUI Framework
 
-**Decision**: TypeScript + Bun (`bun build`)
+**Decision**: `github.com/charmbracelet/bubbletea` + `github.com/charmbracelet/lipgloss` + `github.com/charmbracelet/bubbles`
 
 **Rationale**:
-- TypeScript gives type safety for the Canvas 2D rendering code and WebSocket/HTTP client logic
-- Bun's built-in bundler (`bun build`) compiles TypeScript to a single static JS file with zero config
-- No package.json or node_modules required for this project — the frontend has no runtime dependencies (Canvas 2D is a browser API; WebSocket is built-in)
-- Build command is trivial: `bun build ./web/src/canvas.ts --outdir ./web`
-- Output JS is served as a static asset by the Go `simviz` binary
-- Fast builds (<50ms) keep the edit-rebuild-refresh cycle tight
+- Bubbletea is the most widely adopted Go TUI framework with an active ecosystem and thorough documentation (examples, FAQ, Discord)
+- Elm-style Model/Update/View architecture maps naturally to the simulation's tick-driven state model — the `Model` holds the render state, `Update` processes ticks and keypresses, `View` produces the styled string output
+- Lipgloss provides composable style definitions with 256-color and truecolor support — directly maps the design language hex colors (e.g., `lipgloss.Color("#ef4444")`)
+- Bubbles component library provides pre-built input fields, select lists, spinners, etc. for future interactive controls (config editing, hazard tuning)
+- Pure Go — no CGo, no external runtime, trivial cross-compilation
+- `tea.Program` with `tea.WithAltScreen()` creates a clean full-screen terminal experience
+- Keyboard input handling via `tea.KeyMsg` is straightforward for start/pause/quit controls
+- The `tea.Cmd` pattern for asynchronous operations maps naturally to simulation ticks and NATS subscriptions
+- `tea.Quit` provides a clean shutdown path
 
 **Alternatives considered**:
-- **Plain JS**: Simpler but loses type safety, autocomplete, and inline documentation that TS provides for Canvas 2D APIs
-- **Deno**: Viable alternative with `deno bundle`/`deno pack`, but Bun's bundler is more established for this use case and slightly simpler to invoke
-- **esbuild/webpack/vite**: Overkill for a single-file frontend with no framework, no npm dependencies, no CSS preprocessing
-- **tsc only**: Requires separate bundler; Bun replaces both compiler and bundler in one tool
+- **tview**: More widget-focused, less composable than Bubbletea; uses its own draw model rather than Elm architecture
+- **Termui**: Graph/chart focused, less suited for grid-based simulation rendering
+- **ANSI escape codes directly**: Too low-level; defeats the learning value of TUI framework patterns
 
 **Workflow**:
 ```bash
-# Build frontend assets
-bun build ./web/src/canvas.ts --outdir ./web
-
-# Run the Go server (which serves web/ as static files)
+# Run the TUI directly (no build step needed for the viz layer)
 go run ./cmd/simviz
+
+# Or build and run
+go build -o bin/simviz ./cmd/simviz
+./bin/simviz
 ```
 
 ---

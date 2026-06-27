@@ -41,12 +41,14 @@ go build -o bin/simctl ./cmd/simctl
 ## View the Visualization
 
 ```bash
-# Start the visualization server
+# Build and run the TUI
 go build -o bin/simviz ./cmd/simviz
 ./bin/simviz
 
-# Open in browser
-open http://localhost:8080
+# Controls:
+#   Enter   - Start simulation
+#   Space   - Pause / Resume
+#   q / Esc - Quit
 ```
 
 ## Run All Checks
@@ -63,15 +65,14 @@ go test -race ./...
 ```
 ├── cmd/
 │   ├── simctl/           # CLI operator (start, pause, stop)
-│   └── simviz/           # WebSocket visualization server
+│   └── simviz/           # Terminal TUI visualization
 ├── internal/
 │   ├── engine/           # Core simulation loop
 │   ├── pathfinding/      # A* pathfinder
 │   ├── messaging/        # NATS JetStream producer/consumer
 │   ├── events/           # Event types
-│   ├── vis/              # WebSocket hub
+│   ├── tui/              # Bubbletea TUI components
 │   └── config/           # Config loading
-├── web/                  # HTML/Canvas frontend
 ├── docker-compose.yml    # NATS for development
 └── specs/001-hazard-sim-system/
     ├── plan.md
@@ -91,8 +92,8 @@ This project is built in small, progressive slices. Each slice is independently 
 | 3 | Hazards + Envelopment | Hazard emergence, radius expansion, grid blocking | Concurrent state, tick-based simulation |
 | 4 | Safe Zones + Death | Citizens escape or die, simulation completion | State machines, edge cases |
 | 5 | Event Emission | Event type constructors, tick integration, in-memory storage | time.Time, UUID, event patterns |
-| 6 | Browser Viz (HTTP poll) | Simulation state exposed as JSON, Canvas rendering via TypeScript | net/http, bun build, Canvas 2D API, requestAnimationFrame |
+| 6 | Terminal TUI (Bubbletea) | Bubbletea model/view/update, lipgloss grid rendering, keyboard controls | External Go libs, Elm architecture, event-driven UI |
 | 7 | CLI Controls | simctl start, pause, stop, status | flag package, JSON config, signal handling |
-| 8 | WebSocket Upgrade | Replace HTTP polling with WebSocket push in TypeScript frontend | coder/websocket, hub-and-spoke pattern, bun build |
+| 8 | Event Fan-Out + Optional Remote Observer | In-process event hub, optional HTTP/WS for remote clients | Go channels, hub-and-spoke pattern |
 | 9 | NATS/JetStream Integration | Produce/consume simulation events | nats.go, JetStream, docker-compose, event serialization |
 | 10 | Autonomy + Performance | Risk tolerance, path preference, 100+ citizens | A* variants, benchmarking, pprof |

@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	eng "hazard/internal/engine"
+	"hazard/internal/events"
 	"time"
 )
 
@@ -28,6 +29,11 @@ func main() {
 	}
 
 	go func() {
+		simulation.Events.SimulationStarted(events.EventMetadata{
+			SimulationID: simulation.ID,
+			Tick:         simulation.TickCount,
+		})
+
 		ticker := time.NewTicker(time.Duration(config.TickIntervalMs) * time.Millisecond)
 		defer ticker.Stop()
 

@@ -141,13 +141,12 @@ func (s *Simulation) generateIntermittentHazard() {
 	}
 
 	hazard.CreatedAt = s.TickCount
-	err = s.EventEmitter.HazardEmerged(s.ID, hazard.Origin, s.getEventMetadata())
+	s.Hazards = append(s.Hazards, hazard)
+
+	err = s.EventEmitter.HazardEmerged(hazard.ID, hazard.Origin, s.getEventMetadata())
 	if err != nil {
 		log.Printf("error emitting HazardEmerged event: %v", err)
-		return
 	}
-
-	s.Hazards = append(s.Hazards, hazard)
 }
 
 func (s *Simulation) generateIntermittentSafeZone() bool {
@@ -162,13 +161,13 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 		return false
 	}
 
+	s.SafeZones = append(s.SafeZones, safeZone)
+
 	err = s.EventEmitter.SafeZoneEmerged(safeZone.ID, safeZone.Position, safeZone.Radius, s.getEventMetadata())
 	if err != nil {
 		log.Printf("error emitting SafeZoneEmerged event: %v", err)
-		return false
 	}
 
-	s.SafeZones = append(s.SafeZones, safeZone)
 	return true
 }
 

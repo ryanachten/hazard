@@ -169,7 +169,7 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 **Learning Outcome**: `nats.go` JetStream client, event streaming, consumer management, ordered delivery, `context.Context`
 
-- [ ] T042 [P] [US3] Implement JetStream producer in `internal/messaging/producer.go` — connect to NATS, create JetStream context, publish JSON-serialized `SimulationEvent` to `simulation-events.stream` subject
+- [ ] T042 [P] [US3] Implement JetStream producer in `internal/messaging/producer.go` — connect to NATS, create JetStream context, publish JSON-serialized `SimulationEvent` to `simulation-events.<event_type>` subject (e.g., `simulation-events.citizen.moved`)
 - [ ] T043 [P] [US3] Implement JetStream consumer in `internal/messaging/consumer.go` — subscribe to stream, consume events in order with configurable durable consumer name
 - [ ] T044 [US3] Integrate JetStream producer into simulation tick loop — publish events to JetStream instead of (or in addition to) in-memory storage in `internal/engine/simulation.go`
 - [ ] T045 [US3] Implement event replay in `cmd/simctl/main.go` — add `replay` command that creates a JetStream consumer and prints or saves events in order

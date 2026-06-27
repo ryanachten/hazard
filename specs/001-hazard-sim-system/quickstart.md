@@ -90,9 +90,9 @@ This project is built in small, progressive slices. Each slice is independently 
 | 2 | Citizen Movement | Citizens move along paths on the grid | Go methods, tick loop, state management |
 | 3 | Hazards + Envelopment | Hazard emergence, radius expansion, grid blocking | Concurrent state, tick-based simulation |
 | 4 | Safe Zones + Death | Citizens escape or die, simulation completion | State machines, edge cases |
-| 5 | NATS/JetStream Integration | Produce/consume events via NATS JetStream | nats.go, event streaming, docker-compose |
-| 6 | WebSocket Broadcast | Stream events to browser clients | coder/websocket, hub pattern |
-| 7 | HTML Canvas Viz | Real-time visualization in browser | Canvas API, JSON event rendering |
-| 8 | CLI Controls | Start, pause, stop simulation via CLI | CLI construction, signal handling |
-| 9 | Event History | Full event replay from JetStream | Consumer groups, event sourcing |
-| 10 | Autonomy + Scaling | Multi-path preference, 100+ citizens | A* variants, performance optimization |
+| 5 | Event Emission | Event type constructors, tick integration, in-memory storage | time.Time, UUID, event patterns |
+| 6 | Browser Viz (HTTP poll) | Simulation state exposed as JSON, Canvas rendering via TypeScript | net/http, bun build, Canvas 2D API, requestAnimationFrame |
+| 7 | CLI Controls | simctl start, pause, stop, status | flag package, JSON config, signal handling |
+| 8 | WebSocket Upgrade | Replace HTTP polling with WebSocket push in TypeScript frontend | coder/websocket, hub-and-spoke pattern, bun build |
+| 9 | NATS/JetStream Integration | Produce/consume simulation events | nats.go, JetStream, docker-compose, event serialization |
+| 10 | Autonomy + Performance | Risk tolerance, path preference, 100+ citizens | A* variants, benchmarking, pprof |

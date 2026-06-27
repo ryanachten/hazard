@@ -4,6 +4,7 @@ import (
 	pf "hazard/internal/pathfinding"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -304,7 +305,7 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 		},
 		Citizens: []Citizen{
 			{
-				ID:               0,
+				ID:               uuid.New(),
 				Status:           CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}},

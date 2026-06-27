@@ -2,9 +2,9 @@
 package main
 
 import (
-	"fmt"
 	eng "hazard/internal/engine"
 	"hazard/internal/events"
+	"log"
 	"time"
 )
 
@@ -18,21 +18,22 @@ func main() {
 
 	err := config.Validate()
 	if err != nil {
-		msg := fmt.Sprintf("simulation config invalid: %v", err)
-		panic(msg)
+		log.Fatalf("error validation config: %v", err)
 	}
 
 	simulation, err := eng.NewSimulation(config)
 	if err != nil {
-		msg := fmt.Sprintf("error creating simulation: %v", err)
-		panic(msg)
+		log.Fatalf("error creating simulation: %v", err)
 	}
 
 	go func() {
-		simulation.Events.SimulationStarted(events.EventMetadata{
+		err := simulation.Events.SimulationStarted(events.EventMetadata{
 			SimulationID: simulation.ID,
 			Tick:         simulation.TickCount,
 		})
+		if err != nil {
+			log.Fatalf("error creating SimulationStarted event: %v", err)
+		}
 
 		ticker := time.NewTicker(time.Duration(config.TickIntervalMs) * time.Millisecond)
 		defer ticker.Stop()

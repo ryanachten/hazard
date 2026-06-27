@@ -2,10 +2,13 @@ package engine
 
 import (
 	pf "hazard/internal/pathfinding"
+
+	"github.com/google/uuid"
 )
 
 // SafeZone represents an area safe from hazards for citizens to navigate to
 type SafeZone struct {
+	ID       uuid.UUID
 	Position pf.Position
 	Radius   int
 }

@@ -72,95 +72,24 @@ func (s *Simulation) Tick() {
 	}
 	s.State = SimulationRunning
 
-	// Update or remove hazards
-	hazardConfig := s.Config.Hazard
-	for i := len(s.Hazards) - 1; i >= 0; i-- {
-		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
-			s.Hazards[i].removeHazard(s.Grid)
-			s.Hazards = slices.Delete(s.Hazards, i, i+1)
-		} else {
-			s.Hazards[i].expandHazard(s.Grid)
-		}
-	}
+	s.updateOrRemoveHazards()
+	s.generateIntermittentHazard()
 
-	// Randomly generate hazards within hazard limits
-	if len(s.Hazards) < s.MaxHazards && rand.Float32() <= hazardConfig.Probability {
-		hazard, err := createHazard(hazardConfig, s.Grid)
-		if err != nil {
-			log.Printf("error creating hazard: %v", err)
-		} else {
-			hazard.CreatedAt = s.TickCount
-			s.Hazards = append(s.Hazards, hazard)
-		}
-	}
+	safeZoneCreated := s.generateIntermittentSafeZone()
 
-	// Randomly generate safe zones within hazard limits
-	safeZoneConfig := s.Config.SafeZone
-	safeZoneCreated := false
-	if len(s.SafeZones) < s.MaxSafeZones && rand.Float32() <= safeZoneConfig.Probability {
-		safeZone, err := createSafeZone(safeZoneConfig, s.Grid)
-		if err != nil {
-			log.Printf("error creating safe zone: %v", err)
-		} else {
-			s.SafeZones = append(s.SafeZones, safeZone)
-			safeZoneCreated = true
-		}
-	}
-
-	// Update citizen pathfinding state
 	for i := range s.Citizens {
 
-		// Skip dead and escaped citizens
 		if s.Citizens[i].Status == CitizenDead || s.Citizens[i].Status == CitizenEscaped {
 			continue
 		}
 
-		// If a hazard has caught up with a citizen, they're now dead
-		if s.Grid.GetCell(s.Citizens[i].CurrentPosition) == pf.CellHazard {
-			s.Citizens[i].Status = CitizenDead
-			s.DeadCitizensCount++
-			err := s.Events.CitizenDied(s.Citizens[i].ID, s.getEventMetadata())
-			if err != nil {
-				log.Printf("error emitting CitizenDied event: %v", err)
-			}
+		isDead := s.removeDeadCitizen(i)
+		if isDead {
 			continue
 		}
 
-		// If new safe zone added, determine which safe zone is closest
-		if safeZoneCreated {
-			err := s.Citizens[i].findNearestSafeZone(s.Grid)
-			if err != nil {
-				log.Printf("error finding safe zone for citizen %v path: %v", i, err)
-			}
-		} else {
-			// Check if any path intersects with hazards and needs recalculating
-			for _, pos := range s.Citizens[i].Path {
-				if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
-					err := s.Citizens[i].updatePath(s.Grid)
-					if err != nil {
-						log.Printf("error updating citizen %v path: %v", i, err)
-					}
-					break
-				}
-			}
-		}
-
-		// Increment citizen's position on path
-		hasMoved := s.Citizens[i].incrementLocation()
-		if hasMoved {
-			err := s.Events.CitizenMoved(s.Citizens[i].ID, s.Citizens[i].CurrentPosition, s.getEventMetadata())
-			if err != nil {
-				log.Printf("error emitting CitizenMoved event: %v", err)
-			}
-		}
-
-		if s.Citizens[i].Status == CitizenEscaped {
-			s.EscapedCitizensCount++
-			err := s.Events.CitizenEscaped(s.Citizens[i].ID, s.getEventMetadata())
-			if err != nil {
-				log.Printf("error emitting CitizenEscaped event: %v", err)
-			}
-		}
+		s.updateCitizenPath(i, safeZoneCreated)
+		s.updateCitizenLocation(i)
 	}
 
 	s.TickCount++
@@ -171,6 +100,136 @@ func (s *Simulation) Tick() {
 			log.Printf("error emitting SimulationCompleted event: %v", err)
 		}
 		s.State = SimulationCompleted
+	}
+}
+
+func (s *Simulation) updateOrRemoveHazards() {
+	for i := len(s.Hazards) - 1; i >= 0; i-- {
+		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
+			s.Hazards[i].removeHazard(s.Grid)
+			s.Hazards = slices.Delete(s.Hazards, i, i+1)
+			err := s.Events.HazardDissipated(s.Hazards[i].ID, s.getEventMetadata())
+			if err != nil {
+				log.Printf("error emitting HazardDissipated event: %v", err)
+			}
+		} else {
+			s.Hazards[i].expandHazard(s.Grid)
+			err := s.Events.HazardExpanded(s.Hazards[i].ID, s.Hazards[i].CurrentRadius, s.getEventMetadata())
+			if err != nil {
+				log.Printf("error emitting HazardExpanded event: %v", err)
+			}
+		}
+	}
+}
+
+func (s *Simulation) generateIntermittentHazard() {
+	hazardConfig := s.Config.Hazard
+	if len(s.Hazards) >= s.MaxHazards || rand.Float32() > hazardConfig.Probability {
+		return
+	}
+
+	hazard, err := createHazard(hazardConfig, s.Grid)
+	if err != nil {
+		log.Printf("error creating hazard: %v", err)
+		return
+	}
+
+	hazard.CreatedAt = s.TickCount
+	err = s.Events.HazardEmerged(s.ID, hazard.Origin, s.getEventMetadata())
+	if err != nil {
+		log.Printf("error emitting HazardEmerged event: %v", err)
+		return
+	}
+
+	s.Hazards = append(s.Hazards, hazard)
+}
+
+func (s *Simulation) generateIntermittentSafeZone() bool {
+	safeZoneConfig := s.Config.SafeZone
+	if len(s.SafeZones) >= s.MaxSafeZones || rand.Float32() > safeZoneConfig.Probability {
+		return false
+	}
+
+	safeZone, err := createSafeZone(safeZoneConfig, s.Grid)
+	if err != nil {
+		log.Printf("error creating safe zone: %v", err)
+		return false
+	}
+
+	err = s.Events.SafeZoneEmerged(safeZone.ID, safeZone.Position, safeZone.Radius, s.getEventMetadata())
+	if err != nil {
+		log.Printf("error emitting SafeZoneEmerged event: %v", err)
+		return false
+	}
+
+	s.SafeZones = append(s.SafeZones, safeZone)
+	return true
+}
+
+func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
+	if s.Grid.GetCell(s.Citizens[citizenIndex].CurrentPosition) != pf.CellHazard {
+		return false
+	}
+
+	err := s.Events.CitizenDied(s.Citizens[citizenIndex].ID, s.getEventMetadata())
+	if err != nil {
+		log.Printf("error emitting CitizenDied event: %v", err)
+		return false
+	}
+
+	s.Citizens[citizenIndex].Status = CitizenDead
+	s.DeadCitizensCount++
+	return true
+}
+
+func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
+	pathUpdated := false
+
+	// If new safe zone added, determine which safe zone is closest
+	if safeZoneCreated {
+		err := s.Citizens[citizenIndex].findNearestSafeZone(s.Grid)
+		if err != nil {
+			log.Printf("error finding safe zone for citizen %v path: %v", citizenIndex, err)
+			return
+		}
+		pathUpdated = true
+	} else {
+		// Check if any path intersects with hazards and needs recalculating
+		for _, pos := range s.Citizens[citizenIndex].Path {
+			if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
+				err := s.Citizens[citizenIndex].updatePath(s.Grid)
+				if err != nil {
+					log.Printf("error updating citizen %v path: %v", citizenIndex, err)
+				}
+				pathUpdated = true
+				break
+			}
+		}
+	}
+
+	if pathUpdated {
+		err := s.Events.CitizenPathUpdated(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].Path, s.getEventMetadata())
+		if err != nil {
+			log.Printf("error emitting CitizenPathUpdated event: %v", err)
+		}
+	}
+}
+
+func (s *Simulation) updateCitizenLocation(citizenIndex int) {
+	hasMoved := s.Citizens[citizenIndex].incrementLocation()
+	if hasMoved {
+		err := s.Events.CitizenMoved(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].CurrentPosition, s.getEventMetadata())
+		if err != nil {
+			log.Printf("error emitting CitizenMoved event: %v", err)
+		}
+	}
+
+	if s.Citizens[citizenIndex].Status == CitizenEscaped {
+		s.EscapedCitizensCount++
+		err := s.Events.CitizenEscaped(s.Citizens[citizenIndex].ID, s.getEventMetadata())
+		if err != nil {
+			log.Printf("error emitting CitizenEscaped event: %v", err)
+		}
 	}
 }
 

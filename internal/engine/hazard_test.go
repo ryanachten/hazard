@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"testing"
 
@@ -217,6 +218,7 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		},
 		State:        SimulationCreated,
 		Grid:         &grid,
+		EventEmitter: &events.InMemoryEventLog{},
 		MaxHazards:   0,
 		MaxSafeZones: 1,
 		SafeZones: []SafeZone{

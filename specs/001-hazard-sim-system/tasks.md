@@ -99,10 +99,10 @@ description: "Task list for Hazard Simulation System - 11 progressive slices for
 
 **Learning Outcome**: Go event emission patterns, `time.Time`, UUID generation, structured logging
 
-- [ ] T024 [P] [US1] Implement event emission helpers in `internal/events/events.go` — constructor functions for each event type that generate IDs and timestamps
-- [ ] T025 [US1] Integrate event emission into `Simulation.Tick()`: emit events for citizen moves, hazard expansions, safe zone emergence, state changes in `internal/engine/simulation.go`
-- [ ] T026 [US1] Store emitted events in-memory on the `Simulation` struct and add an `Events()` accessor for later retrieval
-- [ ] T027 [US1] Write tests in `internal/engine/events_test.go` verifying: each tick produces expected events, event ordering is correct, completed simulation has complete event log
+- [x] T024 [P] [US1] Implement event emission helpers in `internal/events/events.go` — constructor functions for each event type that generate IDs and timestamps
+- [x] T025 [US1] Integrate event emission into `Simulation.Tick()`: emit events for citizen moves, hazard expansions, safe zone emergence, state changes in `internal/engine/simulation.go`
+- [x] T026 [US1] Store emitted events in-memory on the `Simulation` struct and add an `Events()` accessor for later retrieval
+- [x] T027 [US1] Write tests in `internal/engine/events_test.go` verifying: each tick produces expected events, event ordering is correct, completed simulation has complete event log
 
 **Checkpoint**: `go test -v ./internal/engine/` passes with event tests. Events capture every state change in the simulation.
 

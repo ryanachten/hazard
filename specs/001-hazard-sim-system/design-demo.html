@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hazard Sim — Design Language Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1b1e;
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  h1 { font-size: 1.3rem; font-weight: 600; color: #e6edf3; letter-spacing: 0.02em; }
+  h2 { font-size: 0.85rem; font-weight: 500; color: #8b949e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    justify-content: center;
+    background: #21262d;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    font-size: 0.85rem;
+    max-width: 800px;
+  }
+  .legend-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .legend-group-label {
+    font-size: 0.7rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.1rem;
+  }
+  .legend-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.6rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+  .legend-item .char { font-size: 1.1rem; width: 1.4rem; text-align: center; }
+
+  .scene {
+    background: #0d1117;
+    padding: 1.5rem 2rem 2rem;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .grid-label {
+    color: #8b949e;
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+
+  pre {
+    font-size: 1.1rem;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    user-select: none;
+  }
+  .coord { color: #30363d; font-size: 0.6rem; }
+
+  .samples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+  }
+  .sample-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+  }
+  .sample-col h3 {
+    font-size: 0.7rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.2rem;
+  }
+  .sample-chars {
+    display: flex;
+    gap: 0.3rem;
+  }
+  .sample-chars span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: 1.1rem;
+    background: #161b22;
+    border-radius: 4px;
+    border: 1px solid #21262d;
+  }
+
+  .caption {
+    max-width: 620px;
+    text-align: center;
+    color: #8b949e;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    border-top: 1px solid #30363d;
+    padding: 1.5rem 0 0.5rem;
+  }
+  .caption code {
+    background: #21262d;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>☣ Hazard Simulation — Visual Design Language</h1>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-group">
+    <div class="legend-group-label">Open ground</div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="char" style="color:#586069">·</span></div>
+      <div class="legend-item"><span class="char" style="color:#586069">.</span></div>
+    </div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-group-label">Obstacle</div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="char" style="color:#6b7280">#</span></div>
+      <div class="legend-item"><span class="char" style="color:#6b7280">▓</span></div>
+      <div class="legend-item"><span class="char" style="color:#6b7280">▒</span></div>
+      <div class="legend-item"><span class="char" style="color:#6b7280">≡</span></div>
+    </div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-group-label">Fire</div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="char" style="color:#ef4444">░</span></div>
+      <div class="legend-item"><span class="char" style="color:#ef4444">"</span></div>
+      <div class="legend-item"><span class="char" style="color:#ef4444">^</span></div>
+    </div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-group-label">Flood</div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="char" style="color:#3b82f6">~</span></div>
+      <div class="legend-item"><span class="char" style="color:#3b82f6">≈</span></div>
+      <div class="legend-item"><span class="char" style="color:#3b82f6">░</span></div>
+    </div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-group-label">Lava</div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="char" style="color:#f97316">≈</span></div>
+      <div class="legend-item"><span class="char" style="color:#f97316">▒</span></div>
+      <div class="legend-item"><span class="char" style="color:#f97316">°</span></div>
+      <div class="legend-item"><span class="char" style="color:#f97316">o</span></div>
+    </div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-group-label">Safe zone</div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="char" style="color:#22c55e">◎</span></div>
+      <div class="legend-item"><span class="char" style="color:#22c55e">◉</span></div>
+      <div class="legend-item"><span class="char" style="color:#22c55e">◌</span></div>
+    </div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-group-label">Citizen</div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="char" style="color:#eab308">@</span> navigating</div>
+      <div class="legend-item"><span class="char" style="color:#4ade80">♦</span> escaped</div>
+      <div class="legend-item"><span class="char" style="color:#991b1b">†</span> dead</div>
+    </div>
+  </div>
+</div>
+
+<!-- Scene -->
+<div class="scene">
+  <h2>Sample Scene — Tick 47</h2>
+  <pre id="grid"></pre>
+</div>
+
+<!-- Palette characters per type -->
+<h2>Instance Palettes</h2>
+<div class="samples">
+  <div class="sample-col">
+    <h3>Obstacle</h3>
+    <div class="sample-chars">
+      <span style="color:#6b7280">#</span>
+      <span style="color:#6b7280">▓</span>
+      <span style="color:#6b7280">▒</span>
+      <span style="color:#6b7280">≡</span>
+    </div>
+  </div>
+  <div class="sample-col">
+    <h3>Fire</h3>
+    <div class="sample-chars">
+      <span style="color:#ef4444">░</span>
+      <span style="color:#ef4444">"</span>
+      <span style="color:#ef4444">^</span>
+    </div>
+  </div>
+  <div class="sample-col">
+    <h3>Flood</h3>
+    <div class="sample-chars">
+      <span style="color:#3b82f6">~</span>
+      <span style="color:#3b82f6">≈</span>
+      <span style="color:#3b82f6">░</span>
+    </div>
+  </div>
+  <div class="sample-col">
+    <h3>Lava</h3>
+    <div class="sample-chars">
+      <span style="color:#f97316">≈</span>
+      <span style="color:#f97316">▒</span>
+      <span style="color:#f97316">°</span>
+      <span style="color:#f97316">o</span>
+    </div>
+  </div>
+  <div class="sample-col">
+    <h3>Safe zone</h3>
+    <div class="sample-chars">
+      <span style="color:#22c55e">◎</span>
+      <span style="color:#22c55e">◉</span>
+      <span style="color:#22c55e">◌</span>
+    </div>
+  </div>
+</div>
+
+<div class="caption">
+  Each instance (building, hazard zone, safe zone) picks one character from its type palette
+  and uses it uniformly across all its cells. Citizens overlay the tile beneath them.
+  Open ground varies subtly cell-to-cell.
+</div>
+
+<script>
+// ── Instance definitions ─────────────────────────────────
+const INST = {
+  A:  { x: 2, y: 1, w: 3, h: 3, type: 'obstacle' },
+  B:  { x: 7, y: 2, w: 4, h: 2, type: 'obstacle' },
+  C:  { x: 1, y: 6, w: 2, h: 5, type: 'obstacle' },
+  D:  { x: 14, y: 0, w: 2, h: 3, type: 'obstacle' },
+  E:  { x: 18, y: 4, w: 3, h: 3, type: 'obstacle' },
+  F:  { x: 4, y: 4, w: 3, h: 3, type: 'hazard', kind: 'fire' },
+  G:  { x: 10, y: 8, w: 3, h: 3, type: 'hazard', kind: 'flood' },
+  H:  { x: 15, y: 6, w: 2, h: 3, type: 'hazard', kind: 'lava' },
+  I:  { x: 8, y: 12, w: 4, h: 2, type: 'hazard', kind: 'fire' },
+  J:  { x: 20, y: 10, w: 3, h: 3, type: 'safezone' },
+  K:  { x: 1, y: 12, w: 2, h: 2, type: 'safezone' },
+};
+
+const COLORS = {
+  open:  '#586069',
+  obst:  '#6b7280',
+  fire:  '#ef4444',
+  flood: '#3b82f6',
+  lava:  '#f97316',
+  safe:  '#22c55e',
+};
+
+const PALETTES = {
+  obst:  ['#', '▓', '▒', '≡'],
+  fire:  ['░', '"', '^'],
+  flood: ['~', '≈', '░'],
+  lava:  ['≈', '▒', '°', 'o'],
+  safe:  ['◎', '◉', '◌'],
+  open:  ['·', '.', '·', '·', '.', '·', '·', ' '],
+};
+
+const CITIZENS = [
+  { x: 8,  y: 5,  status: 'navigating' },
+  { x: 16, y: 3,  status: 'navigating' },
+  { x: 5,  y: 9,  status: 'navigating' },
+  { x: 10, y: 4,  status: 'navigating' },
+  { x: 22, y: 11, status: 'escaped' },
+  { x: 6,  y: 6,  status: 'dead' },
+  { x: 0,  y: 10, status: 'navigating' },
+  { x: 13, y: 10, status: 'navigating' },
+  { x: 11, y: 13, status: 'navigating' },
+];
+
+const CIT_DEFS = {
+  navigating: { char: '@', color: '#eab308' },
+  escaped:    { char: '♦', color: '#4ade80' },
+  dead:       { char: '†', color: '#991b1b' },
+};
+
+// ── Grid construction ────────────────────────────────────
+const W = 25, H = 16;
+
+function kindFor(inst) {
+  if (inst.type === 'obstacle') return 'obst';
+  if (inst.type === 'safezone') return 'safe';
+  return inst.kind;
+}
+
+function buildGrid() {
+  const grid = Array.from({ length: H }, () => Array(W).fill(null));
+
+  // Seed open ground
+  const openPal = PALETTES.open;
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      grid[y][x] = { char: openPal[(x * 7 + y * 3) % openPal.length], color: COLORS.open };
+
+  // Place instances
+  const instList = Object.values(INST);
+  for (let i = 0; i < instList.length; i++) {
+    const inst = instList[i];
+    const kind = kindFor(inst);
+    const ch = PALETTES[kind][i % PALETTES[kind].length];
+    const color = COLORS[kind];
+    for (let y = inst.y; y < inst.y + inst.h && y < H; y++)
+      for (let x = inst.x; x < inst.x + inst.w && x < W; x++)
+        grid[y][x] = { char: ch, color };
+  }
+
+  // Overlay citizens
+  for (const c of CITIZENS) {
+    if (c.x < W && c.y < H) {
+      const d = CIT_DEFS[c.status];
+      grid[c.y][c.x] = { char: d.char, color: d.color };
+    }
+  }
+
+  return grid;
+}
+
+function render() {
+  const grid = buildGrid();
+  const el = document.getElementById('grid');
+  let html = '   ';
+  for (let x = 0; x < W; x++)
+    html += `<span class="coord">${String(x).padStart(2, '\u00A0')}</span>`;
+  html += '\n';
+  for (let y = 0; y < H; y++) {
+    html += `<span class="coord">${String(y).padStart(2, '\u00A0')}</span> `;
+    for (let x = 0; x < W; x++) {
+      const g = grid[y][x];
+      html += `<span style="color:${g.color}">${g.char}</span>`;
+    }
+    html += '\n';
+  }
+  el.innerHTML = html;
+}
+
+render();
+</script>
+
+</body>
+</html>

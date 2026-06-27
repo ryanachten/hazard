@@ -3,10 +3,13 @@ package engine
 import (
 	pf "hazard/internal/pathfinding"
 	"math/rand"
+
+	"github.com/google/uuid"
 )
 
 // Hazard in a simulation
 type Hazard struct {
+	ID            uuid.UUID
 	Type          HazardType
 	CreatedAt     uint64
 	Duration      int
@@ -59,6 +62,7 @@ func createHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
 	grid.UpdateCell(origin, pf.CellHazard)
 
 	hazard := Hazard{
+		ID:       uuid.New(),
 		Duration: duration,
 		Type:     randomHazardType(),
 		Origin:   origin,

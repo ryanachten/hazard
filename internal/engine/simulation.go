@@ -24,7 +24,7 @@ type Simulation struct {
 	Hazards              []Hazard
 	MaxSafeZones         int
 	SafeZones            []SafeZone
-	Events               events.EventLog
+	Events               events.EventEmitter
 }
 
 // SimulationState phases of a simulation
@@ -59,7 +59,7 @@ func NewSimulation(config SimulationConfig) (Simulation, error) {
 		MaxSafeZones: randIntInRange(config.SafeZone.CountRange),
 		SafeZones:    []SafeZone{safeZone},
 		Citizens:     createCitizens(config.CitizenCountRange, &grid),
-		Events:       events.EventLog{},
+		Events:       &events.InMemoryEventLog{},
 	}
 
 	return simulation, nil
@@ -119,7 +119,10 @@ func (s *Simulation) Tick() {
 		if s.Grid.GetCell(s.Citizens[i].CurrentPosition) == pf.CellHazard {
 			s.Citizens[i].Status = CitizenDead
 			s.DeadCitizensCount++
-			s.Events.CitizenDied(s.Citizens[i].ID, s.getEventMetadata())
+			err := s.Events.CitizenDied(s.Citizens[i].ID, s.getEventMetadata())
+			if err != nil {
+				log.Printf("error emitting CitizenDied event: %v", err)
+			}
 			continue
 		}
 
@@ -145,19 +148,28 @@ func (s *Simulation) Tick() {
 		// Increment citizen's position on path
 		hasMoved := s.Citizens[i].incrementLocation()
 		if hasMoved {
-			s.Events.CitizenMoved(s.Citizens[i].ID, s.Citizens[i].CurrentPosition, s.getEventMetadata())
+			err := s.Events.CitizenMoved(s.Citizens[i].ID, s.Citizens[i].CurrentPosition, s.getEventMetadata())
+			if err != nil {
+				log.Printf("error emitting CitizenMoved event: %v", err)
+			}
 		}
 
 		if s.Citizens[i].Status == CitizenEscaped {
-			s.Events.CitizenEscaped(s.Citizens[i].ID, s.getEventMetadata())
 			s.EscapedCitizensCount++
+			err := s.Events.CitizenEscaped(s.Citizens[i].ID, s.getEventMetadata())
+			if err != nil {
+				log.Printf("error emitting CitizenEscaped event: %v", err)
+			}
 		}
 	}
 
 	s.TickCount++
 
 	if len(s.Citizens) > 0 && s.DeadCitizensCount+s.EscapedCitizensCount == len(s.Citizens) {
-		s.Events.SimulationCompleted(s.getEventMetadata())
+		err := s.Events.SimulationCompleted(s.getEventMetadata())
+		if err != nil {
+			log.Printf("error emitting SimulationCompleted event: %v", err)
+		}
 		s.State = SimulationCompleted
 	}
 }

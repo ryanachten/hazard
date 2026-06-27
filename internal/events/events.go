@@ -42,6 +42,7 @@ const (
 
 // EventEmitter defines how events are emitted in the simulation
 type EventEmitter interface {
+	Events() []SimulationEvent
 	SimulationStarted(metadata EventMetadata) error
 	SimulationCompleted(metadata EventMetadata) error
 	CitizenMoved(citizenID uuid.UUID, newPosition pathfinding.Position, metadata EventMetadata) error

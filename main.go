@@ -27,7 +27,7 @@ func main() {
 	}
 
 	go func() {
-		err := simulation.Events.SimulationStarted(events.EventMetadata{
+		err := simulation.EventEmitter.SimulationStarted(events.EventMetadata{
 			SimulationID: simulation.ID,
 			Tick:         simulation.TickCount,
 		})

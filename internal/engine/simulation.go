@@ -24,7 +24,7 @@ type Simulation struct {
 	Hazards              []Hazard
 	MaxSafeZones         int
 	SafeZones            []SafeZone
-	Events               events.EventEmitter
+	EventEmitter         events.EventEmitter
 }
 
 // SimulationState phases of a simulation
@@ -59,7 +59,7 @@ func NewSimulation(config SimulationConfig) (Simulation, error) {
 		MaxSafeZones: randIntInRange(config.SafeZone.CountRange),
 		SafeZones:    []SafeZone{safeZone},
 		Citizens:     createCitizens(config.CitizenCountRange, &grid),
-		Events:       &events.InMemoryEventLog{},
+		EventEmitter: &events.InMemoryEventLog{},
 	}
 
 	return simulation, nil
@@ -95,7 +95,7 @@ func (s *Simulation) Tick() {
 	s.TickCount++
 
 	if len(s.Citizens) > 0 && s.DeadCitizensCount+s.EscapedCitizensCount == len(s.Citizens) {
-		err := s.Events.SimulationCompleted(s.getEventMetadata())
+		err := s.EventEmitter.SimulationCompleted(s.getEventMetadata())
 		if err != nil {
 			log.Printf("error emitting SimulationCompleted event: %v", err)
 		}
@@ -103,18 +103,24 @@ func (s *Simulation) Tick() {
 	}
 }
 
+// Events captured during simulation
+func (s *Simulation) Events() []events.SimulationEvent {
+	return s.EventEmitter.Events()
+}
+
 func (s *Simulation) updateOrRemoveHazards() {
 	for i := len(s.Hazards) - 1; i >= 0; i-- {
 		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
+			hazardID := s.Hazards[i].ID
 			s.Hazards[i].removeHazard(s.Grid)
 			s.Hazards = slices.Delete(s.Hazards, i, i+1)
-			err := s.Events.HazardDissipated(s.Hazards[i].ID, s.getEventMetadata())
+			err := s.EventEmitter.HazardDissipated(hazardID, s.getEventMetadata())
 			if err != nil {
 				log.Printf("error emitting HazardDissipated event: %v", err)
 			}
 		} else {
 			s.Hazards[i].expandHazard(s.Grid)
-			err := s.Events.HazardExpanded(s.Hazards[i].ID, s.Hazards[i].CurrentRadius, s.getEventMetadata())
+			err := s.EventEmitter.HazardExpanded(s.Hazards[i].ID, s.Hazards[i].CurrentRadius, s.getEventMetadata())
 			if err != nil {
 				log.Printf("error emitting HazardExpanded event: %v", err)
 			}
@@ -135,7 +141,7 @@ func (s *Simulation) generateIntermittentHazard() {
 	}
 
 	hazard.CreatedAt = s.TickCount
-	err = s.Events.HazardEmerged(s.ID, hazard.Origin, s.getEventMetadata())
+	err = s.EventEmitter.HazardEmerged(s.ID, hazard.Origin, s.getEventMetadata())
 	if err != nil {
 		log.Printf("error emitting HazardEmerged event: %v", err)
 		return
@@ -156,7 +162,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 		return false
 	}
 
-	err = s.Events.SafeZoneEmerged(safeZone.ID, safeZone.Position, safeZone.Radius, s.getEventMetadata())
+	err = s.EventEmitter.SafeZoneEmerged(safeZone.ID, safeZone.Position, safeZone.Radius, s.getEventMetadata())
 	if err != nil {
 		log.Printf("error emitting SafeZoneEmerged event: %v", err)
 		return false
@@ -171,7 +177,7 @@ func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
 		return false
 	}
 
-	err := s.Events.CitizenDied(s.Citizens[citizenIndex].ID, s.getEventMetadata())
+	err := s.EventEmitter.CitizenDied(s.Citizens[citizenIndex].ID, s.getEventMetadata())
 	if err != nil {
 		log.Printf("error emitting CitizenDied event: %v", err)
 		return false
@@ -208,7 +214,7 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 	}
 
 	if pathUpdated {
-		err := s.Events.CitizenPathUpdated(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].Path, s.getEventMetadata())
+		err := s.EventEmitter.CitizenPathUpdated(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].Path, s.getEventMetadata())
 		if err != nil {
 			log.Printf("error emitting CitizenPathUpdated event: %v", err)
 		}
@@ -218,7 +224,7 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 func (s *Simulation) updateCitizenLocation(citizenIndex int) {
 	hasMoved := s.Citizens[citizenIndex].incrementLocation()
 	if hasMoved {
-		err := s.Events.CitizenMoved(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].CurrentPosition, s.getEventMetadata())
+		err := s.EventEmitter.CitizenMoved(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].CurrentPosition, s.getEventMetadata())
 		if err != nil {
 			log.Printf("error emitting CitizenMoved event: %v", err)
 		}
@@ -226,7 +232,7 @@ func (s *Simulation) updateCitizenLocation(citizenIndex int) {
 
 	if s.Citizens[citizenIndex].Status == CitizenEscaped {
 		s.EscapedCitizensCount++
-		err := s.Events.CitizenEscaped(s.Citizens[citizenIndex].ID, s.getEventMetadata())
+		err := s.EventEmitter.CitizenEscaped(s.Citizens[citizenIndex].ID, s.getEventMetadata())
 		if err != nil {
 			log.Printf("error emitting CitizenEscaped event: %v", err)
 		}

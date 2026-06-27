@@ -6,14 +6,11 @@ import (
 	"slices"
 )
 
-// Dijkstra implementation of the pathfinding algorithm
-type Dijkstra struct{}
-
 // GoalPredicate defines when a goal has been reached
 type GoalPredicate func(pos Position) bool
 
 // FindPathToGoal finds shortest path from a starting point to any location matching a given predicate
-func (d *Dijkstra) FindPathToGoal(grid *Grid, from Position, isGoal GoalPredicate) ([]Position, error) {
+func FindPathToGoal(grid *Grid, from Position, isGoal GoalPredicate) ([]Position, error) {
 	if !grid.InBounds(from) {
 		return nil, ErrPositionOutOfBounds
 	}

@@ -6,11 +6,8 @@ import (
 	"slices"
 )
 
-// AStar implementation of the pathfinding algorithm
-type AStar struct{}
-
 // FindPath finds shortest path from a starting point to a given destination
-func (a *AStar) FindPath(grid *Grid, from, to Position) ([]Position, error) {
+func FindPath(grid *Grid, from, to Position) ([]Position, error) {
 	if !grid.InBounds(from) || !grid.InBounds(to) {
 		return nil, ErrPositionOutOfBounds
 	}

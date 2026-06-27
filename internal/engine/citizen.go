@@ -64,12 +64,10 @@ func createCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 }
 
 func (c *Citizen) findNearestSafeZone(grid *pf.Grid) error {
-	dijkstra := pf.Dijkstra{}
-
 	isGoal := func(pos pf.Position) bool {
 		return grid.GetCell(pos) == pf.CellSafeZone
 	}
-	path, err := dijkstra.FindPathToGoal(grid, c.CurrentPosition, isGoal)
+	path, err := pf.FindPathToGoal(grid, c.CurrentPosition, isGoal)
 
 	if err != nil {
 		return err
@@ -81,9 +79,7 @@ func (c *Citizen) findNearestSafeZone(grid *pf.Grid) error {
 }
 
 func (c *Citizen) updatePath(grid *pf.Grid) error {
-	aStar := pf.AStar{}
-
-	path, err := aStar.FindPath(grid, c.CurrentPosition, c.CurrentDestination)
+	path, err := pf.FindPath(grid, c.CurrentPosition, c.CurrentDestination)
 	if err != nil {
 		return fmt.Errorf("pathfinding failed: %w", err)
 	}

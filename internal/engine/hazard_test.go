@@ -66,8 +66,7 @@ func TestHazard_CellsBlockPathfinding(t *testing.T) {
 	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 1, Y: 2}))
 	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 3, Y: 2}))
 
-	pathfinder := pf.AStar{}
-	path, err := pathfinder.FindPath(&grid, pf.Position{X: 0, Y: 0}, pf.Position{X: 4, Y: 4})
+	path, err := pf.FindPath(&grid, pf.Position{X: 0, Y: 0}, pf.Position{X: 4, Y: 4})
 	require.NoError(t, err)
 	for _, pos := range path {
 		require.NotEqual(t, pf.CellHazard, grid.GetCell(pos), "path must not enter hazard cell at %v", pos)
@@ -78,7 +77,7 @@ func TestHazard_CellsBlockPathfinding(t *testing.T) {
 			grid.Cells[y][x] = pf.CellHazard
 		}
 	}
-	_, err = pathfinder.FindPath(&grid, pf.Position{X: 0, Y: 0}, pf.Position{X: 4, Y: 4})
+	_, err = pf.FindPath(&grid, pf.Position{X: 0, Y: 0}, pf.Position{X: 4, Y: 4})
 	require.ErrorIs(t, err, pf.ErrDestinationUnreachable)
 }
 

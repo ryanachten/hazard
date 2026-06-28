@@ -1,6 +1,7 @@
 package engine
 
 import (
+	c "hazard/internal/common"
 	"hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"log"
@@ -13,17 +14,17 @@ import (
 // Simulation engine for hazards
 type Simulation struct {
 	ID                   uuid.UUID
-	Config               SimulationConfig
+	Config               c.SimulationConfig
 	State                SimulationState
 	TickCount            uint64
 	Grid                 *pf.Grid
-	Citizens             []Citizen
+	Citizens             []c.Citizen
 	DeadCitizensCount    int
 	EscapedCitizensCount int
 	MaxHazards           int
-	Hazards              []Hazard
+	Hazards              []c.Hazard
 	MaxSafeZones         int
-	SafeZones            []SafeZone
+	SafeZones            []c.SafeZone
 	EventEmitter         events.EventEmitter
 }
 
@@ -42,10 +43,10 @@ const (
 )
 
 // NewSimulation creates a simulation based on configuration
-func NewSimulation(config SimulationConfig) (Simulation, error) {
+func NewSimulation(config c.SimulationConfig) (Simulation, error) {
 	grid := pf.NewGrid(config.Width, config.Height, pf.CellOpen)
 
-	safeZone, err := createSafeZone(config.SafeZone, &grid)
+	safeZone, err := c.CreateSafeZone(config.SafeZone, &grid)
 	if err != nil {
 		return Simulation{}, err
 	}
@@ -55,10 +56,10 @@ func NewSimulation(config SimulationConfig) (Simulation, error) {
 		State:        SimulationCreated,
 		TickCount:    0,
 		Grid:         &grid,
-		MaxHazards:   randIntInRange(config.Hazard.CountRange),
-		MaxSafeZones: randIntInRange(config.SafeZone.CountRange),
-		SafeZones:    []SafeZone{safeZone},
-		Citizens:     createCitizens(config.CitizenCountRange, &grid),
+		MaxHazards:   c.RandIntInRange(config.Hazard.CountRange),
+		MaxSafeZones: c.RandIntInRange(config.SafeZone.CountRange),
+		SafeZones:    []c.SafeZone{safeZone},
+		Citizens:     c.CreateCitizens(config.CitizenCountRange, &grid),
 		EventEmitter: &events.InMemoryEventLog{},
 	}
 
@@ -79,7 +80,7 @@ func (s *Simulation) Tick() {
 
 	for i := range s.Citizens {
 
-		if s.Citizens[i].Status == CitizenDead || s.Citizens[i].Status == CitizenEscaped {
+		if s.Citizens[i].Status == c.CitizenDead || s.Citizens[i].Status == c.CitizenEscaped {
 			continue
 		}
 
@@ -112,14 +113,14 @@ func (s *Simulation) updateOrRemoveHazards() {
 	for i := len(s.Hazards) - 1; i >= 0; i-- {
 		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
 			hazardID := s.Hazards[i].ID
-			s.Hazards[i].removeHazard(s.Grid)
+			s.Hazards[i].RemoveHazard(s.Grid)
 			s.Hazards = slices.Delete(s.Hazards, i, i+1)
 			err := s.EventEmitter.HazardDissipated(hazardID, s.getEventMetadata())
 			if err != nil {
 				log.Printf("error emitting HazardDissipated event: %v", err)
 			}
 		} else {
-			s.Hazards[i].expandHazard(s.Grid)
+			s.Hazards[i].ExpandHazard(s.Grid)
 			err := s.EventEmitter.HazardExpanded(s.Hazards[i].ID, s.Hazards[i].CurrentRadius, s.getEventMetadata())
 			if err != nil {
 				log.Printf("error emitting HazardExpanded event: %v", err)
@@ -134,7 +135,7 @@ func (s *Simulation) generateIntermittentHazard() {
 		return
 	}
 
-	hazard, err := createHazard(hazardConfig, s.Grid)
+	hazard, err := c.CreateHazard(hazardConfig, s.Grid)
 	if err != nil {
 		log.Printf("error creating hazard: %v", err)
 		return
@@ -155,7 +156,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 		return false
 	}
 
-	safeZone, err := createSafeZone(safeZoneConfig, s.Grid)
+	safeZone, err := c.CreateSafeZone(safeZoneConfig, s.Grid)
 	if err != nil {
 		log.Printf("error creating safe zone: %v", err)
 		return false
@@ -182,7 +183,7 @@ func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
 		return false
 	}
 
-	s.Citizens[citizenIndex].Status = CitizenDead
+	s.Citizens[citizenIndex].Status = c.CitizenDead
 	s.DeadCitizensCount++
 	return true
 }
@@ -192,7 +193,7 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 
 	// If new safe zone added, determine which safe zone is closest
 	if safeZoneCreated {
-		err := s.Citizens[citizenIndex].findNearestSafeZone(s.Grid)
+		err := s.Citizens[citizenIndex].FindNearestSafeZone(s.Grid)
 		if err != nil {
 			log.Printf("error finding safe zone for citizen %v path: %v", citizenIndex, err)
 			return
@@ -202,7 +203,7 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 		// Check if any path intersects with hazards and needs recalculating
 		for _, pos := range s.Citizens[citizenIndex].Path {
 			if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
-				err := s.Citizens[citizenIndex].updatePath(s.Grid)
+				err := s.Citizens[citizenIndex].UpdatePath(s.Grid)
 				if err != nil {
 					log.Printf("error updating citizen %v path: %v", citizenIndex, err)
 				}
@@ -221,7 +222,7 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 }
 
 func (s *Simulation) updateCitizenLocation(citizenIndex int) {
-	hasMoved := s.Citizens[citizenIndex].incrementLocation()
+	hasMoved := s.Citizens[citizenIndex].IncrementLocation()
 	if hasMoved {
 		err := s.EventEmitter.CitizenMoved(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].CurrentPosition, s.getEventMetadata())
 		if err != nil {
@@ -229,7 +230,7 @@ func (s *Simulation) updateCitizenLocation(citizenIndex int) {
 		}
 	}
 
-	if s.Citizens[citizenIndex].Status == CitizenEscaped {
+	if s.Citizens[citizenIndex].Status == c.CitizenEscaped {
 		s.EscapedCitizensCount++
 		err := s.EventEmitter.CitizenEscaped(s.Citizens[citizenIndex].ID, s.getEventMetadata())
 		if err != nil {

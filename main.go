@@ -2,18 +2,29 @@
 package main
 
 import (
+	c "hazard/internal/common"
 	eng "hazard/internal/engine"
 	"hazard/internal/events"
+	"hazard/internal/tui"
 	"log"
 	"time"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 func main() {
-	config := eng.SimulationConfig{
+	config := c.SimulationConfig{
 		TickIntervalMs:    100,
 		Height:            100,
 		Width:             100,
 		CitizenCountRange: [2]int{5, 10},
+		Hazard: c.HazardConfig{
+			DurationRange: [2]int{5, 10},
+		},
+		SafeZone: c.SafeZoneConfig{
+			RadiusRange: [2]int{3, 7},
+			CountRange:  [2]int{2, 5},
+		},
 	}
 
 	err := config.Validate()
@@ -27,10 +38,16 @@ func main() {
 	}
 
 	go func() {
-		err := simulation.EventEmitter.SimulationStarted(events.EventMetadata{
-			SimulationID: simulation.ID,
-			Tick:         simulation.TickCount,
-		})
+		err := simulation.EventEmitter.SimulationStarted(
+			events.SimulationStartedPayload{
+				Grid:      simulation.Grid,
+				Citizens:  simulation.Citizens,
+				SafeZones: simulation.SafeZones,
+			},
+			events.EventMetadata{
+				SimulationID: simulation.ID,
+				Tick:         simulation.TickCount,
+			})
 		if err != nil {
 			log.Fatalf("error creating SimulationStarted event: %v", err)
 		}
@@ -42,6 +59,11 @@ func main() {
 			simulation.Tick()
 		}
 	}()
+
+	p := tea.NewProgram(tui.InitialModel())
+	if _, err := p.Run(); err != nil {
+		log.Fatalf("error running program: %v", err)
+	}
 
 	select {}
 }

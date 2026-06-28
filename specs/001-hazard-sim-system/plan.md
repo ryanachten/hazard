@@ -102,17 +102,16 @@ Each slice is independently testable and introduces one new concept. Developed i
 | 4 | Safe Zones + Death | Citizens escape or die, simulation completion; dynamic safe zone emergence | State machine, multiple termination conditions, scheduled emergence | Simulation ends when all citizens resolved; new safe zones appear mid-run |
 | 5 | Event Emission | Event type constructors, tick integration, in-memory storage | `time.Time`, UUID, event patterns | Complete event log for any run |
 | 6 | Terminal TUI — Core | Bubbletea model/view/update, lipgloss grid rendering, keyboard controls (start/pause/quit) | External Go libraries, Elm architecture, `lipgloss` styling, event-driven UI | TUI shows live simulation, responds to keyboard input |
-| 7 | Config Sidebar | Split-pane layout (grid + config panel), live-adjustable `SimulationConfig` fields with focus cycling | `lipgloss.JoinHorizontal`, focus management, config-as-UI mapping | Config sidebar renders alongside grid, Tab/↑↓ adjust values |
-| 8 | CLI Controls (P2) | `simctl` start, pause, stop, status | `flag` package, JSON config, signal handling | `simctl start --config x.json` runs simulation |
-| 9 | Event Fan-Out + Optional Remote Observer (P2) | In-process event hub broadcasting to TUI + optional subscribers; optional HTTP/WebSocket for remote observation | Go channels for fan-out, hub-and-spoke pattern, optional `coder/websocket` | Events fanned out to TUI and optional remote client |
-| 10 | NATS/JetStream Integration (P3) | Produce/consume simulation events | `nats.go` JetStream producer/consumer, `docker-compose`, event serialization | Events appear in JetStream stream |
-| 11 | Autonomy + Performance (P3) | Risk tolerance, path preference, 100+ citizens | A* variants (weighted), benchmarking, `pprof` | Citizens take different paths, 100 citizens at <2x real-time |
+| 7 | Entity-Grid Occupancy | `CellCitizen` cell type, citizen grid marking, obstacle placement (`StaticObstacle` + `ObstacleConfig`), safe zone capacity (`MaxOccupants`/`OccupantIDs`), pathfinding respects citizen-occupied, obstacle, and full safe-zone cells | Grid cell state management, pathfinding integration with dynamic blocking, capacity-aware navigation, environment generation | Citizen cells and obstacles block pathfinding; safe zone refuses entry when full; citizens recalculate toward available zone |
+| 8 | Config Sidebar | Split-pane layout (grid + config panel), live-adjustable `SimulationConfig` fields with focus cycling | `lipgloss.JoinHorizontal`, focus management, config-as-UI mapping | Config sidebar renders alongside grid, Tab/↑↓ adjust values |
+| 9 | CLI Controls (P2) | `simctl` start, pause, stop, status | `flag` package, JSON config, signal handling | `simctl start --config x.json` runs simulation |
+| 10 | Event Fan-Out + Optional Remote Observer (P2) | In-process event hub broadcasting to TUI + optional subscribers; optional HTTP/WebSocket for remote observation | Go channels for fan-out, hub-and-spoke pattern, optional `coder/websocket` | Events fanned out to TUI and optional remote client |
+| 11 | NATS/JetStream Integration (P3) | Produce/consume simulation events | `nats.go` JetStream producer/consumer, `docker-compose`, event serialization | Events appear in JetStream stream |
+| 12 | Autonomy + Performance (P3) | Risk tolerance, path preference, 100+ citizens | A* variants (weighted), benchmarking, `pprof` | Citizens take different paths, 100 citizens at <2x real-time |
 
 ## Future Enhancements
 
-The following are deferred from v1 but documented for potential later iteration:
-
-- **Safe Zone Capacity**: Add `MaxOccupants` and `OccupantIDs` to `SafeZone`. Citizens targeting a full zone recalculate. Best implemented as a discrete enhancement after Slice 4 (Safe Zones + Death). Fully complementary with dynamic emergence (more zones + capacity limits = citizens spread out).
+> Safe zone capacity was promoted from Future Enhancements to Phase 7 (Entity-Grid Occupancy).
 
 ## Complexity Tracking
 

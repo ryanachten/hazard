@@ -1,8 +1,7 @@
-package engine
+package common
 
 import (
 	"errors"
-	"math/rand"
 )
 
 // SimulationConfig configuration for a simulation
@@ -74,10 +73,4 @@ func (s *SimulationConfig) Validate() error {
 	}
 
 	return errors.Join(err...)
-}
-
-func randIntInRange(valueRange [2]int) int {
-	configMin := valueRange[0]
-	configMax := valueRange[1]
-	return configMin + rand.Intn(configMax-configMin+1)
 }

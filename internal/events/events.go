@@ -3,6 +3,7 @@ package events
 
 import (
 	"encoding/json"
+	c "hazard/internal/common"
 	"hazard/internal/pathfinding"
 	"time"
 
@@ -11,13 +12,13 @@ import (
 
 // SimulationEvent represents a domain event that occurred during a simulation
 type SimulationEvent struct {
-	ID           uuid.UUID       `json:"id"`
-	EventType    eventType       `json:"eventType"`
-	SimulationID uuid.UUID       `json:"simulationId"`
-	Tick         uint64          `json:"tick"`
-	Timestamp    time.Time       `json:"timestamp"`
-	EntityID     uuid.UUID       `json:"entityId"`
-	Payload      json.RawMessage `json:"payload"`
+	ID           uuid.UUID
+	EventType    eventType
+	SimulationID uuid.UUID
+	Tick         uint64
+	Timestamp    time.Time
+	EntityID     uuid.UUID
+	Payload      json.RawMessage
 }
 
 // EventMetadata common for all simulation events
@@ -26,25 +27,45 @@ type EventMetadata struct {
 	Tick         uint64
 }
 
+// SimulationEventChannel to subscribe to simulation events
+var SimulationEventChannel = make(chan SimulationEvent)
+
 type eventType string
 
 const (
-	simulationStarted   eventType = "simulation.started"
-	simulationCompleted eventType = "simulation.completed"
-	citizenMoved        eventType = "citizen.moved"
-	citizenPathUpdated  eventType = "citizen.pathUpdated"
-	citizenEscaped      eventType = "citizen.escaped"
-	citizenDied         eventType = "citizen.died"
-	safeZoneEmerged     eventType = "safeZone.emerged"
-	hazardEmerged       eventType = "hazard.emerged"
-	hazardExpanded      eventType = "hazard.expanded"
-	hazardDissipated    eventType = "hazard.dissipated"
+	// SimulationStarted event type indicates the simulation has started
+	SimulationStarted eventType = "simulation.started"
+	// SimulationCompleted event type indicates the simulation has completed
+	SimulationCompleted eventType = "simulation.completed"
+	// CitizenMoved event type for citizen movement
+	CitizenMoved eventType = "citizen.moved"
+	// CitizenPathUpdated event type for citizen path recalculation
+	CitizenPathUpdated eventType = "citizen.pathUpdated"
+	// CitizenEscaped event type for citizen reaching safety
+	CitizenEscaped eventType = "citizen.escaped"
+	// CitizenDied event type for citizen overtaken by hazard
+	CitizenDied eventType = "citizen.died"
+	// SafeZoneEmerged event type for new safe zone appearing on the grid
+	SafeZoneEmerged eventType = "safeZone.emerged"
+	// HazardEmerged event type for new hazard appearing on the grid
+	HazardEmerged eventType = "hazard.emerged"
+	// HazardExpanded event type for hazard radius increase
+	HazardExpanded eventType = "hazard.expanded"
+	// HazardDissipated event type for hazard dissipation
+	HazardDissipated eventType = "hazard.dissipated"
 )
+
+// SimulationStartedPayload for simulation start event
+type SimulationStartedPayload struct {
+	Grid      *pathfinding.Grid
+	Citizens  []c.Citizen
+	SafeZones []c.SafeZone
+}
 
 // EventEmitter defines how events are emitted in the simulation
 type EventEmitter interface {
 	Events() []SimulationEvent
-	SimulationStarted(metadata EventMetadata) error
+	SimulationStarted(payload SimulationStartedPayload, metadata EventMetadata) error
 	SimulationCompleted(metadata EventMetadata) error
 	CitizenMoved(citizenID uuid.UUID, newPosition pathfinding.Position, metadata EventMetadata) error
 	CitizenPathUpdated(citizenID uuid.UUID, path []pathfinding.Position, metadata EventMetadata) error

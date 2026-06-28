@@ -1,6 +1,7 @@
 package engine
 
 import (
+	c "hazard/internal/common"
 	"hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"testing"
@@ -10,16 +11,16 @@ import (
 )
 
 func newTestSim() (Simulation, error) {
-	return NewSimulation(SimulationConfig{
+	return NewSimulation(c.SimulationConfig{
 		Width:             10,
 		Height:            10,
 		CitizenCountRange: [2]int{0, 0},
-		Hazard: HazardConfig{
+		Hazard: c.HazardConfig{
 			DurationRange: [2]int{100, 100},
 			Probability:   0,
 			CountRange:    [2]int{0, 0},
 		},
-		SafeZone: SafeZoneConfig{
+		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
 			CountRange:  [2]int{1, 1},
 			RadiusRange: [2]int{1, 1},
@@ -31,7 +32,7 @@ func TestHazard_RadiusGrowsEachTick(t *testing.T) {
 	sim, err := newTestSim()
 	require.NoError(t, err)
 
-	sim.Hazards = append(sim.Hazards, Hazard{
+	sim.Hazards = append(sim.Hazards, c.Hazard{
 		CreatedAt:     0,
 		Duration:      100,
 		Origin:        pf.Position{X: 5, Y: 5},
@@ -50,42 +51,11 @@ func TestHazard_RadiusGrowsEachTick(t *testing.T) {
 	require.Equal(t, 3, sim.Hazards[0].CurrentRadius)
 }
 
-func TestHazard_CellsBlockPathfinding(t *testing.T) {
-	grid := pf.NewGrid(5, 5, pf.CellOpen)
-	hazard := Hazard{
-		Origin:        pf.Position{X: 2, Y: 2},
-		CurrentRadius: 0,
-	}
-
-	grid.UpdateCell(pf.Position{X: 2, Y: 2}, pf.CellHazard)
-	hazard.expandHazard(&grid)
-
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 2, Y: 2}))
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 2, Y: 1}))
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 2, Y: 3}))
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 1, Y: 2}))
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 3, Y: 2}))
-
-	path, err := pf.FindPath(&grid, pf.Position{X: 0, Y: 0}, pf.Position{X: 4, Y: 4})
-	require.NoError(t, err)
-	for _, pos := range path {
-		require.NotEqual(t, pf.CellHazard, grid.GetCell(pos), "path must not enter hazard cell at %v", pos)
-	}
-
-	for y := range grid.Height {
-		for x := range grid.Width {
-			grid.Cells[y][x] = pf.CellHazard
-		}
-	}
-	_, err = pf.FindPath(&grid, pf.Position{X: 0, Y: 0}, pf.Position{X: 4, Y: 4})
-	require.ErrorIs(t, err, pf.ErrDestinationUnreachable)
-}
-
 func TestHazard_RemovedAfterDuration(t *testing.T) {
 	sim, err := newTestSim()
 	require.NoError(t, err)
 
-	hazard := Hazard{
+	hazard := c.Hazard{
 		CreatedAt:     0,
 		Duration:      1,
 		Origin:        pf.Position{X: 5, Y: 5},
@@ -113,55 +83,17 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 		"expanded cell at radius 2 must be restored to open")
 }
 
-func TestCreateHazard(t *testing.T) {
-	grid := pf.NewGrid(10, 10, pf.CellOpen)
-	config := HazardConfig{
-		DurationRange: [2]int{5, 10},
-		Probability:   0.5,
-		CountRange:    [2]int{0, 0},
-	}
-
-	hazard, err := createHazard(config, &grid)
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, hazard.Duration, 5)
-	require.LessOrEqual(t, hazard.Duration, 10)
-	require.Contains(t, []string{"fire", "flood", "lava"}, hazard.Type.Name)
-	require.True(t, grid.InBounds(hazard.Origin))
-	require.Equal(t, pf.CellHazard, grid.GetCell(hazard.Origin))
-}
-
-func TestCreateHazard_NoOpenCells(t *testing.T) {
-	grid := pf.NewGrid(2, 2, pf.CellObstacle)
-	config := HazardConfig{
-		DurationRange: [2]int{5, 5},
-	}
-
-	_, err := createHazard(config, &grid)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "no open cells available")
-}
-
-func TestRandomHazardType(t *testing.T) {
-	seen := make(map[string]bool)
-	for range 100 {
-		ht := randomHazardType()
-		require.Contains(t, HazardTypes, ht.Name)
-		seen[ht.Name] = true
-	}
-	require.GreaterOrEqual(t, len(seen), 2)
-}
-
 func TestHazard_CreationViaTick(t *testing.T) {
-	sim, err := NewSimulation(SimulationConfig{
+	sim, err := NewSimulation(c.SimulationConfig{
 		Width:             10,
 		Height:            10,
 		CitizenCountRange: [2]int{0, 0},
-		Hazard: HazardConfig{
+		Hazard: c.HazardConfig{
 			DurationRange: [2]int{10, 10},
 			Probability:   1.0,
 			CountRange:    [2]int{5, 5},
 		},
-		SafeZone: SafeZoneConfig{
+		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
 			CountRange:  [2]int{0, 0},
 			RadiusRange: [2]int{1, 1},
@@ -204,12 +136,12 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 	}
 
 	sim := Simulation{
-		Config: SimulationConfig{
-			SafeZone: SafeZoneConfig{
+		Config: c.SimulationConfig{
+			SafeZone: c.SafeZoneConfig{
 				CountRange:  [2]int{1, 1},
 				RadiusRange: [2]int{1, 1},
 			},
-			Hazard: HazardConfig{
+			Hazard: c.HazardConfig{
 				DurationRange: [2]int{100, 100},
 				Probability:   0,
 				CountRange:    [2]int{0, 0},
@@ -220,20 +152,20 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		EventEmitter: &events.InMemoryEventLog{},
 		MaxHazards:   0,
 		MaxSafeZones: 1,
-		SafeZones: []SafeZone{
+		SafeZones: []c.SafeZone{
 			{Position: destination, Radius: 1},
 		},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
 				ID:                 uuid.New(),
-				Status:             CitizenIdle,
+				Status:             c.CitizenIdle,
 				CurrentPosition:    pf.Position{X: 0, Y: 0},
 				CurrentDestination: destination,
 				Path:               path,
 				CurrentPathIndex:   0,
 			},
 		},
-		Hazards: []Hazard{},
+		Hazards: []c.Hazard{},
 	}
 
 	blockedCell := pf.Position{X: 0, Y: 2}

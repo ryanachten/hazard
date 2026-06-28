@@ -1,6 +1,8 @@
+// Package engine tests for the simulation engine
 package engine
 
 import (
+	c "hazard/internal/common"
 	"hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"testing"
@@ -10,16 +12,16 @@ import (
 )
 
 func TestNewSimulation_EventLogIsEmpty(t *testing.T) {
-	config := SimulationConfig{
+	config := c.SimulationConfig{
 		Width:             5,
 		Height:            5,
 		CitizenCountRange: [2]int{0, 0},
-		Hazard: HazardConfig{
+		Hazard: c.HazardConfig{
 			Probability:   0,
 			CountRange:    [2]int{0, 0},
 			DurationRange: [2]int{1, 1},
 		},
-		SafeZone: SafeZoneConfig{
+		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
 			CountRange:  [2]int{1, 1},
 			RadiusRange: [2]int{1, 1},
@@ -38,9 +40,9 @@ func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
@@ -70,9 +72,9 @@ func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
@@ -110,9 +112,9 @@ func TestTick_EmitsCitizenDiedEvent(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
 				CurrentPathIndex: 0,
@@ -139,7 +141,7 @@ func TestTick_EmitsHazardExpandedEvents(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Hazards: []Hazard{
+		Hazards: []c.Hazard{
 			{
 				ID:            uuid.New(),
 				CreatedAt:     0,
@@ -171,9 +173,9 @@ func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
@@ -199,9 +201,9 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
@@ -232,9 +234,9 @@ func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
@@ -275,10 +277,10 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 	sim := Simulation{
 		EventEmitter: &events.InMemoryEventLog{},
 		Grid:         &grid,
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
 				ID:                 uuid.New(),
-				Status:             CitizenIdle,
+				Status:             c.CitizenIdle,
 				CurrentPosition:    pf.Position{X: 0, Y: 0},
 				CurrentDestination: destination,
 				Path:               path,
@@ -311,10 +313,10 @@ func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
 		ID:           uuid.New(),
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
 				ID:               uuid.New(),
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
@@ -359,17 +361,17 @@ func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
 				ID:               citizen1ID,
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 			{
 				ID:               citizen2ID,
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 1},
 				Path:             []pf.Position{{X: 0, Y: 1}, {X: 1, Y: 1}, {X: 2, Y: 1}, {X: 3, Y: 1}, {X: 4, Y: 1}},
 				CurrentPathIndex: 0,
@@ -407,10 +409,10 @@ func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 		ID:           simID,
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
 				ID:               citizenID,
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
 				CurrentPathIndex: 0,
@@ -439,9 +441,9 @@ func TestPausedSimulation_EmitsNoEvents(t *testing.T) {
 		State:        SimulationPaused,
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
 			},
@@ -459,9 +461,9 @@ func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
 	sim := Simulation{
 		Grid:         &grid,
 		EventEmitter: &events.InMemoryEventLog{},
-		Citizens: []Citizen{
+		Citizens: []c.Citizen{
 			{
-				Status:           CitizenIdle,
+				Status:           c.CitizenIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,

@@ -17,18 +17,19 @@ func (e *InMemoryEventLog) Events() []SimulationEvent {
 }
 
 // SimulationStarted raised when simulation starts
-func (e *InMemoryEventLog) SimulationStarted(metadata EventMetadata) error {
-	event, err := createEvent(simulationStarted, metadata.SimulationID, metadata, nil)
+func (e *InMemoryEventLog) SimulationStarted(payload SimulationStartedPayload, metadata EventMetadata) error {
+	event, err := createEvent(SimulationStarted, metadata.SimulationID, metadata, payload)
 	if err != nil {
 		return err
 	}
+	SimulationEventChannel <- event
 	e.EventLog = append(e.EventLog, event)
 	return nil
 }
 
 // SimulationCompleted raised when simulation finishes
 func (e *InMemoryEventLog) SimulationCompleted(metadata EventMetadata) error {
-	event, err := createEvent(simulationCompleted, metadata.SimulationID, metadata, nil)
+	event, err := createEvent(SimulationCompleted, metadata.SimulationID, metadata, nil)
 	if err != nil {
 		return err
 	}
@@ -38,7 +39,7 @@ func (e *InMemoryEventLog) SimulationCompleted(metadata EventMetadata) error {
 
 // CitizenMoved raised when a citizen moves
 func (e *InMemoryEventLog) CitizenMoved(citizenID uuid.UUID, newPosition pathfinding.Position, metadata EventMetadata) error {
-	event, err := createEvent(citizenMoved, citizenID, metadata, newPosition)
+	event, err := createEvent(CitizenMoved, citizenID, metadata, newPosition)
 	if err != nil {
 		return err
 	}
@@ -48,7 +49,7 @@ func (e *InMemoryEventLog) CitizenMoved(citizenID uuid.UUID, newPosition pathfin
 
 // CitizenPathUpdated raised when a citizen's path is recalculated
 func (e *InMemoryEventLog) CitizenPathUpdated(citizenID uuid.UUID, path []pathfinding.Position, metadata EventMetadata) error {
-	event, err := createEvent(citizenPathUpdated, citizenID, metadata, path)
+	event, err := createEvent(CitizenPathUpdated, citizenID, metadata, path)
 	if err != nil {
 		return err
 	}
@@ -60,7 +61,7 @@ func (e *InMemoryEventLog) CitizenPathUpdated(citizenID uuid.UUID, path []pathfi
 func (e *InMemoryEventLog) CitizenEscaped(citizenID uuid.UUID, metadata EventMetadata) error {
 	// TODO: ideally we would have some sort of relationship between citizens and the safe zone they've occupied
 	// - this is out of scope for now
-	event, err := createEvent(citizenEscaped, citizenID, metadata, nil)
+	event, err := createEvent(CitizenEscaped, citizenID, metadata, nil)
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (e *InMemoryEventLog) CitizenEscaped(citizenID uuid.UUID, metadata EventMet
 
 // CitizenDied raised when a citizen has been killed by a hazard
 func (e *InMemoryEventLog) CitizenDied(citizenID uuid.UUID, metadata EventMetadata) error {
-	event, err := createEvent(citizenDied, citizenID, metadata, nil)
+	event, err := createEvent(CitizenDied, citizenID, metadata, nil)
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ type safeZoneEmergedPayload struct {
 
 // SafeZoneEmerged raised when a safe zone emerges
 func (e *InMemoryEventLog) SafeZoneEmerged(safeZoneID uuid.UUID, position pathfinding.Position, radius int, metadata EventMetadata) error {
-	event, err := createEvent(safeZoneEmerged, safeZoneID, metadata, safeZoneEmergedPayload{
+	event, err := createEvent(SafeZoneEmerged, safeZoneID, metadata, safeZoneEmergedPayload{
 		Position: position,
 		Radius:   radius,
 	})
@@ -98,7 +99,7 @@ func (e *InMemoryEventLog) SafeZoneEmerged(safeZoneID uuid.UUID, position pathfi
 
 // HazardEmerged raised when a hazard emerges
 func (e *InMemoryEventLog) HazardEmerged(hazardID uuid.UUID, position pathfinding.Position, metadata EventMetadata) error {
-	event, err := createEvent(hazardEmerged, hazardID, metadata, position)
+	event, err := createEvent(HazardEmerged, hazardID, metadata, position)
 	if err != nil {
 		return err
 	}
@@ -108,7 +109,7 @@ func (e *InMemoryEventLog) HazardEmerged(hazardID uuid.UUID, position pathfindin
 
 // HazardExpanded raised when a hazard expands
 func (e *InMemoryEventLog) HazardExpanded(hazardID uuid.UUID, radius int, metadata EventMetadata) error {
-	event, err := createEvent(hazardExpanded, hazardID, metadata, radius)
+	event, err := createEvent(HazardExpanded, hazardID, metadata, radius)
 	if err != nil {
 		return err
 	}
@@ -118,7 +119,7 @@ func (e *InMemoryEventLog) HazardExpanded(hazardID uuid.UUID, radius int, metada
 
 // HazardDissipated raised when a hazard disappears
 func (e *InMemoryEventLog) HazardDissipated(hazardID uuid.UUID, metadata EventMetadata) error {
-	event, err := createEvent(hazardDissipated, hazardID, metadata, nil)
+	event, err := createEvent(HazardDissipated, hazardID, metadata, nil)
 	if err != nil {
 		return err
 	}

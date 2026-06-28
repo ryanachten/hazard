@@ -1,5 +1,5 @@
-// Package engine defines the simulation engine
-package engine
+// Package common define common types and utilities in the project
+package common
 
 import (
 	"fmt"
@@ -33,8 +33,9 @@ const (
 	CitizenDead CitizenStatus = "dead"
 )
 
-func createCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
-	citizenCount := randIntInRange(citizenCountRange)
+// CreateCitizens instantiates citizens in a grid
+func CreateCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
+	citizenCount := RandIntInRange(citizenCountRange)
 	citizens := make([]Citizen, 0, citizenCount)
 
 	for range citizenCount {
@@ -51,7 +52,7 @@ func createCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 			CurrentPathIndex: 0,
 		}
 
-		err = citizen.findNearestSafeZone(grid)
+		err = citizen.FindNearestSafeZone(grid)
 		if err != nil {
 			log.Printf("error updating citizen %v path: %v", citizen.ID, err)
 			continue
@@ -63,7 +64,8 @@ func createCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 	return citizens
 }
 
-func (c *Citizen) findNearestSafeZone(grid *pf.Grid) error {
+// FindNearestSafeZone finds a path from the citizen's current position to the nearest safe zone
+func (c *Citizen) FindNearestSafeZone(grid *pf.Grid) error {
 	isGoal := func(pos pf.Position) bool {
 		return grid.GetCell(pos) == pf.CellSafeZone
 	}
@@ -78,7 +80,8 @@ func (c *Citizen) findNearestSafeZone(grid *pf.Grid) error {
 	return nil
 }
 
-func (c *Citizen) updatePath(grid *pf.Grid) error {
+// UpdatePath recalculates the path from the citizen's current position to their destination
+func (c *Citizen) UpdatePath(grid *pf.Grid) error {
 	path, err := pf.FindPath(grid, c.CurrentPosition, c.CurrentDestination)
 	if err != nil {
 		return fmt.Errorf("pathfinding failed: %w", err)
@@ -89,7 +92,8 @@ func (c *Citizen) updatePath(grid *pf.Grid) error {
 	return nil
 }
 
-func (c *Citizen) incrementLocation() bool {
+// IncrementLocation moves the citizen one step along their path and updates their status
+func (c *Citizen) IncrementLocation() bool {
 	hasMoved := false
 
 	if c.Status == CitizenEscaped || c.Status == CitizenDead {
@@ -99,8 +103,6 @@ func (c *Citizen) incrementLocation() bool {
 	if c.CurrentPathIndex < len(c.Path)-1 {
 		c.CurrentPathIndex++
 		c.CurrentPosition = c.Path[c.CurrentPathIndex]
-
-		log.Printf("Citizen %v now at %v of %v steps", c.ID, c.CurrentPathIndex, len(c.Path))
 		hasMoved = true
 	}
 

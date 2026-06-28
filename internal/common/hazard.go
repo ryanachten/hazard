@@ -1,4 +1,4 @@
-package engine
+package common
 
 import (
 	pf "hazard/internal/pathfinding"
@@ -51,8 +51,9 @@ func randomHazardType() HazardType {
 	return HazardTypes[k]
 }
 
-func createHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
-	duration := randIntInRange(config.DurationRange)
+// CreateHazard creates a new hazard at a random open position on the grid
+func CreateHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
+	duration := RandIntInRange(config.DurationRange)
 
 	origin, err := grid.GetRandomOpenPosition()
 	if err != nil {
@@ -71,12 +72,14 @@ func createHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
 	return hazard, nil
 }
 
-func (h *Hazard) expandHazard(grid *pf.Grid) {
+// ExpandHazard increases the hazard radius and marks affected cells on the grid
+func (h *Hazard) ExpandHazard(grid *pf.Grid) {
 	h.CurrentRadius++
 	h.updateCells(grid, pf.CellOpen, pf.CellHazard)
 }
 
-func (h *Hazard) removeHazard(grid *pf.Grid) {
+// RemoveHazard clears the hazard's cells from the grid
+func (h *Hazard) RemoveHazard(grid *pf.Grid) {
 	h.updateCells(grid, pf.CellHazard, pf.CellOpen)
 }
 

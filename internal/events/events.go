@@ -27,8 +27,10 @@ type EventMetadata struct {
 	Tick         uint64
 }
 
+const eventBufferSize = 256
+
 // SimulationEventChannel to subscribe to simulation events
-var SimulationEventChannel = make(chan SimulationEvent)
+var SimulationEventChannel = make(chan SimulationEvent, eventBufferSize)
 
 type eventType string
 
@@ -57,7 +59,7 @@ const (
 
 // SimulationStartedPayload for simulation start event
 type SimulationStartedPayload struct {
-	Grid      *pathfinding.Grid
+	Grid      pathfinding.Grid
 	Citizens  []c.Citizen
 	SafeZones []c.SafeZone
 }

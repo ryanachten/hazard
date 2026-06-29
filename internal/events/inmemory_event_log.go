@@ -1,7 +1,7 @@
 package events
 
 import (
-	"hazard/internal/pathfinding"
+	pf "hazard/internal/pathfinding"
 
 	"github.com/google/uuid"
 )
@@ -22,12 +22,6 @@ func (e *InMemoryEventLog) SimulationStarted(payload SimulationStartedPayload, m
 	if err != nil {
 		return err
 	}
-
-	select {
-	case SimulationEventChannel <- event:
-	default:
-	}
-
 	e.EventLog = append(e.EventLog, event)
 	return nil
 }
@@ -43,7 +37,7 @@ func (e *InMemoryEventLog) SimulationCompleted(metadata EventMetadata) error {
 }
 
 // CitizenMoved raised when a citizen moves
-func (e *InMemoryEventLog) CitizenMoved(citizenID uuid.UUID, newPosition pathfinding.Position, metadata EventMetadata) error {
+func (e *InMemoryEventLog) CitizenMoved(citizenID uuid.UUID, newPosition pf.Position, metadata EventMetadata) error {
 	event, err := createEvent(CitizenMoved, citizenID, metadata, newPosition)
 	if err != nil {
 		return err
@@ -53,7 +47,7 @@ func (e *InMemoryEventLog) CitizenMoved(citizenID uuid.UUID, newPosition pathfin
 }
 
 // CitizenPathUpdated raised when a citizen's path is recalculated
-func (e *InMemoryEventLog) CitizenPathUpdated(citizenID uuid.UUID, path []pathfinding.Position, metadata EventMetadata) error {
+func (e *InMemoryEventLog) CitizenPathUpdated(citizenID uuid.UUID, path []pf.Position, metadata EventMetadata) error {
 	event, err := createEvent(CitizenPathUpdated, citizenID, metadata, path)
 	if err != nil {
 		return err
@@ -84,17 +78,9 @@ func (e *InMemoryEventLog) CitizenDied(citizenID uuid.UUID, metadata EventMetada
 	return nil
 }
 
-type safeZoneEmergedPayload struct {
-	Position pathfinding.Position
-	Radius   int
-}
-
 // SafeZoneEmerged raised when a safe zone emerges
-func (e *InMemoryEventLog) SafeZoneEmerged(safeZoneID uuid.UUID, position pathfinding.Position, radius int, metadata EventMetadata) error {
-	event, err := createEvent(SafeZoneEmerged, safeZoneID, metadata, safeZoneEmergedPayload{
-		Position: position,
-		Radius:   radius,
-	})
+func (e *InMemoryEventLog) SafeZoneEmerged(safeZoneID uuid.UUID, cells []pf.Position, metadata EventMetadata) error {
+	event, err := createEvent(SafeZoneEmerged, safeZoneID, metadata, cells)
 	if err != nil {
 		return err
 	}
@@ -103,7 +89,7 @@ func (e *InMemoryEventLog) SafeZoneEmerged(safeZoneID uuid.UUID, position pathfi
 }
 
 // HazardEmerged raised when a hazard emerges
-func (e *InMemoryEventLog) HazardEmerged(hazardID uuid.UUID, position pathfinding.Position, metadata EventMetadata) error {
+func (e *InMemoryEventLog) HazardEmerged(hazardID uuid.UUID, position pf.Position, metadata EventMetadata) error {
 	event, err := createEvent(HazardEmerged, hazardID, metadata, position)
 	if err != nil {
 		return err
@@ -113,8 +99,8 @@ func (e *InMemoryEventLog) HazardEmerged(hazardID uuid.UUID, position pathfindin
 }
 
 // HazardExpanded raised when a hazard expands
-func (e *InMemoryEventLog) HazardExpanded(hazardID uuid.UUID, radius int, metadata EventMetadata) error {
-	event, err := createEvent(HazardExpanded, hazardID, metadata, radius)
+func (e *InMemoryEventLog) HazardExpanded(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) error {
+	event, err := createEvent(HazardExpanded, hazardID, metadata, updatedCells)
 	if err != nil {
 		return err
 	}
@@ -123,8 +109,8 @@ func (e *InMemoryEventLog) HazardExpanded(hazardID uuid.UUID, radius int, metada
 }
 
 // HazardDissipated raised when a hazard disappears
-func (e *InMemoryEventLog) HazardDissipated(hazardID uuid.UUID, metadata EventMetadata) error {
-	event, err := createEvent(HazardDissipated, hazardID, metadata, nil)
+func (e *InMemoryEventLog) HazardDissipated(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) error {
+	event, err := createEvent(HazardDissipated, hazardID, metadata, updatedCells)
 	if err != nil {
 		return err
 	}

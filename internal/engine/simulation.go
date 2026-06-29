@@ -113,15 +113,15 @@ func (s *Simulation) updateOrRemoveHazards() {
 	for i := len(s.Hazards) - 1; i >= 0; i-- {
 		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
 			hazardID := s.Hazards[i].ID
-			s.Hazards[i].RemoveHazard(s.Grid)
+			updatedCells := s.Hazards[i].RemoveHazard(s.Grid)
 			s.Hazards = slices.Delete(s.Hazards, i, i+1)
-			err := s.EventEmitter.HazardDissipated(hazardID, s.getEventMetadata())
+			err := s.EventEmitter.HazardDissipated(hazardID, updatedCells, s.getEventMetadata())
 			if err != nil {
 				log.Printf("error emitting HazardDissipated event: %v", err)
 			}
 		} else {
-			s.Hazards[i].ExpandHazard(s.Grid)
-			err := s.EventEmitter.HazardExpanded(s.Hazards[i].ID, s.Hazards[i].CurrentRadius, s.getEventMetadata())
+			updatedCells := s.Hazards[i].ExpandHazard(s.Grid)
+			err := s.EventEmitter.HazardExpanded(s.Hazards[i].ID, updatedCells, s.getEventMetadata())
 			if err != nil {
 				log.Printf("error emitting HazardExpanded event: %v", err)
 			}
@@ -164,7 +164,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 
 	s.SafeZones = append(s.SafeZones, safeZone)
 
-	err = s.EventEmitter.SafeZoneEmerged(safeZone.ID, safeZone.Position, safeZone.Radius, s.getEventMetadata())
+	err = s.EventEmitter.SafeZoneEmerged(safeZone.ID, safeZone.Cells, s.getEventMetadata())
 	if err != nil {
 		log.Printf("error emitting SafeZoneEmerged event: %v", err)
 	}

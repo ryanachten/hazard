@@ -73,23 +73,28 @@ func CreateHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
 }
 
 // ExpandHazard increases the hazard radius and marks affected cells on the grid
-func (h *Hazard) ExpandHazard(grid *pf.Grid) {
+func (h *Hazard) ExpandHazard(grid *pf.Grid) []pf.Position {
 	h.CurrentRadius++
-	h.updateCells(grid, pf.CellOpen, pf.CellHazard)
+	return h.updateCells(grid, pf.CellOpen, pf.CellHazard)
 }
 
 // RemoveHazard clears the hazard's cells from the grid
-func (h *Hazard) RemoveHazard(grid *pf.Grid) {
-	h.updateCells(grid, pf.CellHazard, pf.CellOpen)
+func (h *Hazard) RemoveHazard(grid *pf.Grid) []pf.Position {
+	return h.updateCells(grid, pf.CellHazard, pf.CellOpen)
 }
 
-func (h *Hazard) updateCells(grid *pf.Grid, oldType, newType pf.CellType) {
+func (h *Hazard) updateCells(grid *pf.Grid, oldType, newType pf.CellType) []pf.Position {
+	updatedCells := []pf.Position{}
+
 	for dx := -h.CurrentRadius; dx <= h.CurrentRadius; dx++ {
 		for dy := -h.CurrentRadius; dy <= h.CurrentRadius; dy++ {
 			pos := pf.Position{X: h.Origin.X + dx, Y: h.Origin.Y + dy}
 			if grid.InBounds(pos) && grid.GetCell(pos) == oldType {
 				grid.UpdateCell(pos, newType)
+				updatedCells = append(updatedCells, pos)
 			}
 		}
 	}
+
+	return updatedCells
 }

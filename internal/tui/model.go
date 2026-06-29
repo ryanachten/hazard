@@ -3,20 +3,22 @@ package tui
 
 import (
 	"encoding/json"
-	"hazard/internal/common"
+	c "hazard/internal/common"
 	"hazard/internal/events"
-	"hazard/internal/pathfinding"
+	pf "hazard/internal/pathfinding"
 	"log"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/google/uuid"
 )
 
 // Model represents the TUI state for the hazard simulation
 type Model struct {
 	SimulationEvents chan events.SimulationEvent
 	Grid             [][]rune
-	Citizens         []common.Citizen
+	Citizens         map[uuid.UUID]pf.Position
+	Hazards          map[uuid.UUID]rune
 }
 
 // InitialModel creates the initial TUI model state
@@ -24,7 +26,8 @@ func InitialModel() Model {
 	return Model{
 		SimulationEvents: events.SimulationEventChannel,
 		Grid:             [][]rune{},
-		Citizens:         []common.Citizen{},
+		Citizens:         map[uuid.UUID]pf.Position{},
+		Hazards:          map[uuid.UUID]rune{},
 	}
 }
 
@@ -65,6 +68,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch event.EventType {
 		case events.SimulationStarted:
 			m.handleSimulationStarted(event)
+		case events.SimulationCompleted:
+			return m, tea.Quit
+		case events.CitizenMoved:
+			m.handleCitizenMoved(event)
+		case events.CitizenDied:
+			m.handleCitizenDied(event)
+		case events.SafeZoneEmerged:
+			m.handleSafeZoneEmerged(event)
+		case events.CitizenEscaped:
+			m.handleCitizenEscaped(event)
+		case events.HazardEmerged:
+			m.handleHazardEmerged(event)
+		case events.HazardExpanded:
+			m.handleHazardExpanded(event)
+		case events.HazardDissipated:
+			m.handleHazardDissipated(event)
 		}
 
 		return m, m.consumeEvent
@@ -120,15 +139,13 @@ func (m *Model) handleSimulationStarted(event events.SimulationEvent) {
 	for y := range payload.Grid.Height {
 		m.Grid[y] = make([]rune, payload.Grid.Width)
 		for x := range payload.Grid.Width {
-			chars := cellCharacters[pathfinding.CellOpen]
-			m.Grid[y][x] = common.RandValInSlice(chars[:])
+			m.Grid[y][x] = c.RandValInSlice(openCharacters)
 		}
 	}
 
 	// Initialise safe zones
-	safeZoneChars := cellCharacters[pathfinding.CellSafeZone]
 	for _, safeZone := range payload.SafeZones {
-		safeZoneChar := common.RandValInSlice(safeZoneChars[:])
+		safeZoneChar := c.RandValInSlice(safeZoneCharacters)
 		for _, safeZoneCell := range safeZone.Cells {
 			m.Grid[safeZoneCell.Y][safeZoneCell.X] = safeZoneChar
 		}
@@ -138,7 +155,83 @@ func (m *Model) handleSimulationStarted(event events.SimulationEvent) {
 	for _, citizen := range payload.Citizens {
 		pos := citizen.CurrentPosition
 		m.Grid[pos.Y][pos.X] = citizenCharacter
+		m.Citizens[citizen.ID] = citizen.CurrentPosition
+	}
+}
+
+func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
+	var newPosition pf.Position
+	err := json.Unmarshal(event.Payload, &newPosition)
+	if err != nil {
+		log.Printf("error parsing event: %v", err)
 	}
 
-	m.Citizens = payload.Citizens
+	var currentPosition = m.Citizens[event.EntityID]
+	m.Grid[currentPosition.Y][currentPosition.X] = c.RandValInSlice(openCharacters)
+
+	m.Grid[newPosition.Y][newPosition.X] = citizenCharacter
+	m.Citizens[event.EntityID] = newPosition
+}
+
+func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
+	var currentPosition = m.Citizens[event.EntityID]
+	m.Grid[currentPosition.Y][currentPosition.X] = citizenEscapedCharacter
+}
+
+func (m *Model) handleCitizenDied(event events.SimulationEvent) {
+	var currentPosition = m.Citizens[event.EntityID]
+	m.Grid[currentPosition.Y][currentPosition.X] = citizenDeadCharacter
+}
+
+func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {
+	var cells []pf.Position
+	err := json.Unmarshal(event.Payload, &cells)
+	if err != nil {
+		log.Printf("error parsing event: %v", err)
+	}
+
+	character := c.RandValInSlice(safeZoneCharacters)
+
+	for _, cell := range cells {
+		m.Grid[cell.Y][cell.X] = character
+	}
+}
+
+func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
+	var newPosition pf.Position
+	err := json.Unmarshal(event.Payload, &newPosition)
+	if err != nil {
+		log.Printf("error parsing event: %v", err)
+	}
+
+	character := c.RandValInSlice(hazardCharacters)
+
+	m.Grid[newPosition.Y][newPosition.X] = character
+	m.Hazards[event.EntityID] = character
+}
+
+func (m *Model) handleHazardExpanded(event events.SimulationEvent) {
+	var updatedCells []pf.Position
+	err := json.Unmarshal(event.Payload, &updatedCells)
+	if err != nil {
+		log.Printf("error parsing event: %v", err)
+	}
+
+	character := m.Hazards[event.EntityID]
+
+	for _, cell := range updatedCells {
+		m.Grid[cell.Y][cell.X] = character
+	}
+}
+
+func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
+	var updatedCells []pf.Position
+	err := json.Unmarshal(event.Payload, &updatedCells)
+	if err != nil {
+		log.Printf("error parsing event: %v", err)
+	}
+
+	for _, cell := range updatedCells {
+		m.Grid[cell.Y][cell.X] = c.RandValInSlice(openCharacters)
+	}
 }

@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	c "hazard/internal/common"
 	eng "hazard/internal/engine"
 	"hazard/internal/events"
@@ -37,10 +38,13 @@ func main() {
 		log.Fatalf("error creating simulation: %v", err)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	go func() {
 		err := simulation.EventEmitter.SimulationStarted(
 			events.SimulationStartedPayload{
-				Grid:      simulation.Grid,
+				Grid:      simulation.Grid.Copy(),
 				Citizens:  simulation.Citizens,
 				SafeZones: simulation.SafeZones,
 			},
@@ -55,8 +59,13 @@ func main() {
 		ticker := time.NewTicker(time.Duration(config.TickIntervalMs) * time.Millisecond)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			simulation.Tick()
+		for {
+			select {
+			case <-ticker.C:
+				simulation.Tick()
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
@@ -65,5 +74,5 @@ func main() {
 		log.Fatalf("error running program: %v", err)
 	}
 
-	select {}
+	cancel()
 }

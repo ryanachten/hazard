@@ -86,3 +86,13 @@ func (g *Grid) GetCell(p Position) CellType {
 func (g *Grid) UpdateCell(p Position, cellType CellType) {
 	g.Cells[p.Y][p.X] = cellType
 }
+
+// Copy grid cells into a new instance
+func (g *Grid) Copy() Grid {
+	cells := make([][]CellType, g.Height)
+	for y := range g.Height {
+		cells[y] = make([]CellType, g.Width)
+		copy(cells[y], g.Cells[y])
+	}
+	return Grid{Width: g.Width, Height: g.Height, Cells: cells}
+}

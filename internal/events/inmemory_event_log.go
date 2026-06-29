@@ -22,7 +22,12 @@ func (e *InMemoryEventLog) SimulationStarted(payload SimulationStartedPayload, m
 	if err != nil {
 		return err
 	}
-	SimulationEventChannel <- event
+
+	select {
+	case SimulationEventChannel <- event:
+	default:
+	}
+
 	e.EventLog = append(e.EventLog, event)
 	return nil
 }

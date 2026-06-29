@@ -20,9 +20,12 @@ func main() {
 		Width:             100,
 		CitizenCountRange: [2]int{5, 10},
 		Hazard: c.HazardConfig{
+			Probability:   0.3,
+			CountRange:    [2]int{2, 5},
 			DurationRange: [2]int{5, 10},
 		},
 		SafeZone: c.SafeZoneConfig{
+			Probability: 0.2,
 			RadiusRange: [2]int{3, 7},
 			CountRange:  [2]int{2, 5},
 		},

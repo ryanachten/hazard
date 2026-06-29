@@ -4,7 +4,7 @@ package events
 import (
 	"encoding/json"
 	c "hazard/internal/common"
-	"hazard/internal/pathfinding"
+	pf "hazard/internal/pathfinding"
 	"time"
 
 	"github.com/google/uuid"
@@ -59,7 +59,7 @@ const (
 
 // SimulationStartedPayload for simulation start event
 type SimulationStartedPayload struct {
-	Grid      pathfinding.Grid
+	Grid      pf.Grid
 	Citizens  []c.Citizen
 	SafeZones []c.SafeZone
 }
@@ -69,14 +69,14 @@ type EventEmitter interface {
 	Events() []SimulationEvent
 	SimulationStarted(payload SimulationStartedPayload, metadata EventMetadata) error
 	SimulationCompleted(metadata EventMetadata) error
-	CitizenMoved(citizenID uuid.UUID, newPosition pathfinding.Position, metadata EventMetadata) error
-	CitizenPathUpdated(citizenID uuid.UUID, path []pathfinding.Position, metadata EventMetadata) error
+	CitizenMoved(citizenID uuid.UUID, newPosition pf.Position, metadata EventMetadata) error
+	CitizenPathUpdated(citizenID uuid.UUID, path []pf.Position, metadata EventMetadata) error
 	CitizenEscaped(citizenID uuid.UUID, metadata EventMetadata) error
 	CitizenDied(citizenID uuid.UUID, metadata EventMetadata) error
-	SafeZoneEmerged(safeZoneID uuid.UUID, position pathfinding.Position, radius int, metadata EventMetadata) error
-	HazardEmerged(hazardID uuid.UUID, position pathfinding.Position, metadata EventMetadata) error
-	HazardExpanded(hazardID uuid.UUID, radius int, metadata EventMetadata) error
-	HazardDissipated(hazardID uuid.UUID, metadata EventMetadata) error
+	SafeZoneEmerged(safeZoneID uuid.UUID, cells []pf.Position, metadata EventMetadata) error
+	HazardEmerged(hazardID uuid.UUID, position pf.Position, metadata EventMetadata) error
+	HazardExpanded(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) error
+	HazardDissipated(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) error
 }
 
 func createEvent(eventType eventType, entityID uuid.UUID, metadata EventMetadata, payload any) (SimulationEvent, error) {
@@ -85,7 +85,7 @@ func createEvent(eventType eventType, entityID uuid.UUID, metadata EventMetadata
 		return SimulationEvent{}, err
 	}
 
-	return SimulationEvent{
+	event := SimulationEvent{
 		ID:           uuid.New(),
 		Timestamp:    time.Now().UTC(),
 		SimulationID: metadata.SimulationID,
@@ -93,5 +93,12 @@ func createEvent(eventType eventType, entityID uuid.UUID, metadata EventMetadata
 		EventType:    eventType,
 		EntityID:     entityID,
 		Payload:      json.RawMessage(jsonPayload),
-	}, nil
+	}
+
+	select {
+	case SimulationEventChannel <- event:
+	default:
+	}
+
+	return event, nil
 }

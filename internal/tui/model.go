@@ -16,18 +16,18 @@ import (
 // Model represents the TUI state for the hazard simulation
 type Model struct {
 	SimulationEvents chan events.SimulationEvent
-	Grid             [][]rune
+	Grid             [][]string
 	Citizens         map[uuid.UUID]pf.Position
-	Hazards          map[uuid.UUID]rune
+	Hazards          map[uuid.UUID]string
 }
 
 // InitialModel creates the initial TUI model state
 func InitialModel() Model {
 	return Model{
 		SimulationEvents: events.SimulationEventChannel,
-		Grid:             [][]rune{},
+		Grid:             [][]string{},
 		Citizens:         map[uuid.UUID]pf.Position{},
-		Hazards:          map[uuid.UUID]rune{},
+		Hazards:          map[uuid.UUID]string{},
 	}
 }
 
@@ -50,7 +50,7 @@ func (m Model) View() tea.View {
 	for y := range m.Grid {
 		for x := range m.Grid[y] {
 			cell := m.Grid[y][x]
-			s.WriteString(string(cell))
+			s.WriteString(cell)
 		}
 		s.WriteString("\n")
 	}
@@ -135,11 +135,11 @@ func (m *Model) handleSimulationStarted(event events.SimulationEvent) {
 	}
 
 	// Initialise open cells
-	m.Grid = make([][]rune, payload.Grid.Height)
+	m.Grid = make([][]string, payload.Grid.Height)
 	for y := range payload.Grid.Height {
-		m.Grid[y] = make([]rune, payload.Grid.Width)
+		m.Grid[y] = make([]string, payload.Grid.Width)
 		for x := range payload.Grid.Width {
-			m.Grid[y][x] = c.RandValInSlice(openCharacters)
+			m.Grid[y][x] = getOpenCell()
 		}
 	}
 
@@ -147,14 +147,14 @@ func (m *Model) handleSimulationStarted(event events.SimulationEvent) {
 	for _, safeZone := range payload.SafeZones {
 		safeZoneChar := c.RandValInSlice(safeZoneCharacters)
 		for _, safeZoneCell := range safeZone.Cells {
-			m.Grid[safeZoneCell.Y][safeZoneCell.X] = safeZoneChar
+			m.Grid[safeZoneCell.Y][safeZoneCell.X] = getSafeZoneCell(safeZoneChar)
 		}
 	}
 
 	// Initialise citizens
 	for _, citizen := range payload.Citizens {
 		pos := citizen.CurrentPosition
-		m.Grid[pos.Y][pos.X] = citizenCharacter
+		m.Grid[pos.Y][pos.X] = getCitizenCell()
 		m.Citizens[citizen.ID] = citizen.CurrentPosition
 	}
 }
@@ -167,20 +167,20 @@ func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
 	}
 
 	var currentPosition = m.Citizens[event.EntityID]
-	m.Grid[currentPosition.Y][currentPosition.X] = c.RandValInSlice(openCharacters)
+	m.Grid[currentPosition.Y][currentPosition.X] = getOpenCell()
 
-	m.Grid[newPosition.Y][newPosition.X] = citizenCharacter
+	m.Grid[newPosition.Y][newPosition.X] = getCitizenCell()
 	m.Citizens[event.EntityID] = newPosition
 }
 
 func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
 	var currentPosition = m.Citizens[event.EntityID]
-	m.Grid[currentPosition.Y][currentPosition.X] = citizenEscapedCharacter
+	m.Grid[currentPosition.Y][currentPosition.X] = getEscapedCitizenCell()
 }
 
 func (m *Model) handleCitizenDied(event events.SimulationEvent) {
 	var currentPosition = m.Citizens[event.EntityID]
-	m.Grid[currentPosition.Y][currentPosition.X] = citizenDeadCharacter
+	m.Grid[currentPosition.Y][currentPosition.X] = getDeadCitizenCell()
 }
 
 func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {
@@ -193,7 +193,7 @@ func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {
 	character := c.RandValInSlice(safeZoneCharacters)
 
 	for _, cell := range cells {
-		m.Grid[cell.Y][cell.X] = character
+		m.Grid[cell.Y][cell.X] = getSafeZoneCell(character)
 	}
 }
 
@@ -206,7 +206,7 @@ func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
 
 	character := c.RandValInSlice(hazardCharacters)
 
-	m.Grid[newPosition.Y][newPosition.X] = character
+	m.Grid[newPosition.Y][newPosition.X] = getHazardCell(character)
 	m.Hazards[event.EntityID] = character
 }
 
@@ -220,7 +220,7 @@ func (m *Model) handleHazardExpanded(event events.SimulationEvent) {
 	character := m.Hazards[event.EntityID]
 
 	for _, cell := range updatedCells {
-		m.Grid[cell.Y][cell.X] = character
+		m.Grid[cell.Y][cell.X] = getHazardCell(character)
 	}
 }
 
@@ -232,6 +232,6 @@ func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
 	}
 
 	for _, cell := range updatedCells {
-		m.Grid[cell.Y][cell.X] = c.RandValInSlice(openCharacters)
+		m.Grid[cell.Y][cell.X] = getOpenCell()
 	}
 }

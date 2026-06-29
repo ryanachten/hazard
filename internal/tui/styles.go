@@ -1,10 +1,74 @@
 package tui
 
-var citizenCharacter = '@'
-var citizenDeadCharacter = '†'
-var citizenEscapedCharacter = '♦'
-var openCharacters = []rune{'·', '.', ',', ' '}
+import (
+	c "hazard/internal/common"
 
-// var obstacleCharacters = []rune{'#', '▓', '▒', '≡'}
-var hazardCharacters = []rune{'~', '≈', '°', '^'}
-var safeZoneCharacters = []rune{'◎', '◉', '◌'}
+	"charm.land/lipgloss/v2"
+)
+
+var citizenCharacter = "@"
+var citizenStyle = lipgloss.NewStyle().
+	SetString(citizenCharacter).
+	Foreground(lipgloss.Color("#eab308")).
+	Background(lipgloss.Color("#2a2000")).Render()
+
+var citizenDeadCharacter = "†"
+var citizenDeadStyle = lipgloss.NewStyle().
+	SetString(citizenDeadCharacter).
+	Foreground(lipgloss.Color("#991b1b")).
+	Background(lipgloss.Color("#2a0505")).
+	Render()
+
+var citizenEscapedCharacter = "♦"
+var citizenEscapedStyle = lipgloss.NewStyle().
+	SetString(citizenEscapedCharacter).
+	Foreground(lipgloss.Color("#4ade80")).
+	Background(lipgloss.Color("#0d2a0d")).
+	Render()
+
+var openCharacters = []string{"·", ".", ",", " "}
+var openStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#586069"))
+
+// var obstacleCharacters = []rune{"#", "▓", "▒", "≡"}
+var hazardCharacters = []string{"~", "≈", "°", "^"}
+var hazardStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#ef4444")).
+	Background(lipgloss.Color("#2a0a0a"))
+
+var safeZoneCharacters = []string{"◎", "◉", "◌"}
+var safeZoneStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#22c55e")).
+	Background(lipgloss.Color("#0d2a0d"))
+
+func getOpenCell() string {
+	char := c.RandValInSlice(openCharacters)
+	bgOffset := c.RandomFloat(0, 0.04)
+	bgColour := lipgloss.Color("#0d1117")
+
+	return openStyle.
+		SetString(char).
+		Background(lipgloss.Lighten(bgColour, bgOffset)).
+		Render()
+}
+
+func getCitizenCell() string {
+	return citizenStyle
+}
+
+func getDeadCitizenCell() string {
+	return citizenDeadStyle
+}
+
+func getEscapedCitizenCell() string {
+	return citizenEscapedStyle
+}
+
+// TODO: support different hazard types
+func getHazardCell(char string) string {
+	return hazardStyle.SetString(char).Render()
+}
+
+func getSafeZoneCell(char string) string {
+	return safeZoneStyle.SetString(char).Render()
+}

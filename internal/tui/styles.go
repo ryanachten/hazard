@@ -31,10 +31,21 @@ var openStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color("#586069"))
 
 // var obstacleCharacters = []rune{"#", "▓", "▒", "≡"}
-var hazardCharacters = []string{"~", "≈", "°", "^"}
-var hazardStyle = lipgloss.NewStyle().
+
+var fireCharacters = []string{"░", "\"", "^"}
+var fireStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color("#ef4444")).
 	Background(lipgloss.Color("#2a0a0a"))
+
+var floodCharacters = []string{"~", "≈", "░"}
+var floodStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#3b82f6")).
+	Background(lipgloss.Color("#0a1628"))
+
+var lavaCharacters = []string{"≈", "▒", "°", "o"}
+var lavaStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#f97316")).
+	Background(lipgloss.Color("#2a1400"))
 
 var safeZoneCharacters = []string{"◎", "◉", "◌"}
 var safeZoneStyle = lipgloss.NewStyle().
@@ -64,9 +75,19 @@ func getEscapedCitizenCell() string {
 	return citizenEscapedStyle
 }
 
-// TODO: support different hazard types
-func getHazardCell(char string) string {
-	return hazardStyle.SetString(char).Render()
+func getFireCell() string {
+	char := c.RandValInSlice(fireCharacters)
+	return fireStyle.SetString(char).Render()
+}
+
+func getFloodCell() string {
+	char := c.RandValInSlice(floodCharacters)
+	return floodStyle.SetString(char).Render()
+}
+
+func getLavaCell() string {
+	char := c.RandValInSlice(lavaCharacters)
+	return lavaStyle.SetString(char).Render()
 }
 
 func getSafeZoneCell(char string) string {

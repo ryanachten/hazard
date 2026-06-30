@@ -4,6 +4,7 @@ import (
 	pf "hazard/internal/pathfinding"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,9 +20,10 @@ func TestCreateHazard(t *testing.T) {
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, hazard.Duration, 5)
 	require.LessOrEqual(t, hazard.Duration, 10)
-	require.Contains(t, []string{"fire", "flood", "lava"}, hazard.Type.Name)
+	require.Contains(t, []HazardType{FireHazard, FloodHazard, LavaHazard}, hazard.Type)
 	require.True(t, grid.InBounds(hazard.Origin))
 	require.Equal(t, pf.CellHazard, grid.GetCell(hazard.Origin))
+	require.NotEqual(t, uuid.Nil, hazard.ID)
 }
 
 func TestCreateHazard_NoOpenCells(t *testing.T) {
@@ -41,12 +43,12 @@ func TestRandomHazardType(t *testing.T) {
 		DurationRange: [2]int{5, 10},
 	}
 
-	seen := make(map[string]bool)
+	seen := make(map[HazardType]bool)
 	for range 100 {
 		hazard, err := CreateHazard(config, &grid)
 		require.NoError(t, err)
-		require.Contains(t, HazardTypes, hazard.Type.Name)
-		seen[hazard.Type.Name] = true
+		require.Contains(t, []HazardType{FireHazard, FloodHazard, LavaHazard}, hazard.Type)
+		seen[hazard.Type] = true
 	}
 	require.GreaterOrEqual(t, len(seen), 2)
 }
@@ -54,6 +56,8 @@ func TestRandomHazardType(t *testing.T) {
 func TestHazard_CellsBlockPathfinding(t *testing.T) {
 	grid := pf.NewGrid(5, 5, pf.CellOpen)
 	hazard := Hazard{
+		ID:            uuid.New(),
+		Type:          FireHazard,
 		Origin:        pf.Position{X: 2, Y: 2},
 		CurrentRadius: 0,
 	}

@@ -2,7 +2,7 @@ package common
 
 import (
 	pf "hazard/internal/pathfinding"
-	"math/rand"
+	"math/rand/v2"
 
 	"github.com/google/uuid"
 )
@@ -30,25 +30,21 @@ const (
 )
 
 // HazardType is a registry-level type identifier.
-type HazardType struct {
-	Name string
-	Kind HazardKind
-}
+type HazardType string
 
-// HazardTypes registry for defining hazard metadata
-var HazardTypes = map[string]HazardType{
-	"fire":  {Name: "fire", Kind: HazardKindExpanding},
-	"flood": {Name: "flood", Kind: HazardKindExpanding},
-	"lava":  {Name: "lava", Kind: HazardKindExpanding},
-}
+const (
+	// FireHazard fire-type hazard
+	FireHazard HazardType = "fire"
+	// FloodHazard flood-type hazard
+	FloodHazard HazardType = "flood"
+	// LavaHazard lava-type hazard
+	LavaHazard HazardType = "lava"
+)
 
-func randomHazardType() HazardType {
-	keys := make([]string, 0, len(HazardTypes))
-	for k := range HazardTypes {
-		keys = append(keys, k)
-	}
-	k := keys[rand.Intn(len(keys))]
-	return HazardTypes[k]
+var hazardTypes = []HazardType{
+	FireHazard,
+	FloodHazard,
+	LavaHazard,
 }
 
 // CreateHazard creates a new hazard at a random open position on the grid
@@ -65,7 +61,7 @@ func CreateHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
 	hazard := Hazard{
 		ID:       uuid.New(),
 		Duration: duration,
-		Type:     randomHazardType(),
+		Type:     hazardTypes[rand.IntN(len(hazardTypes))],
 		Origin:   origin,
 	}
 

@@ -89,8 +89,8 @@ func (e *InMemoryEventLog) SafeZoneEmerged(safeZoneID uuid.UUID, cells []pf.Posi
 }
 
 // HazardEmerged raised when a hazard emerges
-func (e *InMemoryEventLog) HazardEmerged(hazardID uuid.UUID, position pf.Position, metadata EventMetadata) error {
-	event, err := createEvent(HazardEmerged, hazardID, metadata, position)
+func (e *InMemoryEventLog) HazardEmerged(hazardID uuid.UUID, payload HazardEmergedPayload, metadata EventMetadata) error {
+	event, err := createEvent(HazardEmerged, hazardID, metadata, payload)
 	if err != nil {
 		return err
 	}

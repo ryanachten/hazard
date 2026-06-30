@@ -144,7 +144,10 @@ func (s *Simulation) generateIntermittentHazard() {
 	hazard.CreatedAt = s.TickCount
 	s.Hazards = append(s.Hazards, hazard)
 
-	err = s.EventEmitter.HazardEmerged(hazard.ID, hazard.Origin, s.getEventMetadata())
+	err = s.EventEmitter.HazardEmerged(hazard.ID, events.HazardEmergedPayload{
+		Type:     hazard.Type,
+		Position: hazard.Origin,
+	}, s.getEventMetadata())
 	if err != nil {
 		log.Printf("error emitting HazardEmerged event: %v", err)
 	}

@@ -33,6 +33,8 @@ func TestHazard_RadiusGrowsEachTick(t *testing.T) {
 	require.NoError(t, err)
 
 	sim.Hazards = append(sim.Hazards, c.Hazard{
+		ID:            uuid.New(),
+		Type:          c.FireHazard,
 		CreatedAt:     0,
 		Duration:      100,
 		Origin:        pf.Position{X: 5, Y: 5},
@@ -56,6 +58,8 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 	require.NoError(t, err)
 
 	hazard := c.Hazard{
+		ID:            uuid.New(),
+		Type:          c.FloodHazard,
 		CreatedAt:     0,
 		Duration:      1,
 		Origin:        pf.Position{X: 5, Y: 5},
@@ -106,6 +110,9 @@ func TestHazard_CreationViaTick(t *testing.T) {
 	require.Len(t, sim.Hazards, 1)
 
 	h := sim.Hazards[0]
+	require.NotEqual(t, uuid.Nil, h.ID)
+	require.Contains(t, []c.HazardType{c.FireHazard, c.FloodHazard, c.LavaHazard}, h.Type)
+	require.Equal(t, 0, h.CurrentRadius)
 	require.GreaterOrEqual(t, h.Duration, 10)
 	require.LessOrEqual(t, h.Duration, 10)
 	require.Equal(t, uint64(0), h.CreatedAt)

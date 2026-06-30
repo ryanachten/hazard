@@ -64,6 +64,12 @@ type SimulationStartedPayload struct {
 	SafeZones []c.SafeZone
 }
 
+// HazardEmergedPayload for hazard emergence event
+type HazardEmergedPayload struct {
+	Type     c.HazardType
+	Position pf.Position
+}
+
 // EventEmitter defines how events are emitted in the simulation
 type EventEmitter interface {
 	Events() []SimulationEvent
@@ -74,7 +80,7 @@ type EventEmitter interface {
 	CitizenEscaped(citizenID uuid.UUID, metadata EventMetadata) error
 	CitizenDied(citizenID uuid.UUID, metadata EventMetadata) error
 	SafeZoneEmerged(safeZoneID uuid.UUID, cells []pf.Position, metadata EventMetadata) error
-	HazardEmerged(hazardID uuid.UUID, position pf.Position, metadata EventMetadata) error
+	HazardEmerged(hazardID uuid.UUID, payload HazardEmergedPayload, metadata EventMetadata) error
 	HazardExpanded(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) error
 	HazardDissipated(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) error
 }

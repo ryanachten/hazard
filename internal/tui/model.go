@@ -198,15 +198,24 @@ func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {
 }
 
 func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
-	var newPosition pf.Position
-	err := json.Unmarshal(event.Payload, &newPosition)
+	var payload events.HazardEmergedPayload
+	err := json.Unmarshal(event.Payload, &payload)
 	if err != nil {
 		log.Printf("error parsing event: %v", err)
 	}
 
-	character := c.RandValInSlice(hazardCharacters)
+	var character string
 
-	m.Grid[newPosition.Y][newPosition.X] = getHazardCell(character)
+	switch payload.Type {
+	case c.FireHazard:
+		character = getFireCell()
+	case c.FloodHazard:
+		character = getFloodCell()
+	case c.LavaHazard:
+		character = getLavaCell()
+	}
+
+	m.Grid[payload.Position.Y][payload.Position.X] = character
 	m.Hazards[event.EntityID] = character
 }
 
@@ -220,7 +229,7 @@ func (m *Model) handleHazardExpanded(event events.SimulationEvent) {
 	character := m.Hazards[event.EntityID]
 
 	for _, cell := range updatedCells {
-		m.Grid[cell.Y][cell.X] = getHazardCell(character)
+		m.Grid[cell.Y][cell.X] = character
 	}
 }
 

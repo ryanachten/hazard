@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewSimulation_EventLogIsEmpty(t *testing.T) {
+func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
 	config := c.SimulationConfig{
 		Width:             5,
 		Height:            5,
@@ -28,18 +28,19 @@ func TestNewSimulation_EventLogIsEmpty(t *testing.T) {
 		},
 	}
 
-	sim, err := NewSimulation(config)
+	sim, err := NewSimulation(config, events.CreateEventBus())
 	require.NoError(t, err)
 
-	evts := sim.Events()
-	require.Empty(t, evts, "new simulation should start with empty event log")
+	evts := sim.eventBus.EventLog
+	require.Len(t, evts, 1, "new simulation should emit one creation event")
+	require.Equal(t, "simulation.created", string(evts[0].EventType))
 }
 
 func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.CitizenIdle,
@@ -52,7 +53,7 @@ func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	foundMove := false
 	for _, e := range evts {
 		if string(e.EventType) == "citizen.moved" {
@@ -70,8 +71,8 @@ func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
 
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.CitizenIdle,
@@ -85,7 +86,7 @@ func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
 	sim.Tick()
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	foundEscaped := false
 	for _, e := range evts {
 		if string(e.EventType) == "citizen.escaped" {
@@ -110,8 +111,8 @@ func TestTick_EmitsCitizenDiedEvent(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 0, Y: 0}, pf.CellHazard)
 
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.CitizenIdle,
@@ -124,7 +125,7 @@ func TestTick_EmitsCitizenDiedEvent(t *testing.T) {
 
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	foundDied := false
 	for _, e := range evts {
 		if string(e.EventType) == "citizen.died" {
@@ -139,8 +140,8 @@ func TestTick_EmitsHazardExpandedEvents(t *testing.T) {
 	grid := pf.NewGrid(10, 10, pf.CellOpen)
 
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Hazards: []c.Hazard{
 			{
 				ID:            uuid.New(),
@@ -154,7 +155,7 @@ func TestTick_EmitsHazardExpandedEvents(t *testing.T) {
 
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	foundExpanded := false
 	for _, e := range evts {
 		if string(e.EventType) == "hazard.expanded" {
@@ -171,8 +172,8 @@ func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
 
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.CitizenIdle,
@@ -186,7 +187,7 @@ func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
 	sim.Tick()
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	require.NotEmpty(t, evts)
 	lastEvent := evts[len(evts)-1]
 	require.Equal(t, "simulation.completed", string(lastEvent.EventType),
@@ -199,8 +200,8 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 4, Y: 0}, pf.CellSafeZone)
 
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.CitizenIdle,
@@ -216,7 +217,7 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 	sim.Tick()
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	require.NotEmpty(t, evts)
 
 	var prevTick uint64
@@ -232,8 +233,8 @@ func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.CitizenIdle,
@@ -244,14 +245,14 @@ func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
 		},
 	}
 
-	require.Empty(t, sim.Events(), "event log should be empty before first tick")
+	require.Empty(t, sim.eventBus.EventLog, "event log should be empty before first tick")
 
 	sim.Tick()
-	tick1Count := len(sim.Events())
+	tick1Count := len(sim.eventBus.EventLog)
 	require.NotZero(t, tick1Count, "first tick should produce events")
 
 	sim.Tick()
-	tick2Events := sim.Events()
+	tick2Events := sim.eventBus.EventLog
 	require.Greater(t, len(tick2Events), tick1Count,
 		"events should accumulate across ticks - got %d after tick 1, %d after tick 2", tick1Count, len(tick2Events))
 }
@@ -275,8 +276,8 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 	}
 
 	sim := Simulation{
-		EventEmitter: &events.InMemoryEventLog{},
-		Grid:         &grid,
+		eventBus: events.CreateEventBus(),
+		Grid:     &grid,
 		Citizens: []c.Citizen{
 			{
 				ID:                 uuid.New(),
@@ -294,7 +295,7 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	foundPathUpdated := false
 	for _, e := range evts {
 		if string(e.EventType) == "citizen.pathUpdated" {
@@ -310,9 +311,9 @@ func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 4, Y: 0}, pf.CellSafeZone)
 
 	sim := Simulation{
-		ID:           uuid.New(),
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		ID:       uuid.New(),
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				ID:               uuid.New(),
@@ -329,7 +330,7 @@ func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
 	sim.Tick()
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	require.NotEmpty(t, evts)
 
 	hasMoved := false
@@ -359,8 +360,8 @@ func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
 	citizen2ID := uuid.New()
 
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				ID:               citizen1ID,
@@ -381,7 +382,7 @@ func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
 
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	citizen1Moves := 0
 	citizen2Moves := 0
 	for _, e := range evts {
@@ -406,9 +407,9 @@ func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 	citizenID := uuid.New()
 
 	sim := Simulation{
-		ID:           simID,
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		ID:       simID,
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				ID:               citizenID,
@@ -422,7 +423,7 @@ func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 
 	sim.Tick()
 
-	evts := sim.Events()
+	evts := sim.eventBus.EventLog
 	for _, e := range evts {
 		if string(e.EventType) == "citizen.died" {
 			require.Equal(t, citizenID, e.EntityID, "citizen.died event entity ID should match citizen")
@@ -438,9 +439,9 @@ func TestPausedSimulation_EmitsNoEvents(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 
 	sim := Simulation{
-		State:        SimulationPaused,
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		State:    SimulationPaused,
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.CitizenIdle,
@@ -451,7 +452,7 @@ func TestPausedSimulation_EmitsNoEvents(t *testing.T) {
 	}
 
 	sim.Tick()
-	require.Empty(t, sim.Events(), "paused simulation should not produce events")
+	require.Empty(t, sim.eventBus.EventLog, "paused simulation should not produce events")
 }
 
 func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
@@ -459,8 +460,8 @@ func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
 
 	sim := Simulation{
-		Grid:         &grid,
-		EventEmitter: &events.InMemoryEventLog{},
+		Grid:     &grid,
+		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.CitizenIdle,
@@ -474,10 +475,10 @@ func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
 	sim.Tick()
 	sim.Tick()
 
-	tick2Count := len(sim.Events())
+	tick2Count := len(sim.eventBus.EventLog)
 
 	sim.Tick()
 
-	require.Equal(t, tick2Count, len(sim.Events()),
+	require.Equal(t, tick2Count, len(sim.eventBus.EventLog),
 		"completed simulation should not produce new events on subsequent ticks")
 }

@@ -36,7 +36,9 @@ func main() {
 		log.Fatalf("error validation config: %v", err)
 	}
 
-	simulation, err := eng.NewSimulation(config)
+	eventBus := events.CreateEventBus()
+
+	simulation, err := eng.NewSimulation(config, eventBus)
 	if err != nil {
 		log.Fatalf("error creating simulation: %v", err)
 	}
@@ -45,34 +47,24 @@ func main() {
 	defer cancel()
 
 	go func() {
-		err := simulation.EventEmitter.SimulationStarted(
-			events.SimulationStartedPayload{
-				Grid:      simulation.Grid.Copy(),
-				Citizens:  simulation.Citizens,
-				SafeZones: simulation.SafeZones,
-			},
-			events.EventMetadata{
-				SimulationID: simulation.ID,
-				Tick:         simulation.TickCount,
-			})
-		if err != nil {
-			log.Fatalf("error creating SimulationStarted event: %v", err)
-		}
-
 		ticker := time.NewTicker(time.Duration(config.TickIntervalMs) * time.Millisecond)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ticker.C:
-				simulation.Tick()
+				if simulation.State == eng.SimulationRunning {
+					simulation.Tick()
+				}
+			case cmd := <-eventBus.SimulationCommands:
+				simulation.ProcessCommand(cmd)
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
 
-	p := tea.NewProgram(tui.InitialModel())
+	p := tea.NewProgram(tui.InitialModel(eventBus))
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("error running program: %v", err)
 	}

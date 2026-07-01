@@ -2,7 +2,6 @@
 package events
 
 import (
-	"encoding/json"
 	c "hazard/internal/common"
 	pf "hazard/internal/pathfinding"
 	"time"
@@ -18,7 +17,7 @@ type SimulationEvent struct {
 	Tick         uint64
 	Timestamp    time.Time
 	EntityID     uuid.UUID
-	Payload      json.RawMessage
+	Payload      any
 }
 
 // EventMetadata common for all simulation events
@@ -27,16 +26,11 @@ type EventMetadata struct {
 	Tick         uint64
 }
 
-const eventBufferSize = 256
-
-// SimulationEventChannel to subscribe to simulation events
-var SimulationEventChannel = make(chan SimulationEvent, eventBufferSize)
-
 type eventType string
 
 const (
-	// SimulationStarted event type indicates the simulation has started
-	SimulationStarted eventType = "simulation.started"
+	// SimulationCreated event type indicates a new simulation has been created
+	SimulationCreated eventType = "simulation.created"
 	// SimulationCompleted event type indicates the simulation has completed
 	SimulationCompleted eventType = "simulation.completed"
 	// CitizenMoved event type for citizen movement
@@ -57,8 +51,8 @@ const (
 	HazardDissipated eventType = "hazard.dissipated"
 )
 
-// SimulationStartedPayload for simulation start event
-type SimulationStartedPayload struct {
+// SimulationCreatedPayload for simulation start event
+type SimulationCreatedPayload struct {
 	Grid      pf.Grid
 	Citizens  []c.Citizen
 	SafeZones []c.SafeZone
@@ -70,27 +64,59 @@ type HazardEmergedPayload struct {
 	Position pf.Position
 }
 
-// EventEmitter defines how events are emitted in the simulation
-type EventEmitter interface {
-	Events() []SimulationEvent
-	SimulationStarted(payload SimulationStartedPayload, metadata EventMetadata) error
-	SimulationCompleted(metadata EventMetadata) error
-	CitizenMoved(citizenID uuid.UUID, newPosition pf.Position, metadata EventMetadata) error
-	CitizenPathUpdated(citizenID uuid.UUID, path []pf.Position, metadata EventMetadata) error
-	CitizenEscaped(citizenID uuid.UUID, metadata EventMetadata) error
-	CitizenDied(citizenID uuid.UUID, metadata EventMetadata) error
-	SafeZoneEmerged(safeZoneID uuid.UUID, cells []pf.Position, metadata EventMetadata) error
-	HazardEmerged(hazardID uuid.UUID, payload HazardEmergedPayload, metadata EventMetadata) error
-	HazardExpanded(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) error
-	HazardDissipated(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) error
+// SimulationCreated raised when simulation starts
+func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata EventMetadata) {
+	e.createEvent(SimulationCreated, metadata.SimulationID, metadata, payload)
 }
 
-func createEvent(eventType eventType, entityID uuid.UUID, metadata EventMetadata, payload any) (SimulationEvent, error) {
-	jsonPayload, err := json.Marshal(payload)
-	if err != nil {
-		return SimulationEvent{}, err
-	}
+// SimulationCompleted raised when simulation finishes
+func (e *EventBus) SimulationCompleted(metadata EventMetadata) {
+	e.createEvent(SimulationCompleted, metadata.SimulationID, metadata, nil)
+}
 
+// CitizenMoved raised when a citizen moves
+func (e *EventBus) CitizenMoved(citizenID uuid.UUID, newPosition pf.Position, metadata EventMetadata) {
+	e.createEvent(CitizenMoved, citizenID, metadata, newPosition)
+}
+
+// CitizenPathUpdated raised when a citizen's path is recalculated
+func (e *EventBus) CitizenPathUpdated(citizenID uuid.UUID, path []pf.Position, metadata EventMetadata) {
+	e.createEvent(CitizenPathUpdated, citizenID, metadata, path)
+}
+
+// CitizenEscaped raised when a citizen escapes hazards by reaching a safe zone
+func (e *EventBus) CitizenEscaped(citizenID uuid.UUID, metadata EventMetadata) {
+	// TODO: ideally we would have some sort of relationship between citizens and the safe zone they've occupied
+	// - this is out of scope for now
+	e.createEvent(CitizenEscaped, citizenID, metadata, nil)
+}
+
+// CitizenDied raised when a citizen has been killed by a hazard
+func (e *EventBus) CitizenDied(citizenID uuid.UUID, metadata EventMetadata) {
+	e.createEvent(CitizenDied, citizenID, metadata, nil)
+}
+
+// SafeZoneEmerged raised when a safe zone emerges
+func (e *EventBus) SafeZoneEmerged(safeZoneID uuid.UUID, cells []pf.Position, metadata EventMetadata) {
+	e.createEvent(SafeZoneEmerged, safeZoneID, metadata, cells)
+}
+
+// HazardEmerged raised when a hazard emerges
+func (e *EventBus) HazardEmerged(hazardID uuid.UUID, payload HazardEmergedPayload, metadata EventMetadata) {
+	e.createEvent(HazardEmerged, hazardID, metadata, payload)
+}
+
+// HazardExpanded raised when a hazard expands
+func (e *EventBus) HazardExpanded(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) {
+	e.createEvent(HazardExpanded, hazardID, metadata, updatedCells)
+}
+
+// HazardDissipated raised when a hazard disappears
+func (e *EventBus) HazardDissipated(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) {
+	e.createEvent(HazardDissipated, hazardID, metadata, updatedCells)
+}
+
+func (e *EventBus) createEvent(eventType eventType, entityID uuid.UUID, metadata EventMetadata, payload any) {
 	event := SimulationEvent{
 		ID:           uuid.New(),
 		Timestamp:    time.Now().UTC(),
@@ -98,13 +124,13 @@ func createEvent(eventType eventType, entityID uuid.UUID, metadata EventMetadata
 		Tick:         metadata.Tick,
 		EventType:    eventType,
 		EntityID:     entityID,
-		Payload:      json.RawMessage(jsonPayload),
+		Payload:      payload,
 	}
 
 	select {
-	case SimulationEventChannel <- event:
+	case e.SimulationEvents <- event:
 	default:
 	}
 
-	return event, nil
+	e.EventLog = append(e.EventLog, event)
 }

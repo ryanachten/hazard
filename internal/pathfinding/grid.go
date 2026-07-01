@@ -50,18 +50,21 @@ func NewGrid(width, height int, variant CellType) Grid {
 	}
 }
 
-// GetRandomOpenPosition returns a random unoccupied position within the grid bounds
-func (g *Grid) GetRandomOpenPosition() (Position, error) {
-	// Conduct n number of attempts to randomly find an open cell
+// GetRandomOpenPosition returns a random unoccupied position within the given bounds (inclusive).
+func (g *Grid) GetRandomOpenPosition(minX, minY, maxX, maxY int) (Position, error) {
+	if minX > maxX || minY > maxY {
+		return Position{}, errors.New("invalid bounds")
+	}
+
 	for range 10 {
-		p := Position{X: rand.Intn(g.Width), Y: rand.Intn(g.Height)}
+		p := Position{X: rand.Intn(maxX-minX+1) + minX, Y: rand.Intn(maxY-minY+1) + minY}
 		if g.GetCell(p) == CellOpen {
 			return p, nil
 		}
 	}
-	// If random assignment fails, we scan for an open cell
-	for y := range g.Height {
-		for x := range g.Width {
+
+	for y := minY; y <= maxY; y++ {
+		for x := minX; x <= maxX; x++ {
 			p := Position{X: x, Y: y}
 			if g.GetCell(p) == CellOpen {
 				return p, nil

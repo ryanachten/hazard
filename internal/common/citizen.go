@@ -39,7 +39,7 @@ func CreateCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 	citizens := make([]Citizen, 0, citizenCount)
 
 	for range citizenCount {
-		startPosition, err := grid.GetRandomOpenPosition()
+		startPosition, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
 		if err != nil {
 			log.Printf("error getting position for citizen: %v", err)
 			continue
@@ -113,4 +113,18 @@ func (c *Citizen) IncrementLocation() bool {
 	}
 
 	return hasMoved
+}
+
+// Copy returns a deep copy of the Citizen
+func (c *Citizen) Copy() Citizen {
+	path := make([]pf.Position, len(c.Path))
+	copy(path, c.Path)
+	return Citizen{
+		ID:                 c.ID,
+		Status:             c.Status,
+		CurrentPosition:    c.CurrentPosition,
+		CurrentDestination: c.CurrentDestination,
+		Path:               path,
+		CurrentPathIndex:   c.CurrentPathIndex,
+	}
 }

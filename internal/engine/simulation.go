@@ -52,6 +52,7 @@ func NewSimulation(config c.SimulationConfig, eventBus *events.EventBus) (Simula
 	}
 
 	var simulation = Simulation{
+		ID:           uuid.New(),
 		Config:       config,
 		State:        SimulationRunning,
 		TickCount:    0,

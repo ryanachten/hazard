@@ -18,7 +18,7 @@ type SafeZone struct {
 func CreateSafeZone(config SafeZoneConfig, grid *pf.Grid) (SafeZone, error) {
 	radius := RandIntInRange(config.RadiusRange)
 
-	origin, err := grid.GetRandomOpenPosition()
+	origin, err := grid.GetRandomOpenPosition(radius, radius, grid.Width-1-radius, grid.Height-1-radius)
 	if err != nil {
 		return SafeZone{}, err
 	}
@@ -36,8 +36,21 @@ func CreateSafeZone(config SafeZoneConfig, grid *pf.Grid) (SafeZone, error) {
 	}
 
 	return SafeZone{
+		ID:       uuid.New(),
 		Position: origin,
 		Radius:   radius,
 		Cells:    cells,
 	}, nil
+}
+
+// Copy returns a deep copy of the SafeZone
+func (s *SafeZone) Copy() SafeZone {
+	cells := make([]pf.Position, len(s.Cells))
+	copy(cells, s.Cells)
+	return SafeZone{
+		ID:       s.ID,
+		Position: s.Position,
+		Radius:   s.Radius,
+		Cells:    cells,
+	}
 }

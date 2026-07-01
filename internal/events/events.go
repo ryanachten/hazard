@@ -66,7 +66,21 @@ type HazardEmergedPayload struct {
 
 // SimulationCreated raised when simulation starts
 func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata EventMetadata) {
-	e.createEvent(SimulationCreated, metadata.SimulationID, metadata, payload)
+	citizenSnapshot := make([]c.Citizen, len(payload.Citizens))
+	for i, citizen := range payload.Citizens {
+		citizenSnapshot[i] = citizen.Copy()
+	}
+
+	safeZoneSnapshot := make([]c.SafeZone, len(payload.SafeZones))
+	for i, safeZone := range payload.SafeZones {
+		safeZoneSnapshot[i] = safeZone.Copy()
+	}
+
+	e.createEvent(SimulationCreated, metadata.SimulationID, metadata, SimulationCreatedPayload{
+		Grid:      payload.Grid,
+		Citizens:  citizenSnapshot,
+		SafeZones: safeZoneSnapshot,
+	})
 }
 
 // SimulationCompleted raised when simulation finishes
@@ -81,7 +95,7 @@ func (e *EventBus) CitizenMoved(citizenID uuid.UUID, newPosition pf.Position, me
 
 // CitizenPathUpdated raised when a citizen's path is recalculated
 func (e *EventBus) CitizenPathUpdated(citizenID uuid.UUID, path []pf.Position, metadata EventMetadata) {
-	e.createEvent(CitizenPathUpdated, citizenID, metadata, path)
+	e.createEvent(CitizenPathUpdated, citizenID, metadata, getPositionSnapshot(path))
 }
 
 // CitizenEscaped raised when a citizen escapes hazards by reaching a safe zone
@@ -98,7 +112,7 @@ func (e *EventBus) CitizenDied(citizenID uuid.UUID, metadata EventMetadata) {
 
 // SafeZoneEmerged raised when a safe zone emerges
 func (e *EventBus) SafeZoneEmerged(safeZoneID uuid.UUID, cells []pf.Position, metadata EventMetadata) {
-	e.createEvent(SafeZoneEmerged, safeZoneID, metadata, cells)
+	e.createEvent(SafeZoneEmerged, safeZoneID, metadata, getPositionSnapshot(cells))
 }
 
 // HazardEmerged raised when a hazard emerges
@@ -108,12 +122,12 @@ func (e *EventBus) HazardEmerged(hazardID uuid.UUID, payload HazardEmergedPayloa
 
 // HazardExpanded raised when a hazard expands
 func (e *EventBus) HazardExpanded(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) {
-	e.createEvent(HazardExpanded, hazardID, metadata, updatedCells)
+	e.createEvent(HazardExpanded, hazardID, metadata, getPositionSnapshot(updatedCells))
 }
 
 // HazardDissipated raised when a hazard disappears
 func (e *EventBus) HazardDissipated(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) {
-	e.createEvent(HazardDissipated, hazardID, metadata, updatedCells)
+	e.createEvent(HazardDissipated, hazardID, metadata, getPositionSnapshot(updatedCells))
 }
 
 func (e *EventBus) createEvent(eventType eventType, entityID uuid.UUID, metadata EventMetadata, payload any) {
@@ -133,4 +147,11 @@ func (e *EventBus) createEvent(eventType eventType, entityID uuid.UUID, metadata
 	}
 
 	e.EventLog = append(e.EventLog, event)
+}
+
+func getPositionSnapshot(src []pf.Position) []pf.Position {
+	snapshot := make([]pf.Position, len(src))
+	copy(snapshot, src)
+
+	return snapshot
 }

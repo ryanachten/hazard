@@ -12,19 +12,21 @@ import (
 
 // Model represents the TUI state for the hazard simulation
 type Model struct {
-	grid     [][]string
-	citizens map[uuid.UUID]pf.Position
-	hazards  map[uuid.UUID]string
-	eventBus *e.EventBus
+	grid      [][]string
+	citizens  map[uuid.UUID]pf.Position
+	hazards   map[uuid.UUID]string
+	safeZones map[pf.Position]string
+	eventBus  *e.EventBus
 }
 
 // InitialModel creates the initial TUI model state
 func InitialModel(eventBus *e.EventBus) Model {
 	return Model{
-		grid:     [][]string{},
-		citizens: map[uuid.UUID]pf.Position{},
-		hazards:  map[uuid.UUID]string{},
-		eventBus: eventBus,
+		grid:      [][]string{},
+		citizens:  map[uuid.UUID]pf.Position{},
+		hazards:   map[uuid.UUID]string{},
+		safeZones: map[pf.Position]string{},
+		eventBus:  eventBus,
 	}
 }
 

@@ -54,8 +54,18 @@ func TestHazard_RadiusGrowsEachTick(t *testing.T) {
 }
 
 func TestHazard_RemovedAfterDuration(t *testing.T) {
-	sim, err := newTestSim()
-	require.NoError(t, err)
+	grid := pf.NewGrid(10, 10, pf.CellOpen)
+	// Place safe zone far from the hazard area so expansion/removal is deterministic
+	grid.UpdateCell(pf.Position{X: 9, Y: 9}, pf.CellSafeZone)
+
+	sim := Simulation{
+		Grid:         &grid,
+		eventBus:     events.CreateEventBus(),
+		MaxSafeZones: 1,
+		SafeZones: []c.SafeZone{
+			{Position: pf.Position{X: 9, Y: 9}, Radius: 1},
+		},
+	}
 
 	hazard := c.Hazard{
 		ID:            uuid.New(),

@@ -57,7 +57,16 @@ func main() {
 					simulation.Tick()
 				}
 			case cmd := <-eventBus.SimulationCommands:
-				simulation.ProcessCommand(cmd)
+				if cmd.CommandType == events.RestartSimulation {
+					newSim, err := eng.NewSimulation(config, eventBus)
+					if err != nil {
+						log.Printf("error restarting simulation: %v", err)
+						continue
+					}
+					simulation = newSim
+				} else {
+					simulation.ProcessCommand(cmd)
+				}
 			case <-ctx.Done():
 				return
 			}

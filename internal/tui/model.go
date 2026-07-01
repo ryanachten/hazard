@@ -97,7 +97,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q", "esc":
 			return m, tea.Quit
 
-		case "space":
+		case "enter", "space":
 			return m, m.dispatchEvent(e.SimulationCommand{
 				CommandType: e.PauseSimulation,
 			})

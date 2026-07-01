@@ -110,19 +110,19 @@ description: "Task list for Hazard Simulation System - 12 progressive slices for
 
 ## Phase 6: User Story 1 — Terminal TUI (Bubbletea) — Core (P1) 🎯 MVP SLICE 6/8
 
-**Goal**: Simulation state renders in a terminal UI via Bubbletea. The TUI connects to the simulation engine through a Go channel, renders the grid using the design-language glyphs and colors (via Lipgloss), and accepts keyboard input for start/pause/quit.
+**Goal**: Simulation state renders in a terminal UI via Bubbletea. The TUI connects to the simulation engine through an `EventBus` (bidirectional channel pair), renders the grid using the design-language glyphs and colors (via Lipgloss), and accepts keyboard input for start/pause/quit.
 
 **Independent Test**: Start `simviz`, verify the TUI renders a grid with citizens, hazards, and safe zones using the correct glyphs and colors. Verify keyboard controls work (Enter to start, Space to pause, q to quit).
 
 **Learning Outcome**: External Go library integration, Bubbletea Elm architecture (Model/Update/View), Lipgloss composable styles, terminal event handling, `tea.Program`, alt-screen rendering
 
-- [ ] T028 [P] [US1] Define event channel type in `internal/events/` — add `type EventChan chan SimulationEvent`, decide buffering strategy (e.g., 256-buffered), document producer/consumer roles. This is the bridge contract between engine and TUI.
-- [ ] T029 [P] [US1] Define Bubbletea model struct — simulation state, grid dimensions, viewport offset, keyboard mode, plus `events.EventChan` read-end field — in `internal/tui/model.go`
-- [ ] T030 [P] [US1] Implement grid view rendering — iterate over grid cells, apply design-language glyphs and Lipgloss colors, compose into a styled string in `internal/tui/grid_view.go`
-- [ ] T031 [P] [US1] Implement keyboard controls — Enter starts simulation, Space pauses/resumes, q/Esc quits, r restarts — in `internal/tui/controls.go`
-- [ ] T032 [P] [US1] Define Lipgloss style constants mapping design-language colors (e.g., `styleFire = lipgloss.NewStyle().Foreground(lipgloss.Color("#ef4444"))`) in `internal/tui/styles.go`
-- [ ] T033 [US1] Wire simulation and TUI via the event channel — Simulation accepts optional `chan<- SimulationEvent` write-end (nil means no streaming, e.g. in tests), writes events at end of each Tick; model Update() reads from channel to build render state; cmd/simviz/main.go owns channel lifecycle (create, pass write-end to engine, pass read-end to model, close on shutdown)
-- [ ] T034 [US1] Wire end-to-end: verify TUI starts, renders grid, responds to keyboard, simulation state updates on each tick
+- [x] T028 [P] [US1] Define `EventBus` struct in `internal/events/event_bus.go` — holds `SimulationEvents` (chan `SimulationEvent`, 256-buffered) and `SimulationCommands` (chan `SimulationCommand`, 256-buffered) channels plus an in-memory `EventLog`. `CreateEventBus()` constructor initialises both channels. Producer (engine) writes to `SimulationEvents`, consumer (TUI) reads from it; TUI writes commands to `SimulationCommands`, engine reads from it. This is the bridge contract between engine and TUI.
+- [x] T029 [P] [US1] Define Bubbletea `Model` struct in `internal/tui/model.go` — holds render grid (`[][]string`), citizen positions (`map[uuid.UUID]Position`), hazard glyphs (`map[uuid.UUID]string`), and `*events.EventBus` field for reading events and writing commands.
+- [x] T030 [P] [US1] Implement grid view rendering in `Model.View()` in `internal/tui/model.go` — iterate over `m.grid` cells (pre-styled strings set by event handlers), compose into a single string output. Styles are applied at event-handling time rather than render time.
+- [x] T031 [P] [US1] Implement keyboard controls in `Model.Update()` in `internal/tui/model.go` — Enter/Space toggle pause, q/Esc quit, r restarts.
+- [x] T032 [P] [US1] Define Lipgloss style constants mapping design-language colors (e.g., `styleFire = lipgloss.NewStyle().Foreground(lipgloss.Color("#ef4444"))`) in `internal/tui/styles.go`
+- [x] T033 [US1] Wire simulation and TUI via the `EventBus` in `main.go` — `NewSimulation` accepts `*events.EventBus` and writes events during each `Tick`; `Model` receives the same `*events.EventBus` and reads events in `Update()` to build render state; `main.go` owns the `EventBus` lifecycle (create via `events.CreateEventBus()`, pass to both engine and model, close channels on shutdown). Defer `cmd/` migration to Phase 10 when `simctl` is added.
+- [x] T034 [US1] Wire end-to-end: verify TUI starts, renders grid, responds to keyboard, simulation state updates on each tick
 
 **Checkpoint**: You can SEE your simulation running in a terminal. Glyphs and colors match the design language. You understand Bubbletea's Elm architecture and Lipgloss styling.
 
@@ -293,7 +293,7 @@ Phase 13: Polish — depends on all phases
 
 - Phase 1 (US1/Grid): T008, T009 can run in parallel (interface + implementation)
 - Phase 3 (US1/Hazards): T015 is independent
-- Phase 6 (US1/TUI Core): T028, T029, T030, T031, T032 can all run in parallel (different tui/ files + events/ channel type)
+- Phase 6 (US1/TUI Core): T028, T029, T030, T031, T032 can all run in parallel (events/ EventBus + tui/ components)
 - Phase 7 (US1/Entity-Grid Occupancy): T035, T036, T037, T039 can run in parallel (different packages/files); T038 depends on T037; T040 depends on all
 - Phase 8 (US1/Config Sidebar): T041 is independent; T041, T042 can run in parallel
 - Phase 9 (US2/Event Fan-Out): T045 is independent; T048 is stretch
@@ -307,10 +307,10 @@ Phase 13: Polish — depends on all phases
 
 ```bash
 # Launch all parallel tasks for Phase 6 together:
-# Task T028 + T029 + T030 + T031 + T032: channel type + tui/ components (events + model + grid + controls + styles)
+# Task T028 + T029 + T030 + T031 + T032: EventBus type + tui/ components (events + model + grid + controls + styles)
 
 # Then assemble:
-# Task T033: simviz main.go — wire engine and TUI via channel (depends on T028, T029, T030, T031, T032)
+# Task T033: simviz main.go — wire engine and TUI via EventBus (depends on T028, T029, T030, T031, T032)
 # Task T034: end-to-end verification
 ```
 

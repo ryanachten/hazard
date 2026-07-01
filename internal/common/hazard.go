@@ -51,7 +51,7 @@ var hazardTypes = []HazardType{
 func CreateHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
 	duration := RandIntInRange(config.DurationRange)
 
-	origin, err := grid.GetRandomOpenPosition()
+	origin, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
 	if err != nil {
 		return Hazard{}, err
 	}

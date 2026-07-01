@@ -27,7 +27,7 @@ func main() {
 		SafeZone: c.SafeZoneConfig{
 			Probability: 0.2,
 			RadiusRange: [2]int{3, 7},
-			CountRange:  [2]int{2, 5},
+			CountRange:  [2]int{1, 3},
 		},
 	}
 

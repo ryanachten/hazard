@@ -24,10 +24,7 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 
 	// Initialise safe zones
 	for _, safeZone := range payload.SafeZones {
-		safeZoneChar := c.RandValInSlice(safeZoneCharacters)
-		for _, safeZoneCell := range safeZone.Cells {
-			m.grid[safeZoneCell.Y][safeZoneCell.X] = getSafeZoneCell(safeZoneChar)
-		}
+		m.createSafeZone(safeZone.Cells)
 	}
 
 	// Initialise citizens
@@ -45,7 +42,13 @@ func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
 	}
 
 	var currentPosition = m.citizens[event.EntityID]
-	m.grid[currentPosition.Y][currentPosition.X] = getOpenCell()
+
+	// Prevent overwriting safe zone cells with open cells during citizen movement
+	if char, ok := m.safeZones[currentPosition]; ok {
+		m.grid[currentPosition.Y][currentPosition.X] = char
+	} else {
+		m.grid[currentPosition.Y][currentPosition.X] = getOpenCell()
+	}
 
 	m.grid[newPosition.Y][newPosition.X] = getCitizenCell()
 	m.citizens[event.EntityID] = newPosition
@@ -67,11 +70,7 @@ func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {
 		log.Printf("error converting payload to []pf.Position: %v", event.Payload)
 	}
 
-	character := c.RandValInSlice(safeZoneCharacters)
-
-	for _, cell := range cells {
-		m.grid[cell.Y][cell.X] = getSafeZoneCell(character)
-	}
+	m.createSafeZone(cells)
 }
 
 func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
@@ -116,5 +115,13 @@ func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
 
 	for _, cell := range updatedCells {
 		m.grid[cell.Y][cell.X] = getOpenCell()
+	}
+}
+
+func (m *Model) createSafeZone(cells []pf.Position) {
+	safeZoneChar := getSafeZoneCell(c.RandValInSlice(safeZoneCharacters))
+	for _, safeZoneCell := range cells {
+		m.grid[safeZoneCell.Y][safeZoneCell.X] = safeZoneChar
+		m.safeZones[safeZoneCell] = safeZoneChar
 	}
 }

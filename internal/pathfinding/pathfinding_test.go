@@ -164,7 +164,7 @@ func TestDijkstra_FindPathToGoal(t *testing.T) {
 func TestGrid_GetRandomOpenPosition(t *testing.T) {
 	t.Run("open grid returns valid position", func(t *testing.T) {
 		grid := NewGrid(5, 5, CellOpen)
-		pos, err := grid.GetRandomOpenPosition()
+		pos, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
 		require.NoError(t, err)
 		require.True(t, grid.InBounds(pos))
 		require.Equal(t, CellOpen, grid.GetCell(pos))
@@ -172,7 +172,7 @@ func TestGrid_GetRandomOpenPosition(t *testing.T) {
 
 	t.Run("fully obstructed grid returns error", func(t *testing.T) {
 		grid := NewGrid(3, 3, CellObstacle)
-		_, err := grid.GetRandomOpenPosition()
+		_, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no open cells available")
 	})
@@ -180,7 +180,7 @@ func TestGrid_GetRandomOpenPosition(t *testing.T) {
 	t.Run("single open cell is found", func(t *testing.T) {
 		grid := NewGrid(3, 3, CellObstacle)
 		grid.Cells[1][1] = CellOpen
-		pos, err := grid.GetRandomOpenPosition()
+		pos, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
 		require.NoError(t, err)
 		require.Equal(t, Position{X: 1, Y: 1}, pos)
 	})

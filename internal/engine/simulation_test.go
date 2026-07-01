@@ -10,6 +10,69 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestProcessCommand_PauseRunningSimulation(t *testing.T) {
+	sim := Simulation{
+		State: SimulationRunning,
+	}
+
+	sim.ProcessCommand(events.SimulationCommand{
+		CommandType: events.PauseSimulation,
+	})
+
+	require.Equal(t, SimulationPaused, sim.State)
+}
+
+func TestProcessCommand_ResumePausedSimulation(t *testing.T) {
+	sim := Simulation{
+		State: SimulationPaused,
+	}
+
+	sim.ProcessCommand(events.SimulationCommand{
+		CommandType: events.PauseSimulation,
+	})
+
+	require.Equal(t, SimulationRunning, sim.State)
+}
+
+func TestProcessCommand_ToggleFromCreated(t *testing.T) {
+	sim := Simulation{
+		State: SimulationCreated,
+	}
+
+	sim.ProcessCommand(events.SimulationCommand{
+		CommandType: events.PauseSimulation,
+	})
+
+	require.Equal(t, SimulationRunning, sim.State,
+		"non-running states should transition to running")
+}
+
+func TestProcessCommand_ToggleFromCompleted(t *testing.T) {
+	sim := Simulation{
+		State: SimulationCompleted,
+	}
+
+	sim.ProcessCommand(events.SimulationCommand{
+		CommandType: events.PauseSimulation,
+	})
+
+	require.Equal(t, SimulationRunning, sim.State,
+		"completed simulation should toggle to running")
+}
+
+func TestProcessCommand_UnknownCommandTypeDoesNothing(t *testing.T) {
+	sim := Simulation{
+		State: SimulationRunning,
+	}
+
+	sim.ProcessCommand(events.SimulationCommand{
+		CommandType: "unknown.command",
+	})
+
+	require.Equal(t, SimulationRunning, sim.State,
+		"unknown command type must not change state")
+}
+
 func TestNewSimulation_InitializesCoreState(t *testing.T) {
 	config := c.SimulationConfig{
 		TickIntervalMs:    100,
@@ -31,7 +94,7 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 	simulation, err := NewSimulation(config, events.CreateEventBus())
 
 	require.Nil(t, err)
-	require.Equal(t, SimulationCreated, simulation.State)
+	require.Equal(t, SimulationRunning, simulation.State)
 	require.Equal(t, uint64(0), simulation.TickCount)
 	require.NotNil(t, simulation.Grid)
 	require.Equal(t, config.Width, simulation.Grid.Width)

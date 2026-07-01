@@ -5,7 +5,7 @@ const eventBufferSize = 256
 // EventBus for dispatching events and receiving commands
 type EventBus struct {
 	SimulationCommands chan SimulationCommand
-	SimulationEvents   chan SimulationEvent // SimulationEventChannel to subscribe to simulation events
+	SimulationEvents   chan SimulationEvent
 	EventLog           []SimulationEvent
 }
 

@@ -4,8 +4,7 @@ description: "Task list for Hazard Simulation System - 12 progressive slices for
 
 # Tasks: Hazard Simulation System
 
-**Input**: Design documents from `specs/001-hazard-sim-system/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
+**Prerequisites**: plan.md, research.md, data-model.md, contracts/
 
 **Learning Path**: 12 progressive slices, each introducing new Go concepts. Build in order — no skipping ahead.
 

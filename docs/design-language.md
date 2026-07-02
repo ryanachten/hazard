@@ -65,4 +65,4 @@ Each cell is rendered as a styled string; no window-wide background is needed.
 ░  fire                ≈  lava               †  citizen (dead)
 ```
 
-See `design-demo.html` for an interactive reference of glyphs and colors.
+

@@ -1,8 +1,5 @@
 # Implementation Plan: Hazard Simulation System
 
-**Branch**: `001-hazard-sim-system` | **Date**: 2026-06-13 | **Spec**: `specs/001-hazard-sim-system/spec.md`
-**Input**: Feature specification from `specs/001-hazard-sim-system/spec.md`
-
 ## Summary
 
 A 2D grid-based hazard simulation system where citizens navigate around static obstacles and expanding hazard zones to reach safe zones. Built with Go + NATS/JetStream for event-driven architecture, featuring a real-time terminal TUI visualization. Developed in 11 progressive slices, each independently testable, to build Go proficiency while exploring event streaming and pathfinding algorithms.
@@ -46,11 +43,10 @@ Self-contained pathfinding module with well-defined interface. Layered autonomy:
 ### Documentation (this feature)
 
 ```text
-specs/001-hazard-sim-system/
+docs/
 ├── plan.md              # This file
 ├── research.md          # Phase 0 output
 ├── data-model.md        # Phase 1 output
-├── quickstart.md        # Phase 1 output
 ├── contracts/           # Phase 1 output
 └── tasks.md             # Phase 2 output (NOT created by this command)
 ```

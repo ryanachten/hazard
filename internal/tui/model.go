@@ -12,11 +12,12 @@ import (
 
 // Model represents the TUI state for the hazard simulation
 type Model struct {
-	grid      [][]string
-	citizens  map[uuid.UUID]pf.Position
-	hazards   map[uuid.UUID]string
-	safeZones map[pf.Position]string
-	eventBus  *e.EventBus
+	simulationID uuid.UUID
+	grid         [][]string
+	citizens     map[uuid.UUID]pf.Position
+	hazards      map[uuid.UUID]string
+	safeZones    map[pf.Position]string
+	eventBus     *e.EventBus
 }
 
 // InitialModel creates the initial TUI model state
@@ -69,6 +70,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case e.SimulationEvent:
 		event := e.SimulationEvent(msg)
+
+		// Skip processing any events where the simulation ID doesn't match the current simulation
+		// this avoids processing stale events
+		if event.EventType != e.SimulationCreated && event.SimulationID != m.simulationID {
+			return m, m.consumeEvent
+		}
+
 		switch event.EventType {
 		case e.SimulationCreated:
 			m.handleSimulationCreated(event)
@@ -105,6 +113,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			})
 
 		case "r":
+			m.simulationID = uuid.Nil
 			return m, m.dispatchEvent(e.SimulationCommand{
 				CommandType: e.RestartSimulation,
 			})

@@ -72,7 +72,6 @@ nats-server -js
 - Zero dependencies — no schema registry or code generation needed for v1
 - Human-readable for debugging during development
 - `encoding/json` is in the Go standard library
-- `coder/websocket`'s `wsjson` subpackage handles marshaling natively
 - Can evolve to Avro/Protobuf via NATS message headers or schema registry if needed later
 
 ---

@@ -41,11 +41,13 @@ func TestCreateSafeZone_RadiusZeroMarksOnlyOrigin(t *testing.T) {
 }
 
 func TestCreateSafeZone_DoesNotOverwriteNonOpenCells(t *testing.T) {
-	grid := pf.NewGrid(7, 7, pf.CellOpen)
+	grid := pf.NewGrid(5, 5, pf.CellObstacle)
+	// Only one open cell, forcing the origin to (2,1) with radius 1
+	grid.UpdateCell(pf.Position{X: 2, Y: 1}, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 2, Y: 2}, pf.CellObstacle)
 	config := SafeZoneConfig{
 		CountRange:  [2]int{1, 1},
-		RadiusRange: [2]int{2, 2},
+		RadiusRange: [2]int{1, 1},
 	}
 
 	safeZone, err := CreateSafeZone(config, &grid)

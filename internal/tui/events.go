@@ -5,6 +5,8 @@ import (
 	"hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"log"
+
+	"github.com/google/uuid"
 )
 
 func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
@@ -12,6 +14,12 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 	if !ok {
 		log.Printf("error converting payload to SimulationCreatedPayload: %v", event.Payload)
 	}
+
+	// Reset model state
+	m.simulationID = event.SimulationID
+	m.citizens = map[uuid.UUID]pf.Position{}
+	m.hazards = map[uuid.UUID]string{}
+	m.safeZones = map[pf.Position]string{}
 
 	// Initialise open cells
 	m.grid = make([][]string, payload.Grid.Height)

@@ -257,22 +257,21 @@ Phase 3: US1 Hazards — depends on Phase 2 (uses Citizen movement)
 Phase 4: US1 Safe Zones — depends on Phase 3 (uses Hazards)
     ↓
 Phase 5: US1 Events — depends on Phase 4 (needs full simulation state)
-    ↓
-Phase 6: US1 Core TUI — depends on Phase 5 (needs events to display)
-    ↓
-Phase 7: US1 Entity-Grid Occupancy — depends on Phase 4 (needs citizens, safe zones, hazards on grid)
-    ↓
-Phase 8: US1 Config Sidebar — depends on Phase 6 (extends TUI layout)
-    ↓
-Phase 9: US2 Event Fan-Out — depends on Phase 6 (decouples TUI from engine)
-    ↓
-Phase 10: US1 CLI Controls — depends on Phase 5 (needs events for output)
-    ↓
-Phase 11: US3 NATS/JetStream — depends on Phase 5 (needs events)
-    ↓
-Phase 12: US4 Autonomy — depends on Phase 4 (needs full simulation)
-    ↓
-Phase 13: Polish — depends on all phases
+    ↓                        ↓
+Phase 6: US1 Core TUI      Phase 7: US1 Entity-Grid Occupancy
+(depends on Phase 5)        (depends on Phase 4)
+    ↓                        ↓
+    └───── Phase 8: US1 Config Sidebar (depends on Phase 6)
+              ↓
+       Phase 9: US2 Event Fan-Out (depends on Phase 6)
+              ↓
+       Phase 10: US1 CLI Controls (depends on Phase 5)
+              ↓
+       Phase 11: US3 NATS/JetStream (depends on Phase 5)
+              ↓
+       Phase 12: US4 Autonomy (depends on Phase 4)
+              ↓
+       Phase 13: Polish (depends on all phases)
 ```
 
 ### User Story Dependencies

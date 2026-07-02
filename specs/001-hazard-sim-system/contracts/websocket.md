@@ -44,4 +44,4 @@ If a client sends data, the server may ignore or log it.
 
 ## Relationship to In-Process Event Hub
 
-The optional WebSocket server subscribes to the same in-process event hub that feeds the TUI. The hub's channel-based fan-out supports both local (TUI) and remote (WebSocket) subscribers transparently. See `plan.md` Phase 8 for the hub implementation.
+The optional WebSocket server subscribes to the same in-process event hub that feeds the TUI. The hub's channel-based fan-out supports both local (TUI) and remote (WebSocket) subscribers transparently. See `tasks.md` Phase 9 for the hub implementation.

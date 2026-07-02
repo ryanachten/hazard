@@ -59,32 +59,35 @@ specs/001-hazard-sim-system/
 
 ```text
 internal/
-├── engine/              # Core simulation engine (tick loop, state management)
-│   ├── simulation.go
+├── common/              # Shared domain types (Citizen, Hazard, SafeZone, Configuration, utilities)
 │   ├── citizen.go
+│   ├── configuration.go
 │   ├── hazard.go
-│   └── environment.go
+│   ├── safe_zone.go
+│   └── utilities.go
+├── engine/              # Core simulation engine (tick loop, state management)
+│   └── simulation.go
 ├── pathfinding/         # A* and alternative pathfinding implementations
 │   ├── astar.go
-│   └── interface.go
-├── messaging/           # NATS JetStream producer/consumer wrappers
-│   ├── producer.go
-│   └── consumer.go
-├── events/              # Event type definitions and serialization
+│   ├── dijkstra.go
+│   └── grid.go
+├── events/              # Event types, event bus, and commands
+│   ├── commands.go
+│   ├── event_bus.go
 │   └── events.go
 ├── tui/                 # Bubbletea TUI components
 │   ├── model.go         # Main model, update, view
-│   ├── grid_view.go     # Grid rendering with lipgloss
-│   ├── config_view.go   # Configuration sidebar rendering
-│   ├── controls.go      # Keybinding helpers
+│   ├── events.go        # Event handlers for grid rendering
 │   └── styles.go        # Lipgloss style definitions
-└── config/              # Simulation configuration loading
-    └── config.go
+```
 
+Entry points (currently `main.go` at repository root; will migrate to `cmd/` in future phases):
+
+```text
 cmd/
-├── simctl/              # CLI for operator (start, pause, stop, configure)
+├── simctl/              # CLI for operator (start, pause, stop, configure) — planned Phase 10
 │   └── main.go
-└── simviz/              # Terminal TUI for visualization
+└── simviz/              # Terminal TUI for visualization — planned Phase 6+ migration
     └── main.go
 ```
 
@@ -95,7 +98,7 @@ cmd/
 Each slice is independently testable and introduces one new concept. Developed in order — no skipping ahead until the current slice is working.
 
 | # | Slice | What You Build | Go Concepts | Verified By |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|
 | 1 | Grid + A* Pathfinding | 2D grid, A* algorithm, path reconstruction | Structs, slices, interfaces, unit tests, `go test` | Path from (0,0) to (5,5) avoiding obstacles |
 | 2 | Citizen Movement | Citizens follow paths, tick loop | Methods, tick timers, state mutation, `go vet` | Citizens move toward goals each tick |
 | 3 | Hazards + Envelopment | Hazard emergence, radius expansion, grid blocking | Concurrent state, config-driven behavior, edge cases | Hazard cells block pathfinding, radius grows |

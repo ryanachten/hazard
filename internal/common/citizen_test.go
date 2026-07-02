@@ -69,8 +69,12 @@ func TestFindNearestSafeZone_ReturnsErrorWhenNoSafeZone(t *testing.T) {
 func TestUpdatePath_RecalculatesAroundObstacle(t *testing.T) {
 	grid := pf.NewGrid(5, 5, pf.CellOpen)
 
-	// Place an obstacle that blocks the direct path from (0,0) to (4,4)
+	// Build a wall that blocks the direct corridor from (0,0) to (4,4),
+	// forcing a detour
+	grid.UpdateCell(pf.Position{X: 1, Y: 0}, pf.CellObstacle)
 	grid.UpdateCell(pf.Position{X: 1, Y: 1}, pf.CellObstacle)
+	grid.UpdateCell(pf.Position{X: 1, Y: 2}, pf.CellObstacle)
+	grid.UpdateCell(pf.Position{X: 1, Y: 3}, pf.CellObstacle)
 
 	citizen := Citizen{
 		ID:                 uuid.New(),

@@ -141,11 +141,8 @@ func (e *EventBus) createEvent(eventType eventType, entityID uuid.UUID, metadata
 		Payload:      payload,
 	}
 
-	select {
-	case e.SimulationEvents <- event:
-	default:
-	}
-
+	// Sending to channel is blocking to ensure event dispatch and event log stay in sync
+	e.SimulationEvents <- event
 	e.EventLog = append(e.EventLog, event)
 }
 

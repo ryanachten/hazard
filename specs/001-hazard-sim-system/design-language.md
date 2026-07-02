@@ -59,7 +59,7 @@ Each cell is rendered as a styled string; no window-wide background is needed.
 
 ## Quick Reference
 
-```
+```text
 ·  open ground         ◎  safe zone          @  citizen (alive)
 #  obstacle (bldg)     ~  flood              ♦  citizen (escaped)
 ░  fire                ≈  lava               †  citizen (dead)

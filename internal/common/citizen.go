@@ -100,6 +100,10 @@ func (c *Citizen) IncrementLocation() bool {
 		return hasMoved
 	}
 
+	if len(c.Path) == 0 || c.CurrentPathIndex < 0 || c.CurrentPathIndex >= len(c.Path) {
+		return false
+	}
+
 	if c.CurrentPathIndex < len(c.Path)-1 {
 		c.CurrentPathIndex++
 		c.CurrentPosition = c.Path[c.CurrentPathIndex]

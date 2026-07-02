@@ -4,8 +4,8 @@ import "math/rand"
 
 // RandIntInRange returns a random integer in range
 func RandIntInRange(valueRange [2]int) int {
-	low := valueRange[0]
-	high := valueRange[1]
+	low := min(valueRange[0], valueRange[1])
+	high := max(valueRange[0], valueRange[1])
 	return low + rand.Intn(high-low+1)
 }
 

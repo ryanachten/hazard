@@ -257,7 +257,7 @@ type SimulationEvent struct {
 type EventType string
 
 const (
-    EventSimulationCreated   EventType = "simulation.started"
+    EventSimulationCreated   EventType = "simulation.created"
     EventSimulationPaused    EventType = "simulation.paused"
     EventSimulationStopped   EventType = "simulation.stopped"
     EventSimulationCompleted EventType = "simulation.completed"

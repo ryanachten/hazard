@@ -179,7 +179,7 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 				CurrentPosition:    pf.Position{X: 0, Y: 0},
 				CurrentDestination: destination,
 				Path:               path,
-				CurrentPathIndex:   0,
+				CurrentPathIndex:   1,
 			},
 		},
 		Hazards: []c.Hazard{},

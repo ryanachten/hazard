@@ -195,22 +195,23 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 
 	// If new safe zone added, determine which safe zone is closest
 	if safeZoneCreated {
-		err := s.Citizens[citizenIndex].FindNearestSafeZone(s.Grid)
-		if err != nil {
+		if err := s.Citizens[citizenIndex].FindNearestSafeZone(s.Grid); err != nil {
 			log.Printf("error finding safe zone for citizen %v path: %v", citizenIndex, err)
 			return
 		}
 		pathUpdated = true
 	} else {
-		// Check if any path intersects with hazards and needs recalculating
-		for _, pos := range s.Citizens[citizenIndex].Path {
-			if s.Grid.Cells[pos.Y][pos.X] == pf.CellHazard {
-				err := s.Citizens[citizenIndex].UpdatePath(s.Grid)
-				if err != nil {
+		// Check if next cell intersects with avoidable cell types and needs recalculating
+		curIndex := s.Citizens[citizenIndex].CurrentPathIndex
+		nextIndex := curIndex + 1
+		if nextIndex < len(s.Citizens[citizenIndex].Path) {
+			pos := s.Citizens[citizenIndex].Path[nextIndex]
+			if pf.AvoidableCellType[s.Grid.GetCell(pos)] {
+				if err := s.Citizens[citizenIndex].UpdatePath(s.Grid); err != nil {
 					log.Printf("error updating citizen %v path: %v", citizenIndex, err)
+				} else {
+					pathUpdated = true
 				}
-				pathUpdated = true
-				break
 			}
 		}
 	}
@@ -221,7 +222,7 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 }
 
 func (s *Simulation) updateCitizenLocation(citizenIndex int) {
-	hasMoved := s.Citizens[citizenIndex].IncrementLocation()
+	hasMoved := s.Citizens[citizenIndex].IncrementLocation(s.Grid)
 	if hasMoved {
 		s.eventBus.CitizenMoved(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].CurrentPosition, s.getEventMetadata())
 	}

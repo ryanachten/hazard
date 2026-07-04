@@ -23,7 +23,18 @@ const (
 	CellHazard
 	// CellSafeZone represents a cell occupied by a safe zone
 	CellSafeZone
+	// CellCitizen represent as cell occupied by a citizen
+	CellCitizen
 )
+
+// AvoidableCellType lookup for pathfinding to determine which cell types should be avoided
+var AvoidableCellType = map[CellType]bool{
+	CellOpen:     false,
+	CellObstacle: true,
+	CellHazard:   true,
+	CellSafeZone: false,
+	CellCitizen:  true,
+}
 
 // Grid (2D) for positioning simulation entities
 type Grid struct {

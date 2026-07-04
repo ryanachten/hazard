@@ -17,6 +17,7 @@ type Citizen struct {
 	CurrentDestination pf.Position
 	Path               []pf.Position
 	CurrentPathIndex   int
+	previousCellType   pf.CellType
 }
 
 // CitizenStatus defines the state of citizen activity
@@ -58,6 +59,9 @@ func CreateCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 			continue
 		}
 
+		citizen.previousCellType = grid.GetCell(startPosition)
+		grid.UpdateCell(startPosition, pf.CellCitizen)
+
 		citizens = append(citizens, citizen)
 	}
 
@@ -93,7 +97,7 @@ func (c *Citizen) UpdatePath(grid *pf.Grid) error {
 }
 
 // IncrementLocation moves the citizen one step along their path and updates their status
-func (c *Citizen) IncrementLocation() bool {
+func (c *Citizen) IncrementLocation(grid *pf.Grid) bool {
 	hasMoved := false
 
 	if c.Status == CitizenEscaped || c.Status == CitizenDead {
@@ -105,9 +109,12 @@ func (c *Citizen) IncrementLocation() bool {
 	}
 
 	if c.CurrentPathIndex < len(c.Path)-1 {
+		grid.UpdateCell(c.CurrentPosition, c.previousCellType)
 		c.CurrentPathIndex++
 		c.CurrentPosition = c.Path[c.CurrentPathIndex]
 		hasMoved = true
+		c.previousCellType = grid.GetCell(c.CurrentPosition)
+		grid.UpdateCell(c.CurrentPosition, pf.CellCitizen)
 	}
 
 	if c.CurrentPathIndex == len(c.Path)-1 {

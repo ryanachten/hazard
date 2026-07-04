@@ -109,6 +109,8 @@ func TestUpdatePath_ReturnsErrorForUnreachableDestination(t *testing.T) {
 }
 
 func TestIncrementLocation_MovesCitizenOneStep(t *testing.T) {
+	grid := pf.NewGrid(3, 1, pf.CellOpen)
+
 	citizen := Citizen{
 		Status:           CitizenIdle,
 		CurrentPosition:  pf.Position{X: 0, Y: 0},
@@ -116,7 +118,7 @@ func TestIncrementLocation_MovesCitizenOneStep(t *testing.T) {
 		CurrentPathIndex: 0,
 	}
 
-	moved := citizen.IncrementLocation()
+	moved := citizen.IncrementLocation(&grid)
 
 	require.True(t, moved)
 	require.Equal(t, 1, citizen.CurrentPathIndex)
@@ -125,6 +127,8 @@ func TestIncrementLocation_MovesCitizenOneStep(t *testing.T) {
 }
 
 func TestIncrementLocation_ReachingEndMarksEscaped(t *testing.T) {
+	grid := pf.NewGrid(2, 1, pf.CellOpen)
+
 	citizen := Citizen{
 		Status:           CitizenIdle,
 		CurrentPosition:  pf.Position{X: 0, Y: 0},
@@ -132,10 +136,10 @@ func TestIncrementLocation_ReachingEndMarksEscaped(t *testing.T) {
 		CurrentPathIndex: 0,
 	}
 
-	moved := citizen.IncrementLocation()
+	moved := citizen.IncrementLocation(&grid)
 	require.True(t, moved)
 
-	moved = citizen.IncrementLocation()
+	moved = citizen.IncrementLocation(&grid)
 
 	require.False(t, moved, "citizen at path end should not report movement")
 	require.Equal(t, 1, citizen.CurrentPathIndex)
@@ -151,7 +155,7 @@ func TestIncrementLocation_DoesNotMoveEscapedCitizen(t *testing.T) {
 		CurrentPathIndex: 2,
 	}
 
-	moved := citizen.IncrementLocation()
+	moved := citizen.IncrementLocation(nil)
 
 	require.False(t, moved)
 	require.Equal(t, 2, citizen.CurrentPathIndex)
@@ -166,7 +170,7 @@ func TestIncrementLocation_DoesNotMoveDeadCitizen(t *testing.T) {
 		CurrentPathIndex: 1,
 	}
 
-	moved := citizen.IncrementLocation()
+	moved := citizen.IncrementLocation(nil)
 
 	require.False(t, moved)
 	require.Equal(t, 1, citizen.CurrentPathIndex)

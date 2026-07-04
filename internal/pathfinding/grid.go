@@ -15,25 +15,28 @@ type Position struct {
 type CellType int
 
 const (
-	// CellOpen represents a passable cell
+	// CellOpen represents an unoccupied
 	CellOpen CellType = iota
-	// CellObstacle represents a blocked cell
+	// CellObstacle represents a cell occupied by a building
 	CellObstacle
 	// CellHazard represents a cell occupied by a hazard
 	CellHazard
 	// CellSafeZone represents a cell occupied by a safe zone
 	CellSafeZone
-	// CellCitizen represent as cell occupied by a citizen
+	// CellCitizen represents a cell occupied by a citizen
 	CellCitizen
+	// CellEscapedCitizen represents cell occupied by a citizen escaped to a safe zone
+	CellEscapedCitizen
 )
 
 // AvoidableCellType lookup for pathfinding to determine which cell types should be avoided
 var AvoidableCellType = map[CellType]bool{
-	CellOpen:     false,
-	CellObstacle: true,
-	CellHazard:   true,
-	CellSafeZone: false,
-	CellCitizen:  true,
+	CellOpen:           false,
+	CellObstacle:       true,
+	CellHazard:         true,
+	CellSafeZone:       false,
+	CellCitizen:        true,
+	CellEscapedCitizen: true,
 }
 
 // Grid (2D) for positioning simulation entities

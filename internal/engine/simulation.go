@@ -179,6 +179,10 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 }
 
 func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
+	if s.Citizens[citizenIndex].Status == c.CitizenEscaped {
+		return false
+	}
+
 	if s.Grid.GetCell(s.Citizens[citizenIndex].CurrentPosition) != pf.CellHazard {
 		return false
 	}

@@ -10,24 +10,27 @@ import (
 	"github.com/google/uuid"
 )
 
+type citizenState struct {
+	Position     pf.Position
+	PreviousCell string
+}
+
 // Model represents the TUI state for the hazard simulation
 type Model struct {
 	simulationID uuid.UUID
 	grid         [][]string
-	citizens     map[uuid.UUID]pf.Position
+	citizens     map[uuid.UUID]citizenState
 	hazards      map[uuid.UUID]string
-	safeZones    map[pf.Position]string
 	eventBus     *e.EventBus
 }
 
 // InitialModel creates the initial TUI model state
 func InitialModel(eventBus *e.EventBus) Model {
 	return Model{
-		grid:      [][]string{},
-		citizens:  map[uuid.UUID]pf.Position{},
-		hazards:   map[uuid.UUID]string{},
-		safeZones: map[pf.Position]string{},
-		eventBus:  eventBus,
+		grid:     [][]string{},
+		citizens: map[uuid.UUID]citizenState{},
+		hazards:  map[uuid.UUID]string{},
+		eventBus: eventBus,
 	}
 }
 

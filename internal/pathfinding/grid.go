@@ -27,6 +27,8 @@ const (
 	CellCitizen
 	// CellEscapedCitizen represents cell occupied by a citizen escaped to a safe zone
 	CellEscapedCitizen
+	// CellDeadCitizen represents cell occupied by a citizen who has been killed
+	CellDeadCitizen
 )
 
 // AvoidableCellType lookup for pathfinding to determine which cell types should be avoided
@@ -37,6 +39,7 @@ var AvoidableCellType = map[CellType]bool{
 	CellSafeZone:       false,
 	CellCitizen:        true,
 	CellEscapedCitizen: true,
+	CellDeadCitizen:    false,
 }
 
 // Grid (2D) for positioning simulation entities

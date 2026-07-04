@@ -188,6 +188,7 @@ func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
 	}
 
 	s.Citizens[citizenIndex].Status = c.CitizenDead
+	s.Grid.UpdateCell(s.Citizens[citizenIndex].CurrentPosition, pf.CellDeadCitizen)
 	s.DeadCitizensCount++
 	s.eventBus.CitizenDied(s.Citizens[citizenIndex].ID, s.getEventMetadata())
 

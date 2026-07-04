@@ -119,6 +119,7 @@ func (c *Citizen) IncrementLocation(grid *pf.Grid) bool {
 
 	if c.CurrentPathIndex == len(c.Path)-1 {
 		c.Status = CitizenEscaped
+		grid.UpdateCell(c.CurrentPosition, pf.CellEscapedCitizen)
 	} else {
 		c.Status = CitizenNavigating
 	}

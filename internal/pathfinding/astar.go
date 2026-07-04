@@ -61,8 +61,8 @@ func FindPath(grid *Grid, from, to Position) ([]Position, error) {
 				continue
 			}
 
-			// Skip obstacles
-			if grid.Cells[y][x] == CellObstacle || grid.Cells[y][x] == CellHazard {
+			// Skip avoidable cells
+			if AvoidableCellType[grid.Cells[y][x]] {
 				continue
 			}
 

@@ -291,7 +291,7 @@ func TestTick_CitizenReachesSafeZoneAndEscapes(t *testing.T) {
 	require.Equal(t, c.CitizenEscaped, sim.Citizens[0].Status)
 	require.Equal(t, pf.Position{X: 2, Y: 0}, sim.Citizens[0].CurrentPosition)
 	require.Equal(t, 1, sim.EscapedCitizensCount)
-	require.Equal(t, pf.CellSafeZone, sim.Grid.GetCell(sim.Citizens[0].CurrentPosition))
+	require.Equal(t, pf.CellCitizen, sim.Grid.GetCell(sim.Citizens[0].CurrentPosition))
 }
 
 func TestTick_CitizenOvertakenByHazardDies(t *testing.T) {

@@ -68,26 +68,39 @@ func CreateHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
 	return hazard, nil
 }
 
+// expandTypes define what cells can be overwritten during expansion
+var expandTypes = map[pf.CellType]struct{}{
+	pf.CellOpen:    {},
+	pf.CellCitizen: {},
+}
+
 // ExpandHazard increases the hazard radius and marks affected cells on the grid
 func (h *Hazard) ExpandHazard(grid *pf.Grid) []pf.Position {
 	h.CurrentRadius++
-	return h.updateCells(grid, pf.CellOpen, pf.CellHazard)
+	return h.updateCells(grid, expandTypes, pf.CellHazard)
+}
+
+// removalTypes define what cells can be overwritten during removal
+var removalTypes = map[pf.CellType]struct{}{
+	pf.CellHazard: {},
 }
 
 // RemoveHazard clears the hazard's cells from the grid
 func (h *Hazard) RemoveHazard(grid *pf.Grid) []pf.Position {
-	return h.updateCells(grid, pf.CellHazard, pf.CellOpen)
+	return h.updateCells(grid, removalTypes, pf.CellOpen)
 }
 
-func (h *Hazard) updateCells(grid *pf.Grid, oldType, newType pf.CellType) []pf.Position {
+func (h *Hazard) updateCells(grid *pf.Grid, oldTypes map[pf.CellType]struct{}, newType pf.CellType) []pf.Position {
 	updatedCells := []pf.Position{}
 
 	for dx := -h.CurrentRadius; dx <= h.CurrentRadius; dx++ {
 		for dy := -h.CurrentRadius; dy <= h.CurrentRadius; dy++ {
 			pos := pf.Position{X: h.Origin.X + dx, Y: h.Origin.Y + dy}
-			if grid.InBounds(pos) && grid.GetCell(pos) == oldType {
-				grid.UpdateCell(pos, newType)
-				updatedCells = append(updatedCells, pos)
+			if grid.InBounds(pos) {
+				if _, validType := oldTypes[grid.GetCell(pos)]; validType {
+					grid.UpdateCell(pos, newType)
+					updatedCells = append(updatedCells, pos)
+				}
 			}
 		}
 	}

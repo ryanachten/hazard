@@ -73,8 +73,8 @@ func FindPathToGoal(grid *Grid, from Position, isGoal GoalPredicate) ([]Position
 				continue
 			}
 
-			// Skip obstacles
-			if grid.Cells[y][x] == CellObstacle || grid.Cells[y][x] == CellHazard {
+			// Skip avoidable cells
+			if AvoidableCellType[grid.Cells[y][x]] {
 				continue
 			}
 

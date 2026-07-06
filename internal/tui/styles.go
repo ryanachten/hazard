@@ -93,3 +93,5 @@ func getLavaCell() string {
 func getSafeZoneCell(char string) string {
 	return safeZoneStyle.SetString(char).Render()
 }
+
+var gridStyle = lipgloss.NewStyle().MarginRight(2)

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/google/uuid"
 )
 
@@ -22,6 +23,7 @@ type Model struct {
 	citizens     map[uuid.UUID]citizenState
 	hazards      map[uuid.UUID]string
 	eventBus     *e.EventBus
+	logs         []string
 }
 
 // InitialModel creates the initial TUI model state
@@ -31,39 +33,53 @@ func InitialModel(eventBus *e.EventBus) Model {
 		citizens: map[uuid.UUID]citizenState{},
 		hazards:  map[uuid.UUID]string{},
 		eventBus: eventBus,
+		logs:     []string{},
 	}
 }
 
-func (m Model) consumeEvent() tea.Msg {
+func (m Model) consumeSimulationEvent() tea.Msg {
 	event := <-m.eventBus.SimulationEvents
 	return event
 }
 
-func (m Model) dispatchEvent(event e.SimulationCommand) tea.Cmd {
+func (m Model) consumeLogEvent() tea.Msg {
+	log := <-m.eventBus.SystemLogs
+	return log
+}
+
+func (m Model) dispatchSimulationCommand(event e.SimulationCommand) tea.Cmd {
 	m.eventBus.SimulationCommands <- event
 	return nil
 }
 
 // Init initializes the Bubble Tea program
 func (m Model) Init() tea.Cmd {
-	return m.consumeEvent
+	return tea.Batch(m.consumeSimulationEvent, m.consumeLogEvent)
 }
 
 // View renders the current simulation state
 func (m Model) View() tea.View {
-	var s strings.Builder
-
-	s.WriteString("Running!\n")
+	var grid strings.Builder
 
 	for y := range m.grid {
 		for x := range m.grid[y] {
 			cell := m.grid[y][x]
-			s.WriteString(cell)
+			grid.WriteString(cell)
 		}
-		s.WriteString("\n")
+		grid.WriteString("\n")
 	}
 
-	return tea.NewView(s.String())
+	var logOutput strings.Builder
+
+	for _, log := range m.logs {
+		logOutput.WriteString(log)
+		logOutput.WriteString("\n")
+	}
+
+	styledLog := lipgloss.Wrap(logOutput.String(), 40, " ")
+	styledGrid := gridStyle.SetString(grid.String()).Render()
+
+	return tea.NewView(lipgloss.JoinHorizontal(lipgloss.Bottom, styledGrid, styledLog))
 }
 
 // Update handles messages and updates the TUI model
@@ -71,13 +87,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
+	case string:
+		m.logs = append(m.logs, string(msg))
+
 	case e.SimulationEvent:
 		event := e.SimulationEvent(msg)
 
 		// Skip processing any events where the simulation ID doesn't match the current simulation
 		// this avoids processing stale events
 		if event.EventType != e.SimulationCreated && event.SimulationID != m.simulationID {
-			return m, m.consumeEvent
+			return m, m.consumeSimulationEvent
 		}
 
 		switch event.EventType {
@@ -101,7 +120,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleHazardDissipated(event)
 		}
 
-		return m, m.consumeEvent
+		return m, m.consumeSimulationEvent
 
 	case tea.KeyPressMsg:
 
@@ -111,13 +130,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "enter", "space":
-			return m, m.dispatchEvent(e.SimulationCommand{
+			return m, m.dispatchSimulationCommand(e.SimulationCommand{
 				CommandType: e.PauseSimulation,
 			})
 
 		case "r":
 			m.simulationID = uuid.Nil
-			return m, m.dispatchEvent(e.SimulationCommand{
+			return m, m.dispatchSimulationCommand(e.SimulationCommand{
 				CommandType: e.RestartSimulation,
 			})
 		}

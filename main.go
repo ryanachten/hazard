@@ -38,6 +38,10 @@ func main() {
 
 	eventBus := events.CreateEventBus()
 
+	log.SetOutput(&c.LogWriter{
+		LogChannel: eventBus.SystemLogs,
+	})
+
 	simulation, err := eng.NewSimulation(config, eventBus)
 	if err != nil {
 		log.Fatalf("error creating simulation: %v", err)

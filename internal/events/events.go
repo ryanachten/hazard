@@ -58,12 +58,6 @@ type SimulationCreatedPayload struct {
 	SafeZones []c.SafeZone
 }
 
-// HazardEmergedPayload for hazard emergence event
-type HazardEmergedPayload struct {
-	Type     c.HazardType
-	Position pf.Position
-}
-
 // SimulationCreated raised when simulation starts
 func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata EventMetadata) {
 	citizenSnapshot := make([]c.Citizen, len(payload.Citizens))
@@ -98,11 +92,15 @@ func (e *EventBus) CitizenPathUpdated(citizenID uuid.UUID, path []pf.Position, m
 	e.createEvent(CitizenPathUpdated, citizenID, metadata, getPositionSnapshot(path))
 }
 
+// CitizenEscapedPayload for citizen escape event
+type CitizenEscapedPayload struct {
+	SafeZoneID       uuid.UUID
+	AssignedPosition pf.Position
+}
+
 // CitizenEscaped raised when a citizen escapes hazards by reaching a safe zone
-func (e *EventBus) CitizenEscaped(citizenID uuid.UUID, metadata EventMetadata) {
-	// TODO: ideally we would have some sort of relationship between citizens and the safe zone they've occupied
-	// - this is out of scope for now
-	e.createEvent(CitizenEscaped, citizenID, metadata, nil)
+func (e *EventBus) CitizenEscaped(citizenID uuid.UUID, payload CitizenEscapedPayload, metadata EventMetadata) {
+	e.createEvent(CitizenEscaped, citizenID, metadata, payload)
 }
 
 // CitizenDied raised when a citizen has been killed by a hazard
@@ -110,9 +108,24 @@ func (e *EventBus) CitizenDied(citizenID uuid.UUID, metadata EventMetadata) {
 	e.createEvent(CitizenDied, citizenID, metadata, nil)
 }
 
+// SafeZoneEmergedPayload for safe zone emergence event
+type SafeZoneEmergedPayload struct {
+	ID    uuid.UUID
+	Cells []pf.Position
+}
+
 // SafeZoneEmerged raised when a safe zone emerges
-func (e *EventBus) SafeZoneEmerged(safeZoneID uuid.UUID, cells []pf.Position, metadata EventMetadata) {
-	e.createEvent(SafeZoneEmerged, safeZoneID, metadata, getPositionSnapshot(cells))
+func (e *EventBus) SafeZoneEmerged(safeZoneID uuid.UUID, payload SafeZoneEmergedPayload, metadata EventMetadata) {
+	e.createEvent(SafeZoneEmerged, safeZoneID, metadata, SafeZoneEmergedPayload{
+		ID:    payload.ID,
+		Cells: getPositionSnapshot(payload.Cells),
+	})
+}
+
+// HazardEmergedPayload for hazard emergence event
+type HazardEmergedPayload struct {
+	Type     c.HazardType
+	Position pf.Position
 }
 
 // HazardEmerged raised when a hazard emerges

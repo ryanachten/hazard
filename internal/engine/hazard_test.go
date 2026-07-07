@@ -152,6 +152,24 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		{X: 4, Y: 4},
 	}
 
+	sz := c.SafeZone{
+		ID:          uuid.New(),
+		Position:    destination,
+		Radius:      1,
+		HasCapacity: true,
+	}
+	// Mark safe zone cells on the grid and populate location map
+	safeZoneCells := []pf.Position{
+		{X: 3, Y: 3}, {X: 3, Y: 4},
+		{X: 4, Y: 3}, {X: 4, Y: 4},
+	}
+	safeZoneLocations := make(map[pf.Position]*c.SafeZone, len(safeZoneCells))
+	for _, cell := range safeZoneCells {
+		grid.UpdateCell(cell, pf.CellSafeZone)
+		safeZoneLocations[cell] = &sz
+	}
+	sz.Cells = safeZoneCells
+
 	sim := Simulation{
 		Config: c.SimulationConfig{
 			SafeZone: c.SafeZoneConfig{
@@ -164,14 +182,13 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 				CountRange:    [2]int{0, 0},
 			},
 		},
-		State:        SimulationCreated,
-		Grid:         &grid,
-		eventBus:     events.CreateEventBus(),
-		MaxHazards:   0,
-		MaxSafeZones: 1,
-		SafeZones: []c.SafeZone{
-			{Position: destination, Radius: 1},
-		},
+		State:             SimulationCreated,
+		Grid:              &grid,
+		eventBus:          events.CreateEventBus(),
+		safeZoneLocations: safeZoneLocations,
+		MaxHazards:        0,
+		MaxSafeZones:      1,
+		SafeZones:         []c.SafeZone{sz},
 		Citizens: []c.Citizen{
 			{
 				ID:                 uuid.New(),
@@ -180,6 +197,7 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 				CurrentDestination: destination,
 				Path:               path,
 				CurrentPathIndex:   1,
+				TargetSafeZone:     &sz,
 			},
 		},
 		Hazards: []c.Hazard{},
@@ -200,6 +218,7 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		"recalculated path must avoid hazard cell")
 	require.Equal(t, 1, sim.Citizens[0].CurrentPathIndex,
 		"citizen advanced one step after recalculation")
-	require.Equal(t, destination, sim.Citizens[0].Path[len(sim.Citizens[0].Path)-1],
-		"recalculated path must still lead to destination")
+	lastCell := sim.Citizens[0].Path[len(sim.Citizens[0].Path)-1]
+	require.Equal(t, pf.CellSafeZone, sim.Grid.GetCell(lastCell),
+		"recalculated path must lead to a safe zone cell")
 }

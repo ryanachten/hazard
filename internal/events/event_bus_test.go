@@ -125,7 +125,9 @@ func TestCitizenEvents_StoreCorrectTypes(t *testing.T) {
 		EventMetadata{SimulationID: simID, Tick: 1})
 	bus.CitizenPathUpdated(citizenID, []pf.Position{{X: 0, Y: 0}},
 		EventMetadata{SimulationID: simID, Tick: 1})
-	bus.CitizenEscaped(citizenID, EventMetadata{SimulationID: simID, Tick: 2})
+	bus.CitizenEscaped(citizenID, CitizenEscapedPayload{
+		SafeZoneID: uuid.New(),
+	}, EventMetadata{SimulationID: simID, Tick: 2})
 	bus.CitizenDied(citizenID, EventMetadata{SimulationID: simID, Tick: 1})
 
 	require.Len(t, bus.EventLog, 4)
@@ -140,7 +142,7 @@ func TestSafeZoneEmerged_StoresCells(t *testing.T) {
 	safeZoneID := uuid.New()
 	cells := []pf.Position{{X: 2, Y: 2}, {X: 3, Y: 2}}
 
-	bus.SafeZoneEmerged(safeZoneID, cells,
+	bus.SafeZoneEmerged(safeZoneID, SafeZoneEmergedPayload{ID: safeZoneID, Cells: cells},
 		EventMetadata{SimulationID: uuid.New(), Tick: 1})
 
 	require.Len(t, bus.EventLog, 1)

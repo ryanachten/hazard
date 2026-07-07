@@ -31,7 +31,7 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 
 	// Initialise safe zones
 	for _, safeZone := range payload.SafeZones {
-		m.createSafeZone(safeZone.Cells)
+		m.createSafeZone(safeZone.ID, safeZone.Cells)
 	}
 
 	// Initialise citizens
@@ -67,8 +67,25 @@ func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
 }
 
 func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
-	var currentPosition = m.citizens[event.EntityID].Position
-	m.grid[currentPosition.Y][currentPosition.X] = getEscapedCitizenCell()
+	payload, ok := event.Payload.(events.CitizenEscapedPayload)
+	if !ok {
+		log.Printf("error converting payload to CitizenEscapedPayload: %v", event.Payload)
+		return
+	}
+
+	assignedPos := payload.AssignedPosition
+	curPos := m.citizens[event.EntityID].Position
+
+	if assignedPos != curPos {
+		// Citizen was redirected; restore the arrival cell
+		m.grid[curPos.Y][curPos.X] = m.citizens[event.EntityID].PreviousCell
+	}
+
+	m.grid[assignedPos.Y][assignedPos.X] = getEscapedCitizenCell()
+
+	state := m.citizens[event.EntityID]
+	state.Position = assignedPos
+	m.citizens[event.EntityID] = state
 }
 
 func (m *Model) handleCitizenDied(event events.SimulationEvent) {
@@ -77,12 +94,12 @@ func (m *Model) handleCitizenDied(event events.SimulationEvent) {
 }
 
 func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {
-	cells, ok := event.Payload.([]pf.Position)
+	payload, ok := event.Payload.(events.SafeZoneEmergedPayload)
 	if !ok {
-		log.Printf("error converting payload to []pf.Position: %v", event.Payload)
+		log.Printf("error converting payload to SafeZoneEmergedPayload: %v", event.Payload)
 	}
 
-	m.createSafeZone(cells)
+	m.createSafeZone(payload.ID, payload.Cells)
 }
 
 func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
@@ -130,9 +147,12 @@ func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
 	}
 }
 
-func (m *Model) createSafeZone(cells []pf.Position) {
+func (m *Model) createSafeZone(safeZoneID uuid.UUID, cells []pf.Position) {
 	safeZoneChar := getSafeZoneCell(c.RandValInSlice(safeZoneCharacters))
-	for _, safeZoneCell := range cells {
-		m.grid[safeZoneCell.Y][safeZoneCell.X] = safeZoneChar
+	m.safeZones[safeZoneID] = make([]pf.Position, len(cells))
+
+	for i, cellPos := range cells {
+		m.grid[cellPos.Y][cellPos.X] = safeZoneChar
+		m.safeZones[safeZoneID][i] = cellPos
 	}
 }

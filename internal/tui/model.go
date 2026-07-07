@@ -13,6 +13,7 @@ import (
 
 type citizenState struct {
 	Position     pf.Position
+	SafeZoneID   uuid.UUID
 	PreviousCell string
 }
 
@@ -22,6 +23,7 @@ type Model struct {
 	grid         [][]string
 	citizens     map[uuid.UUID]citizenState
 	hazards      map[uuid.UUID]string
+	safeZones    map[uuid.UUID][]pf.Position
 	eventBus     *e.EventBus
 	logs         []string
 }
@@ -29,11 +31,12 @@ type Model struct {
 // InitialModel creates the initial TUI model state
 func InitialModel(eventBus *e.EventBus) Model {
 	return Model{
-		grid:     [][]string{},
-		citizens: map[uuid.UUID]citizenState{},
-		hazards:  map[uuid.UUID]string{},
-		eventBus: eventBus,
-		logs:     []string{},
+		grid:      [][]string{},
+		citizens:  map[uuid.UUID]citizenState{},
+		hazards:   map[uuid.UUID]string{},
+		safeZones: map[uuid.UUID][]pf.Position{},
+		eventBus:  eventBus,
+		logs:      []string{},
 	}
 }
 

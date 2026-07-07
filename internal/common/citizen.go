@@ -15,9 +15,10 @@ type Citizen struct {
 	Status             CitizenStatus
 	CurrentPosition    pf.Position
 	CurrentDestination pf.Position
+	TargetSafeZone     *SafeZone
 	Path               []pf.Position
 	CurrentPathIndex   int
-	previousCellType   pf.CellType
+	PreviousCellType   pf.CellType
 }
 
 // CitizenStatus defines the state of citizen activity
@@ -35,7 +36,7 @@ const (
 )
 
 // CreateCitizens instantiates citizens in a grid
-func CreateCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
+func CreateCitizens(citizenCountRange [2]int, grid *pf.Grid, safeZoneLocations map[pf.Position]*SafeZone) []Citizen {
 	citizenCount := RandIntInRange(citizenCountRange)
 	citizens := make([]Citizen, 0, citizenCount)
 
@@ -53,13 +54,13 @@ func CreateCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 			CurrentPathIndex: 0,
 		}
 
-		err = citizen.FindNearestSafeZone(grid)
+		err = citizen.FindNearestSafeZone(grid, safeZoneLocations)
 		if err != nil {
 			log.Printf("error updating citizen %v path: %v", citizen.ID, err)
 			continue
 		}
 
-		citizen.previousCellType = grid.GetCell(startPosition)
+		citizen.PreviousCellType = grid.GetCell(startPosition)
 		grid.UpdateCell(startPosition, pf.CellCitizen)
 
 		citizens = append(citizens, citizen)
@@ -68,10 +69,17 @@ func CreateCitizens(citizenCountRange [2]int, grid *pf.Grid) []Citizen {
 	return citizens
 }
 
-// FindNearestSafeZone finds a path from the citizen's current position to the nearest safe zone
-func (c *Citizen) FindNearestSafeZone(grid *pf.Grid) error {
+// FindNearestSafeZone finds a path from the citizen's current position to the nearest safe zone with capacity
+func (c *Citizen) FindNearestSafeZone(grid *pf.Grid, safeZoneLocations map[pf.Position]*SafeZone) error {
 	isGoal := func(pos pf.Position) bool {
-		return grid.GetCell(pos) == pf.CellSafeZone
+		if grid.GetCell(pos) != pf.CellSafeZone {
+			return false
+		}
+		safeZone, ok := safeZoneLocations[pos]
+		if !ok {
+			return false
+		}
+		return safeZone.HasCapacity
 	}
 	path, err := pf.FindPathToGoal(grid, c.CurrentPosition, isGoal)
 
@@ -79,8 +87,16 @@ func (c *Citizen) FindNearestSafeZone(grid *pf.Grid) error {
 		return err
 	}
 
+	pathDestination := path[len(path)-1]
+	safeZoneDestination, ok := safeZoneLocations[pathDestination]
+	if !ok {
+		return fmt.Errorf("unable to find safe zone for location %v", pathDestination)
+	}
+
 	c.Path = path
-	c.CurrentDestination = path[len(path)-1]
+	c.CurrentDestination = pathDestination
+	c.TargetSafeZone = safeZoneDestination
+	c.CurrentPathIndex = 0
 	return nil
 }
 
@@ -97,34 +113,35 @@ func (c *Citizen) UpdatePath(grid *pf.Grid) error {
 }
 
 // IncrementLocation moves the citizen one step along their path and updates their status
-func (c *Citizen) IncrementLocation(grid *pf.Grid) bool {
-	hasMoved := false
+func (c *Citizen) IncrementLocation(grid *pf.Grid) (bool, bool) {
 
 	if c.Status == CitizenEscaped || c.Status == CitizenDead {
-		return hasMoved
+		return false, c.Status == CitizenEscaped
 	}
 
 	if len(c.Path) == 0 || c.CurrentPathIndex < 0 || c.CurrentPathIndex >= len(c.Path) {
-		return false
+		return false, false
 	}
 
+	hasMoved := false
+
 	if c.CurrentPathIndex < len(c.Path)-1 {
-		grid.UpdateCell(c.CurrentPosition, c.previousCellType)
+		c.Status = CitizenNavigating
+
+		// Revert cell to previous type
+		grid.UpdateCell(c.CurrentPosition, c.PreviousCellType)
+
+		// Update current position
 		c.CurrentPathIndex++
 		c.CurrentPosition = c.Path[c.CurrentPathIndex]
 		hasMoved = true
-		c.previousCellType = grid.GetCell(c.CurrentPosition)
+
+		// Store previous cell type and update current cell
+		c.PreviousCellType = grid.GetCell(c.CurrentPosition)
 		grid.UpdateCell(c.CurrentPosition, pf.CellCitizen)
 	}
 
-	if c.CurrentPathIndex == len(c.Path)-1 {
-		c.Status = CitizenEscaped
-		grid.UpdateCell(c.CurrentPosition, pf.CellEscapedCitizen)
-	} else {
-		c.Status = CitizenNavigating
-	}
-
-	return hasMoved
+	return hasMoved, c.CurrentPathIndex == len(c.Path)-1
 }
 
 // Copy returns a deep copy of the Citizen
@@ -136,7 +153,9 @@ func (c *Citizen) Copy() Citizen {
 		Status:             c.Status,
 		CurrentPosition:    c.CurrentPosition,
 		CurrentDestination: c.CurrentDestination,
+		TargetSafeZone:     c.TargetSafeZone,
 		Path:               path,
 		CurrentPathIndex:   c.CurrentPathIndex,
+		PreviousCellType:   c.PreviousCellType,
 	}
 }

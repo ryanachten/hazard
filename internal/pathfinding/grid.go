@@ -38,7 +38,7 @@ var AvoidableCellType = map[CellType]bool{
 	CellHazard:         true,
 	CellSafeZone:       false,
 	CellCitizen:        true,
-	CellEscapedCitizen: true,
+	CellEscapedCitizen: false,
 	CellDeadCitizen:    false,
 }
 

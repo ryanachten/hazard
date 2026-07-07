@@ -117,9 +117,20 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 
 func TestTick_AdvancesCitizenOneStepPerTick(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
+
+	sz := c.SafeZone{
+		ID:          uuid.New(),
+		Cells:       []pf.Position{{X: 2, Y: 0}},
+		HasCapacity: true,
+	}
+	safeZoneLocations := map[pf.Position]*c.SafeZone{
+		{X: 2, Y: 0}: &sz,
+	}
+
 	simulation := Simulation{
-		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		Grid:              &grid,
+		eventBus:          events.CreateEventBus(),
+		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
 				Status: c.CitizenIdle,
@@ -129,6 +140,7 @@ func TestTick_AdvancesCitizenOneStepPerTick(t *testing.T) {
 					{X: 2, Y: 0},
 				},
 				CurrentPathIndex: 0,
+				TargetSafeZone:   &sz,
 			},
 		},
 	}
@@ -168,9 +180,21 @@ func TestTick_CitizenStopsAtGoal(t *testing.T) {
 
 func TestTick_MultipleCitizensMoveIndependently(t *testing.T) {
 	grid := pf.NewGrid(4, 2, pf.CellOpen)
+
+	sz := c.SafeZone{
+		ID:          uuid.New(),
+		Cells:       []pf.Position{{X: 1, Y: 0}, {X: 1, Y: 1}},
+		HasCapacity: true,
+	}
+	safeZoneLocations := map[pf.Position]*c.SafeZone{
+		{X: 1, Y: 0}: &sz,
+		{X: 1, Y: 1}: &sz,
+	}
+
 	simulation := Simulation{
-		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		Grid:              &grid,
+		eventBus:          events.CreateEventBus(),
+		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
 				Status: c.CitizenIdle,
@@ -179,6 +203,7 @@ func TestTick_MultipleCitizensMoveIndependently(t *testing.T) {
 					{X: 1, Y: 0},
 				},
 				CurrentPathIndex: 0,
+				TargetSafeZone:   &sz,
 			},
 			{
 				Status: c.CitizenIdle,
@@ -189,6 +214,7 @@ func TestTick_MultipleCitizensMoveIndependently(t *testing.T) {
 					{X: 3, Y: 1},
 				},
 				CurrentPathIndex: 0,
+				TargetSafeZone:   &sz,
 			},
 		},
 	}
@@ -265,9 +291,21 @@ func TestTick_CitizenReachesSafeZoneAndEscapes(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
 
+	sz := c.SafeZone{
+		ID:          uuid.New(),
+		Position:    pf.Position{X: 2, Y: 0},
+		Radius:      0,
+		Cells:       []pf.Position{{X: 2, Y: 0}},
+		HasCapacity: true,
+	}
+	safeZoneLocations := map[pf.Position]*c.SafeZone{
+		{X: 2, Y: 0}: &sz,
+	}
+
 	sim := Simulation{
-		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		Grid:              &grid,
+		eventBus:          events.CreateEventBus(),
+		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
 				Status:          c.CitizenIdle,
@@ -291,7 +329,7 @@ func TestTick_CitizenReachesSafeZoneAndEscapes(t *testing.T) {
 	require.Equal(t, c.CitizenEscaped, sim.Citizens[0].Status)
 	require.Equal(t, pf.Position{X: 2, Y: 0}, sim.Citizens[0].CurrentPosition)
 	require.Equal(t, 1, sim.EscapedCitizensCount)
-	require.Equal(t, pf.CellCitizen, sim.Grid.GetCell(sim.Citizens[0].CurrentPosition))
+	require.Equal(t, pf.CellEscapedCitizen, sim.Grid.GetCell(sim.Citizens[0].CurrentPosition))
 }
 
 func TestTick_CitizenOvertakenByHazardDies(t *testing.T) {
@@ -355,6 +393,15 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 	// Place initial safe zone at far corner
 	grid.UpdateCell(pf.Position{X: 9, Y: 9}, pf.CellSafeZone)
 
+	initialSZ := c.SafeZone{
+		Position:    pf.Position{X: 9, Y: 9},
+		Radius:      1,
+		HasCapacity: true,
+	}
+	safeZoneLocations := map[pf.Position]*c.SafeZone{
+		{X: 9, Y: 9}: &initialSZ,
+	}
+
 	sim := Simulation{
 		Config: c.SimulationConfig{
 			SafeZone: c.SafeZoneConfig{
@@ -368,9 +415,10 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 				DurationRange: [2]int{1, 1},
 			},
 		},
-		Grid:         &grid,
-		eventBus:     events.CreateEventBus(),
-		MaxSafeZones: 2,
+		Grid:              &grid,
+		eventBus:          events.CreateEventBus(),
+		safeZoneLocations: safeZoneLocations,
+		MaxSafeZones:      2,
 		SafeZones: []c.SafeZone{
 			{Position: pf.Position{X: 9, Y: 9}, Radius: 1},
 		},
@@ -397,9 +445,19 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 func TestTick_SimulationCompletesWhenAllResolved(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 
+	sz := c.SafeZone{
+		ID:          uuid.New(),
+		Cells:       []pf.Position{{X: 1, Y: 0}},
+		HasCapacity: true,
+	}
+	safeZoneLocations := map[pf.Position]*c.SafeZone{
+		{X: 1, Y: 0}: &sz,
+	}
+
 	sim := Simulation{
 		Grid:              &grid,
 		eventBus:          events.CreateEventBus(),
+		safeZoneLocations: safeZoneLocations,
 		DeadCitizensCount: 1,
 		Citizens: []c.Citizen{
 			{
@@ -413,6 +471,7 @@ func TestTick_SimulationCompletesWhenAllResolved(t *testing.T) {
 					{X: 1, Y: 0},
 				},
 				CurrentPathIndex: 0,
+				TargetSafeZone:   &sz,
 			},
 		},
 	}

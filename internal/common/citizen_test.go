@@ -13,7 +13,17 @@ func TestCreateCitizens_PlacedOnOpenGridCells(t *testing.T) {
 	// Place a safe zone so pathfinding works
 	grid.UpdateCell(pf.Position{X: 9, Y: 9}, pf.CellSafeZone)
 
-	citizens := CreateCitizens([2]int{3, 3}, &grid)
+	safeZone := SafeZone{
+		Position:    pf.Position{X: 9, Y: 9},
+		Radius:      0,
+		Cells:       []pf.Position{{X: 9, Y: 9}},
+		HasCapacity: true,
+	}
+	safeZoneLocations := map[pf.Position]*SafeZone{
+		{X: 9, Y: 9}: &safeZone,
+	}
+
+	citizens := CreateCitizens([2]int{3, 3}, &grid, safeZoneLocations)
 
 	require.Len(t, citizens, 3)
 	for _, c := range citizens {
@@ -30,7 +40,7 @@ func TestCreateCitizens_PlacedOnOpenGridCells(t *testing.T) {
 func TestCreateCitizens_ReturnsEmptyWhenNoOpenCells(t *testing.T) {
 	grid := pf.NewGrid(2, 2, pf.CellObstacle)
 
-	citizens := CreateCitizens([2]int{5, 5}, &grid)
+	citizens := CreateCitizens([2]int{5, 5}, &grid, make(map[pf.Position]*SafeZone))
 
 	require.Empty(t, citizens)
 }
@@ -39,13 +49,23 @@ func TestFindNearestSafeZone_FindsPathToSafeZone(t *testing.T) {
 	grid := pf.NewGrid(5, 5, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 4, Y: 4}, pf.CellSafeZone)
 
+	safeZone := SafeZone{
+		Position:    pf.Position{X: 4, Y: 4},
+		Radius:      0,
+		Cells:       []pf.Position{{X: 4, Y: 4}},
+		HasCapacity: true,
+	}
+	safeZoneLocations := map[pf.Position]*SafeZone{
+		{X: 4, Y: 4}: &safeZone,
+	}
+
 	citizen := Citizen{
 		ID:              uuid.New(),
 		Status:          CitizenIdle,
 		CurrentPosition: pf.Position{X: 0, Y: 0},
 	}
 
-	err := citizen.FindNearestSafeZone(&grid)
+	err := citizen.FindNearestSafeZone(&grid, safeZoneLocations)
 	require.NoError(t, err)
 	require.NotEmpty(t, citizen.Path)
 	require.Equal(t, pf.Position{X: 4, Y: 4}, citizen.CurrentDestination)
@@ -61,7 +81,7 @@ func TestFindNearestSafeZone_ReturnsErrorWhenNoSafeZone(t *testing.T) {
 		CurrentPosition: pf.Position{X: 0, Y: 0},
 	}
 
-	err := citizen.FindNearestSafeZone(&grid)
+	err := citizen.FindNearestSafeZone(&grid, make(map[pf.Position]*SafeZone))
 	require.Error(t, err)
 	require.Empty(t, citizen.Path)
 }
@@ -118,7 +138,7 @@ func TestIncrementLocation_MovesCitizenOneStep(t *testing.T) {
 		CurrentPathIndex: 0,
 	}
 
-	moved := citizen.IncrementLocation(&grid)
+	moved, _ := citizen.IncrementLocation(&grid)
 
 	require.True(t, moved)
 	require.Equal(t, 1, citizen.CurrentPathIndex)
@@ -126,7 +146,7 @@ func TestIncrementLocation_MovesCitizenOneStep(t *testing.T) {
 	require.Equal(t, CitizenNavigating, citizen.Status)
 }
 
-func TestIncrementLocation_ReachingEndMarksEscaped(t *testing.T) {
+func TestIncrementLocation_ReachingEndReportsEscaped(t *testing.T) {
 	grid := pf.NewGrid(2, 1, pf.CellOpen)
 
 	citizen := Citizen{
@@ -136,15 +156,19 @@ func TestIncrementLocation_ReachingEndMarksEscaped(t *testing.T) {
 		CurrentPathIndex: 0,
 	}
 
-	moved := citizen.IncrementLocation(&grid)
+	moved, escaped := citizen.IncrementLocation(&grid)
 	require.True(t, moved)
+	require.True(t, escaped, "last step should report escaped")
+	require.Equal(t, CitizenNavigating, citizen.Status)
 
-	moved = citizen.IncrementLocation(&grid)
+	moved, escaped = citizen.IncrementLocation(&grid)
 
 	require.False(t, moved, "citizen at path end should not report movement")
+	require.True(t, escaped, "citizen at path end should report escaped")
 	require.Equal(t, 1, citizen.CurrentPathIndex)
 	require.Equal(t, pf.Position{X: 1, Y: 0}, citizen.CurrentPosition)
-	require.Equal(t, CitizenEscaped, citizen.Status)
+	require.Equal(t, CitizenNavigating, citizen.Status,
+		"IncrementLocation no longer sets CitizenEscaped; caller must handle it")
 }
 
 func TestIncrementLocation_DoesNotMoveEscapedCitizen(t *testing.T) {
@@ -155,7 +179,7 @@ func TestIncrementLocation_DoesNotMoveEscapedCitizen(t *testing.T) {
 		CurrentPathIndex: 2,
 	}
 
-	moved := citizen.IncrementLocation(nil)
+	moved, _ := citizen.IncrementLocation(nil)
 
 	require.False(t, moved)
 	require.Equal(t, 2, citizen.CurrentPathIndex)
@@ -170,7 +194,7 @@ func TestIncrementLocation_DoesNotMoveDeadCitizen(t *testing.T) {
 		CurrentPathIndex: 1,
 	}
 
-	moved := citizen.IncrementLocation(nil)
+	moved, _ := citizen.IncrementLocation(nil)
 
 	require.False(t, moved)
 	require.Equal(t, 1, citizen.CurrentPathIndex)

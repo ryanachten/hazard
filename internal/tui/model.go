@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/google/uuid"
 )
 
@@ -25,7 +24,6 @@ type Model struct {
 	hazards      map[uuid.UUID]string
 	safeZones    map[uuid.UUID][]pf.Position
 	eventBus     *e.EventBus
-	logs         []string
 }
 
 // InitialModel creates the initial TUI model state
@@ -36,18 +34,12 @@ func InitialModel(eventBus *e.EventBus) Model {
 		hazards:   map[uuid.UUID]string{},
 		safeZones: map[uuid.UUID][]pf.Position{},
 		eventBus:  eventBus,
-		logs:      []string{},
 	}
 }
 
 func (m Model) consumeSimulationEvent() tea.Msg {
 	event := <-m.eventBus.SimulationEvents
 	return event
-}
-
-func (m Model) consumeLogEvent() tea.Msg {
-	log := <-m.eventBus.SystemLogs
-	return log
 }
 
 func (m Model) dispatchSimulationCommand(event e.SimulationCommand) tea.Cmd {
@@ -57,7 +49,7 @@ func (m Model) dispatchSimulationCommand(event e.SimulationCommand) tea.Cmd {
 
 // Init initializes the Bubble Tea program
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.consumeSimulationEvent, m.consumeLogEvent)
+	return m.consumeSimulationEvent
 }
 
 // View renders the current simulation state
@@ -72,26 +64,15 @@ func (m Model) View() tea.View {
 		grid.WriteString("\n")
 	}
 
-	var logOutput strings.Builder
-
-	for _, log := range m.logs {
-		logOutput.WriteString(log)
-		logOutput.WriteString("\n")
-	}
-
-	styledLog := lipgloss.Wrap(logOutput.String(), 40, " ")
 	styledGrid := gridStyle.SetString(grid.String()).Render()
 
-	return tea.NewView(lipgloss.JoinHorizontal(lipgloss.Bottom, styledGrid, styledLog))
+	return tea.NewView(styledGrid)
 }
 
 // Update handles messages and updates the TUI model
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
-
-	case string:
-		m.logs = append(m.logs, string(msg))
 
 	case e.SimulationEvent:
 		event := e.SimulationEvent(msg)

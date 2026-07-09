@@ -2,6 +2,7 @@ package common
 
 import (
 	pf "hazard/internal/pathfinding"
+	"log"
 	"maps"
 
 	"github.com/google/uuid"
@@ -39,8 +40,12 @@ func CreateSafeZone(config SafeZoneConfig, grid *pf.Grid) (SafeZone, error) {
 		}
 	}
 
+	id := uuid.New()
+
+	log.Printf("safe zone %v created at %v", id, origin)
+
 	return SafeZone{
-		ID:            uuid.New(),
+		ID:            id,
 		Position:      origin,
 		Radius:        radius,
 		Cells:         cells,

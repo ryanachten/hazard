@@ -1,5 +1,7 @@
 .DS_Store
 
+debug*.log
+
 # Coverage reports
 cov.out
 

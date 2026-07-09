@@ -8,10 +8,13 @@ import (
 	"hazard/internal/events"
 	"hazard/internal/tui"
 	"log"
+	"os"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 )
+
+var debugFilename = "debug.log"
 
 func main() {
 	config := c.SimulationConfig{
@@ -37,10 +40,6 @@ func main() {
 	}
 
 	eventBus := events.CreateEventBus()
-
-	log.SetOutput(&c.LogWriter{
-		LogChannel: eventBus.SystemLogs,
-	})
 
 	simulation, err := eng.NewSimulation(config, eventBus)
 	if err != nil {
@@ -77,10 +76,29 @@ func main() {
 		}
 	}()
 
+	if len(os.Getenv("DEBUG")) > 0 {
+		logToDebugFile()
+	}
+
 	p := tea.NewProgram(tui.InitialModel(eventBus))
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("error running program: %v", err)
 	}
 
 	cancel()
+}
+
+func logToDebugFile() {
+	_ = os.Remove(debugFilename)
+	f, err := tea.LogToFile(debugFilename, "")
+	if err != nil {
+		log.Fatalf("error logging to debug file: %v", err)
+	}
+	log.SetOutput(f)
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("error closing file: %v", err)
+
+		}
+	}()
 }

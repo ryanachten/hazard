@@ -6,7 +6,6 @@ const eventBufferSize = 256
 type EventBus struct {
 	SimulationCommands chan SimulationCommand
 	SimulationEvents   chan SimulationEvent
-	SystemLogs         chan string
 	EventLog           []SimulationEvent
 }
 
@@ -15,7 +14,6 @@ func CreateEventBus() *EventBus {
 	return &EventBus{
 		SimulationCommands: make(chan SimulationCommand, eventBufferSize),
 		SimulationEvents:   make(chan SimulationEvent, eventBufferSize),
-		SystemLogs:         make(chan string, eventBufferSize),
 		EventLog:           []SimulationEvent{},
 	}
 }

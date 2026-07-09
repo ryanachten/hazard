@@ -15,6 +15,10 @@ pre-commit install
 pre-commit install --hook-type pre-push
 ```
 
+## Running locally
+- Run Go application: `DEBUG=1 go run .`
+    - Set `DEBUG=1` environment variable for log output
+
 ## Tests
 
 - Get code coverage for path

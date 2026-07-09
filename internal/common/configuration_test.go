@@ -21,8 +21,8 @@ func TestSimulationConfig_Validate(t *testing.T) {
 			RadiusRange: Range{Min: 1, Max: 1},
 		},
 		Obstacle: ObstacleConfig{
-			CountRange:    Range{Min: 1, Max: 5},
-			SizeRange: PositiveRange{Min: 2, Max: 5},
+			CountRange: Range{Min: 1, Max: 5},
+			SizeRange:  PositiveRange{Min: 2, Max: 5},
 		},
 	}
 

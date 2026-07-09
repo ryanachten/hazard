@@ -200,3 +200,78 @@ func TestIncrementLocation_DoesNotMoveDeadCitizen(t *testing.T) {
 	require.Equal(t, 1, citizen.CurrentPathIndex)
 	require.Equal(t, CitizenDead, citizen.Status)
 }
+
+func TestCreateCitizens_MarksCellCitizenOnGrid(t *testing.T) {
+	grid := pf.NewGrid(10, 10, pf.CellOpen)
+	grid.UpdateCell(pf.Position{X: 9, Y: 9}, pf.CellSafeZone)
+
+	safeZone := SafeZone{
+		Position:    pf.Position{X: 9, Y: 9},
+		Radius:      0,
+		Cells:       []pf.Position{{X: 9, Y: 9}},
+		HasCapacity: true,
+	}
+	safeZoneLocations := map[pf.Position]*SafeZone{
+		{X: 9, Y: 9}: &safeZone,
+	}
+
+	citizens := CreateCitizens(PositiveRange{Min: 3, Max: 3}, &grid, safeZoneLocations)
+
+	require.Len(t, citizens, 3)
+	for _, c := range citizens {
+		require.Equal(t, pf.CellCitizen, grid.GetCell(c.CurrentPosition),
+			"citizen at %v must be marked as CellCitizen", c.CurrentPosition)
+	}
+}
+
+func TestIncrementLocation_UnmarksPreviousCellAndMarksNewCell(t *testing.T) {
+	grid := pf.NewGrid(3, 1, pf.CellOpen)
+
+	citizen := Citizen{
+		Status:           CitizenIdle,
+		CurrentPosition:  pf.Position{X: 0, Y: 0},
+		Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+		CurrentPathIndex: 0,
+		PreviousCellType: pf.CellOpen,
+	}
+
+	// Mark start cell as citizen before movement (as CreateCitizens does)
+	grid.UpdateCell(pf.Position{X: 0, Y: 0}, pf.CellCitizen)
+
+	moved, _ := citizen.IncrementLocation(&grid)
+
+	require.True(t, moved)
+	// Previous cell should be restored
+	require.Equal(t, pf.CellOpen, grid.GetCell(pf.Position{X: 0, Y: 0}),
+		"previous cell must be restored to open after departure")
+	// New cell should be marked as citizen
+	require.Equal(t, pf.CellCitizen, grid.GetCell(pf.Position{X: 1, Y: 0}),
+		"new cell must be marked as CellCitizen after arrival")
+	// PreviousCellType should reflect the type of the new cell before occupation
+	require.Equal(t, pf.CellOpen, citizen.PreviousCellType)
+}
+
+func TestIncrementLocation_RestoresPreviousCellTypeOnMove(t *testing.T) {
+	grid := pf.NewGrid(3, 1, pf.CellOpen)
+	grid.UpdateCell(pf.Position{X: 1, Y: 0}, pf.CellSafeZone)
+
+	citizen := Citizen{
+		Status:           CitizenIdle,
+		CurrentPosition:  pf.Position{X: 0, Y: 0},
+		Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
+		CurrentPathIndex: 0,
+		PreviousCellType: pf.CellCitizen,
+	}
+
+	// Current cell is marked as citizen, simulating that citizen was already here before
+	grid.UpdateCell(pf.Position{X: 0, Y: 0}, pf.CellCitizen)
+
+	moved, _ := citizen.IncrementLocation(&grid)
+
+	require.True(t, moved)
+	// Previous (departure) cell should revert to the citizen-marking
+	require.Equal(t, pf.CellCitizen, grid.GetCell(pf.Position{X: 0, Y: 0}),
+		"previous cell must be restored to its PreviousCellType (CellCitizen)")
+	// New cell was SafeZone before occupation, so PreviousCellType should be CellSafeZone
+	require.Equal(t, pf.CellSafeZone, citizen.PreviousCellType)
+}

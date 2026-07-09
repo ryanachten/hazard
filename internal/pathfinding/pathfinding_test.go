@@ -201,3 +201,47 @@ func TestGrid_GetCellAndUpdateCell(t *testing.T) {
 	grid.UpdateCell(pos, CellOpen)
 	require.Equal(t, CellOpen, grid.GetCell(pos))
 }
+
+func TestFindPath_AvoidsCellCitizen(t *testing.T) {
+	grid := NewGrid(3, 3, CellOpen)
+	grid.Cells[1][1] = CellCitizen
+
+	path, err := FindPath(&grid, Position{X: 0, Y: 0}, Position{X: 2, Y: 2})
+	require.NoError(t, err)
+	require.NotContains(t, path, Position{X: 1, Y: 1},
+		"path must avoid CellCitizen cell")
+}
+
+func TestFindPath_AvoidsCellDeadCitizen(t *testing.T) {
+	// CellDeadCitizen is NOT in AvoidableCellType, so pathfinding should pass through it
+	grid := NewGrid(3, 3, CellOpen)
+	grid.Cells[1][1] = CellDeadCitizen
+
+	path, err := FindPath(&grid, Position{X: 0, Y: 0}, Position{X: 2, Y: 2})
+	require.NoError(t, err)
+	require.Contains(t, path, Position{X: 1, Y: 1},
+		"path may pass through CellDeadCitizen since it is not avoidable")
+}
+
+func TestFindPathToGoal_AvoidsCellCitizen(t *testing.T) {
+	grid := NewGrid(3, 3, CellOpen)
+	grid.Cells[1][1] = CellCitizen
+	grid.Cells[2][2] = CellSafeZone
+
+	path, err := FindPathToGoal(&grid, Position{X: 0, Y: 0}, func(pos Position) bool {
+		return grid.GetCell(pos) == CellSafeZone
+	})
+	require.NoError(t, err)
+	require.NotContains(t, path, Position{X: 1, Y: 1},
+		"path to safe zone must avoid CellCitizen cell")
+}
+
+func TestGetRandomOpenPosition_SkipsCellCitizen(t *testing.T) {
+	grid := NewGrid(3, 3, CellCitizen)
+	grid.Cells[1][1] = CellOpen
+
+	pos, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
+	require.NoError(t, err)
+	require.Equal(t, Position{X: 1, Y: 1}, pos,
+		"GetRandomOpenPosition should treat CellCitizen as blocked and pick the only open cell")
+}

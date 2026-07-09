@@ -73,6 +73,50 @@ func TestProcessCommand_UnknownCommandTypeDoesNothing(t *testing.T) {
 		"unknown command type must not change state")
 }
 
+func TestTick_ObstaclesBlockPathfinding(t *testing.T) {
+	// Obstacles placed at simulation start must block pathfinding,
+	// forcing citizens to route around them.
+	config := c.SimulationConfig{
+		Width:             10,
+		Height:            10,
+		CitizenCountRange: c.PositiveRange{Min: 1, Max: 1},
+		SafeZone: c.SafeZoneConfig{
+			Probability: 0,
+			CountRange:  c.Range{Min: 1, Max: 1},
+			RadiusRange: c.Range{Min: 1, Max: 1},
+		},
+		Hazard: c.HazardConfig{
+			Probability:   0,
+			CountRange:    c.Range{Min: 0, Max: 0},
+			DurationRange: c.PositiveRange{Min: 1, Max: 1},
+		},
+		Obstacle: c.ObstacleConfig{
+			CountRange: c.Range{Min: 0, Max: 0},
+			SizeRange:  c.PositiveRange{Min: 1, Max: 1},
+		},
+	}
+
+	sim, err := NewSimulation(config, events.CreateEventBus())
+	require.NoError(t, err)
+
+	// Grid should have safe zone cells marked
+	safeZoneCells := sim.SafeZones[0].Cells
+	for _, cell := range safeZoneCells {
+		require.Equal(t, pf.CellSafeZone, sim.Grid.GetCell(cell))
+	}
+
+	// Citizen is spawned with a path that ends in a safe zone cell
+	require.NotEmpty(t, sim.Citizens[0].Path)
+	lastCell := sim.Citizens[0].Path[len(sim.Citizens[0].Path)-1]
+	require.Equal(t, pf.CellSafeZone, sim.Grid.GetCell(lastCell))
+	// All open path cells must not be obstacle or hazard
+	for _, pos := range sim.Citizens[0].Path {
+		cellType := sim.Grid.GetCell(pos)
+		require.NotEqual(t, pf.CellObstacle, cellType,
+			"citizen path must not pass through obstacle cell at %v", pos)
+	}
+}
+
 func TestNewSimulation_InitializesCoreState(t *testing.T) {
 	config := c.SimulationConfig{
 		TickIntervalMs:    100,
@@ -440,6 +484,107 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 	dest := sim.Citizens[0].Path[len(sim.Citizens[0].Path)-1]
 	require.Equal(t, pf.CellSafeZone, sim.Grid.GetCell(dest),
 		"citizen must recalculate path toward nearest safe zone after emergence")
+}
+
+func TestTick_SafeZoneCapacityPreventsOverfilling(t *testing.T) {
+	// Two safe zones: sz1 has capacity 2 (two cells), sz2 has capacity 1 (one cell).
+	// Two citizens target sz1, filling it. A third citizen arriving later
+	// and targeting sz1 should recalculate toward sz2.
+	sz1Cells := []pf.Position{{X: 4, Y: 0}, {X: 4, Y: 1}}
+	sz2Cells := []pf.Position{{X: 3, Y: 0}}
+
+	grid := pf.NewGrid(5, 2, pf.CellOpen)
+	for _, c := range sz1Cells {
+		grid.UpdateCell(c, pf.CellSafeZone)
+	}
+	for _, c := range sz2Cells {
+		grid.UpdateCell(c, pf.CellSafeZone)
+	}
+
+	sz1 := c.SafeZone{
+		ID:          uuid.New(),
+		Position:    pf.Position{X: 4, Y: 0},
+		Radius:      0,
+		Cells:       sz1Cells,
+		HasCapacity: true,
+		Occupants:   []uuid.UUID{},
+	}
+	sz2 := c.SafeZone{
+		ID:          uuid.New(),
+		Position:    pf.Position{X: 3, Y: 0},
+		Radius:      0,
+		Cells:       sz2Cells,
+		HasCapacity: true,
+		Occupants:   []uuid.UUID{},
+	}
+
+	safeZoneLocations := map[pf.Position]*c.SafeZone{
+		{X: 4, Y: 0}: &sz1,
+		{X: 4, Y: 1}: &sz1,
+		{X: 3, Y: 0}: &sz2,
+	}
+
+	sim := Simulation{
+		Grid:              &grid,
+		eventBus:          events.CreateEventBus(),
+		safeZoneLocations: safeZoneLocations,
+		SafeZones:         []c.SafeZone{sz1, sz2},
+		MaxSafeZones:      2,
+		Citizens: []c.Citizen{
+			{
+				ID:               uuid.New(),
+				Status:           c.CitizenIdle,
+				CurrentPosition:  pf.Position{X: 0, Y: 0},
+				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
+				CurrentPathIndex: 0,
+				TargetSafeZone:   &sz1,
+			},
+			{
+				ID:               uuid.New(),
+				Status:           c.CitizenIdle,
+				CurrentPosition:  pf.Position{X: 0, Y: 1},
+				Path:             []pf.Position{{X: 0, Y: 1}, {X: 1, Y: 1}, {X: 2, Y: 1}, {X: 3, Y: 1}, {X: 4, Y: 1}},
+				CurrentPathIndex: 0,
+				TargetSafeZone:   &sz1,
+			},
+		},
+	}
+
+	// Both citizens move toward sz1
+	sim.Tick()
+	sim.Tick()
+	sim.Tick()
+	sim.Tick()
+
+	require.Equal(t, c.CitizenEscaped, sim.Citizens[0].Status,
+		"first citizen should have escaped into sz1")
+	require.Equal(t, c.CitizenEscaped, sim.Citizens[1].Status,
+		"second citizen should have escaped into sz1")
+	require.Equal(t, 2, sim.EscapedCitizensCount)
+	require.False(t, safeZoneLocations[pf.Position{X: 4, Y: 0}].HasCapacity,
+		"sz1 should be at capacity after two occupants")
+
+	// Add a third citizen whose path goes through sz1's cells.
+	// Since sz1 is full, they should recalculate toward sz2.
+	grid.UpdateCell(pf.Position{X: 0, Y: 0}, pf.CellOpen)
+
+	sim.Citizens = append(sim.Citizens, c.Citizen{
+		ID:               uuid.New(),
+		Status:           c.CitizenIdle,
+		CurrentPosition:  pf.Position{X: 0, Y: 0},
+		Path:             []pf.Position{{X: 0, Y: 0}},
+		CurrentPathIndex: 0,
+		TargetSafeZone:   safeZoneLocations[pf.Position{X: 4, Y: 0}],
+	})
+	sim.State = SimulationRunning
+
+	sim.Tick()
+
+	lastCell := sim.Citizens[2].Path[len(sim.Citizens[2].Path)-1]
+	require.NotEqual(t, safeZoneLocations[pf.Position{X: 4, Y: 0}], sim.Citizens[2].TargetSafeZone,
+		"citizen with target at capacity must recalculate to a different safe zone")
+	require.Equal(t, pf.Position{X: 3, Y: 0}, lastCell,
+		"recalculated path must lead to the available safe zone (sz2)")
 }
 
 func TestTick_SimulationCompletesWhenAllResolved(t *testing.T) {

@@ -42,6 +42,14 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 			Position: citizen.CurrentPosition,
 		}
 	}
+
+	// Initialise obstacles
+	for _, obstacle := range payload.Obstacles {
+		obstacleChar := getObstacleCell()
+		for _, cellPos := range obstacle.Cells {
+			m.grid[cellPos.Y][cellPos.X] = obstacleChar
+		}
+	}
 }
 
 func (m *Model) handleCitizenMoved(event events.SimulationEvent) {

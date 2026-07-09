@@ -56,6 +56,7 @@ type SimulationCreatedPayload struct {
 	Grid      pf.Grid
 	Citizens  []c.Citizen
 	SafeZones []c.SafeZone
+	Obstacles []c.Obstacle
 }
 
 // SimulationCreated raised when simulation starts
@@ -70,10 +71,16 @@ func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata 
 		safeZoneSnapshot[i] = safeZone.Copy()
 	}
 
+	obstacleSnapshot := make([]c.Obstacle, len(payload.Obstacles))
+	for i, obstacle := range payload.Obstacles {
+		obstacleSnapshot[i] = obstacle.Copy()
+	}
+
 	e.createEvent(SimulationCreated, metadata.SimulationID, metadata, SimulationCreatedPayload{
 		Grid:      payload.Grid,
 		Citizens:  citizenSnapshot,
 		SafeZones: safeZoneSnapshot,
+		Obstacles: obstacleSnapshot,
 	})
 }
 

@@ -28,9 +28,11 @@ var citizenEscapedStyle = lipgloss.NewStyle().
 
 var openCharacters = []string{"·", ".", ",", " "}
 var openStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color("#586069"))
+	Foreground(lipgloss.Color("#586069")).
+	Background(lipgloss.Color("#0d1117"))
 
-// var obstacleCharacters = []rune{"#", "▓", "▒", "≡"}
+var obstacleCharacters = []string{"#", "▓", "▒", "≡"}
+var obstacleStyle = lipgloss.NewStyle().Inherit(openStyle)
 
 var fireCharacters = []string{"░", "\"", "^"}
 var fireStyle = lipgloss.NewStyle().
@@ -92,6 +94,11 @@ func getLavaCell() string {
 
 func getSafeZoneCell(char string) string {
 	return safeZoneStyle.SetString(char).Render()
+}
+
+func getObstacleCell() string {
+	char := c.RandValInSlice(obstacleCharacters)
+	return obstacleStyle.SetString(char).Render()
 }
 
 var gridStyle = lipgloss.NewStyle().MarginRight(2)

@@ -32,6 +32,10 @@ func main() {
 			RadiusRange: c.Range{Min: 1, Max: 1},
 			CountRange:  c.Range{Min: 1, Max: 5},
 		},
+		Obstacle: c.ObstacleConfig{
+			CountRange: c.Range{Min: 3, Max: 20},
+			SizeRange:  c.PositiveRange{Min: 1, Max: 3},
+		},
 	}
 
 	err := config.Validate()

@@ -14,16 +14,16 @@ func newTestSim() (Simulation, error) {
 	return NewSimulation(c.SimulationConfig{
 		Width:             10,
 		Height:            10,
-		CitizenCountRange: [2]int{0, 0},
+		CitizenCountRange: c.PositiveRange{Min: 0, Max: 0},
 		Hazard: c.HazardConfig{
-			DurationRange: [2]int{100, 100},
+			DurationRange: c.PositiveRange{Min: 100, Max: 100},
 			Probability:   0,
-			CountRange:    [2]int{0, 0},
+			CountRange:    c.Range{Min: 0, Max: 0},
 		},
 		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
-			CountRange:  [2]int{1, 1},
-			RadiusRange: [2]int{1, 1},
+			CountRange:  c.Range{Min: 1, Max: 1},
+			RadiusRange: c.Range{Min: 1, Max: 1},
 		},
 	}, events.CreateEventBus())
 }
@@ -101,16 +101,16 @@ func TestHazard_CreationViaTick(t *testing.T) {
 	sim, err := NewSimulation(c.SimulationConfig{
 		Width:             10,
 		Height:            10,
-		CitizenCountRange: [2]int{0, 0},
+		CitizenCountRange: c.PositiveRange{Min: 0, Max: 0},
 		Hazard: c.HazardConfig{
-			DurationRange: [2]int{10, 10},
+			DurationRange: c.PositiveRange{Min: 10, Max: 10},
 			Probability:   1.0,
-			CountRange:    [2]int{5, 5},
+			CountRange:    c.Range{Min: 5, Max: 5},
 		},
 		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
-			CountRange:  [2]int{0, 0},
-			RadiusRange: [2]int{1, 1},
+			CountRange:  c.Range{Min: 0, Max: 0},
+			RadiusRange: c.Range{Min: 1, Max: 1},
 		},
 	}, events.CreateEventBus())
 	require.NoError(t, err)
@@ -173,13 +173,13 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 	sim := Simulation{
 		Config: c.SimulationConfig{
 			SafeZone: c.SafeZoneConfig{
-				CountRange:  [2]int{1, 1},
-				RadiusRange: [2]int{1, 1},
+				CountRange:  c.Range{Min: 1, Max: 1},
+				RadiusRange: c.Range{Min: 1, Max: 1},
 			},
 			Hazard: c.HazardConfig{
-				DurationRange: [2]int{100, 100},
+				DurationRange: c.PositiveRange{Min: 100, Max: 100},
 				Probability:   0,
-				CountRange:    [2]int{0, 0},
+				CountRange:    c.Range{Min: 0, Max: 0},
 			},
 		},
 		State:             SimulationCreated,

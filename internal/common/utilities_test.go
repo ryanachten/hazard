@@ -6,29 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRandIntInRange(t *testing.T) {
-	tests := []struct {
-		name string
-		rng  [2]int
-		min  int
-		max  int
-	}{
-		{name: "zero range", rng: [2]int{5, 5}, min: 5, max: 5},
-		{name: "positive range", rng: [2]int{1, 10}, min: 1, max: 10},
-		{name: "starting at zero", rng: [2]int{0, 5}, min: 0, max: 5},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			for range 100 {
-				result := RandIntInRange(tt.rng)
-				require.GreaterOrEqual(t, result, tt.min)
-				require.LessOrEqual(t, result, tt.max)
-			}
-		})
-	}
-}
-
 func TestRandomFloat(t *testing.T) {
 	tests := []struct {
 		name string

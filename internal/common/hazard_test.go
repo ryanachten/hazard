@@ -11,9 +11,9 @@ import (
 func TestCreateHazard(t *testing.T) {
 	grid := pf.NewGrid(10, 10, pf.CellOpen)
 	config := HazardConfig{
-		DurationRange: [2]int{5, 10},
+		DurationRange: PositiveRange{Min: 5, Max: 10},
 		Probability:   0.5,
-		CountRange:    [2]int{0, 0},
+		CountRange:    Range{Min: 0, Max: 0},
 	}
 
 	hazard, err := CreateHazard(config, &grid)
@@ -29,7 +29,7 @@ func TestCreateHazard(t *testing.T) {
 func TestCreateHazard_NoOpenCells(t *testing.T) {
 	grid := pf.NewGrid(2, 2, pf.CellObstacle)
 	config := HazardConfig{
-		DurationRange: [2]int{5, 5},
+		DurationRange: PositiveRange{Min: 5, Max: 5},
 	}
 
 	_, err := CreateHazard(config, &grid)
@@ -40,7 +40,7 @@ func TestCreateHazard_NoOpenCells(t *testing.T) {
 func TestRandomHazardType(t *testing.T) {
 	grid := pf.NewGrid(20, 20, pf.CellOpen)
 	config := HazardConfig{
-		DurationRange: [2]int{5, 10},
+		DurationRange: PositiveRange{Min: 5, Max: 10},
 	}
 
 	seen := make(map[HazardType]bool)

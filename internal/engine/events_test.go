@@ -15,16 +15,16 @@ func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
 	config := c.SimulationConfig{
 		Width:             5,
 		Height:            5,
-		CitizenCountRange: [2]int{0, 0},
+		CitizenCountRange: c.PositiveRange{Min: 0, Max: 0},
 		Hazard: c.HazardConfig{
 			Probability:   0,
-			CountRange:    [2]int{0, 0},
-			DurationRange: [2]int{1, 1},
+			CountRange:    c.Range{Min: 0, Max: 0},
+			DurationRange: c.PositiveRange{Min: 1, Max: 1},
 		},
 		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
-			CountRange:  [2]int{1, 1},
-			RadiusRange: [2]int{1, 1},
+			CountRange:  c.Range{Min: 1, Max: 1},
+			RadiusRange: c.Range{Min: 1, Max: 1},
 		},
 	}
 

@@ -32,8 +32,8 @@ type SafeZoneConfig struct {
 
 // ObstacleConfig configures simulation obstacles
 type ObstacleConfig struct {
-	CountRange    Range
-	DiameterRange PositiveRange
+	CountRange Range
+	SizeRange  PositiveRange
 }
 
 // Validate ensures configuration is valid prior to use
@@ -61,8 +61,8 @@ func (s *SimulationConfig) Validate() error {
 	if err := ValidateRange(s.Obstacle.CountRange.Min, s.Obstacle.CountRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("Obstacle.CountRange: %w", err))
 	}
-	if err := ValidatePositiveRange(s.Obstacle.DiameterRange.Min, s.Obstacle.DiameterRange.Max); err != nil {
-		errs = append(errs, fmt.Errorf("Obstacle.DiameterRange: %w", err))
+	if err := ValidatePositiveRange(s.Obstacle.SizeRange.Min, s.Obstacle.SizeRange.Max); err != nil {
+		errs = append(errs, fmt.Errorf("Obstacle.SizeRange: %w", err))
 	}
 	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {
 		errs = append(errs, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))

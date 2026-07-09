@@ -49,7 +49,7 @@ var hazardTypes = []HazardType{
 
 // CreateHazard creates a new hazard at a random open position on the grid
 func CreateHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
-	duration := RandIntInRange(config.DurationRange)
+	duration := config.DurationRange.Random()
 
 	origin, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
 	if err != nil {

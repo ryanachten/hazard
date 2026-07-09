@@ -23,7 +23,7 @@ func TestCreateCitizens_PlacedOnOpenGridCells(t *testing.T) {
 		{X: 9, Y: 9}: &safeZone,
 	}
 
-	citizens := CreateCitizens([2]int{3, 3}, &grid, safeZoneLocations)
+	citizens := CreateCitizens(PositiveRange{Min: 3, Max: 3}, &grid, safeZoneLocations)
 
 	require.Len(t, citizens, 3)
 	for _, c := range citizens {
@@ -40,7 +40,7 @@ func TestCreateCitizens_PlacedOnOpenGridCells(t *testing.T) {
 func TestCreateCitizens_ReturnsEmptyWhenNoOpenCells(t *testing.T) {
 	grid := pf.NewGrid(2, 2, pf.CellObstacle)
 
-	citizens := CreateCitizens([2]int{5, 5}, &grid, make(map[pf.Position]*SafeZone))
+	citizens := CreateCitizens(PositiveRange{Min: 5, Max: 5}, &grid, make(map[pf.Position]*SafeZone))
 
 	require.Empty(t, citizens)
 }

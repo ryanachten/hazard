@@ -36,8 +36,8 @@ const (
 )
 
 // CreateCitizens instantiates citizens in a grid
-func CreateCitizens(citizenCountRange [2]int, grid *pf.Grid, safeZoneLocations map[pf.Position]*SafeZone) []Citizen {
-	citizenCount := RandIntInRange(citizenCountRange)
+func CreateCitizens(citizenCountRange PositiveRange, grid *pf.Grid, safeZoneLocations map[pf.Position]*SafeZone) []Citizen {
+	citizenCount := citizenCountRange.Random()
 	citizens := make([]Citizen, 0, citizenCount)
 
 	for range citizenCount {

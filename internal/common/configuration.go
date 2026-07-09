@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"fmt"
 )
 
 // SimulationConfig configuration for a simulation
@@ -9,80 +10,69 @@ type SimulationConfig struct {
 	TickIntervalMs    int
 	Width             int
 	Height            int
-	CitizenCountRange [2]int
+	CitizenCountRange PositiveRange
 	Hazard            HazardConfig
 	SafeZone          SafeZoneConfig
+	Obstacle          ObstacleConfig
 }
 
 // HazardConfig configures simulation hazards
 type HazardConfig struct {
 	Probability   float32
-	CountRange    [2]int
-	DurationRange [2]int
+	CountRange    Range
+	DurationRange PositiveRange
 }
 
 // SafeZoneConfig configures simulation safe zones
 type SafeZoneConfig struct {
 	Probability float32
-	CountRange  [2]int
-	RadiusRange [2]int
+	CountRange  Range
+	RadiusRange Range
+}
+
+// ObstacleConfig configures simulation obstacles
+type ObstacleConfig struct {
+	CountRange    Range
+	DiameterRange PositiveRange
 }
 
 // Validate ensures configuration is valid prior to use
 func (s *SimulationConfig) Validate() error {
-	var err []error
+	var errs []error
 
 	if s.Width <= 0 || s.Height <= 0 {
-		err = append(err, errors.New("simulation width and height must be greater than zero"))
+		errs = append(errs, errors.New("simulation width and height must be greater than zero"))
 	}
-
-	if s.CitizenCountRange[0] > s.CitizenCountRange[1] {
-		err = append(err, errors.New("CitizenCountRange[0] must be less than or equal to CitizenCountRange[1]"))
+	if err := ValidatePositiveRange(s.CitizenCountRange.Min, s.CitizenCountRange.Max); err != nil {
+		errs = append(errs, fmt.Errorf("CitizenCountRange: %w", err))
 	}
-
-	if s.Hazard.DurationRange[0] > s.Hazard.DurationRange[1] {
-		err = append(err, errors.New("Hazard.HazardDurationRange[0] must be less than or equal to Hazard.HazardDurationRange[1]"))
+	if err := ValidateRange(s.Hazard.CountRange.Min, s.Hazard.CountRange.Max); err != nil {
+		errs = append(errs, fmt.Errorf("Hazard.CountRange: %w", err))
 	}
-
-	if s.Hazard.DurationRange[0] <= 0 {
-		err = append(err, errors.New("Hazard.HazardDurationRange values must be above 0"))
+	if err := ValidatePositiveRange(s.Hazard.DurationRange.Min, s.Hazard.DurationRange.Max); err != nil {
+		errs = append(errs, fmt.Errorf("Hazard.DurationRange: %w", err))
 	}
-
-	if s.Hazard.CountRange[0] > s.Hazard.CountRange[1] {
-		err = append(err, errors.New("Hazard.CountRange[0] must be less than or equal to Hazard.CountRange[1]"))
+	if err := ValidateRange(s.SafeZone.CountRange.Min, s.SafeZone.CountRange.Max); err != nil {
+		errs = append(errs, fmt.Errorf("SafeZone.CountRange: %w", err))
 	}
-
-	if s.Hazard.CountRange[0] < 0 {
-		err = append(err, errors.New("Hazard.CountRange values must be at least 0"))
+	if err := ValidateRange(s.SafeZone.RadiusRange.Min, s.SafeZone.RadiusRange.Max); err != nil {
+		errs = append(errs, fmt.Errorf("SafeZone.RadiusRange: %w", err))
 	}
-
+	if err := ValidateRange(s.Obstacle.CountRange.Min, s.Obstacle.CountRange.Max); err != nil {
+		errs = append(errs, fmt.Errorf("Obstacle.CountRange: %w", err))
+	}
+	if err := ValidatePositiveRange(s.Obstacle.DiameterRange.Min, s.Obstacle.DiameterRange.Max); err != nil {
+		errs = append(errs, fmt.Errorf("Obstacle.DiameterRange: %w", err))
+	}
 	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {
-		err = append(err, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))
+		errs = append(errs, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))
 	}
-
 	if s.SafeZone.Probability < 0 || s.SafeZone.Probability > 1 {
-		err = append(err, errors.New("SafeZone.Probability must be between 0.0 and 1.0"))
+		errs = append(errs, errors.New("SafeZone.Probability must be between 0.0 and 1.0"))
+	}
+	if s.SafeZone.CountRange.Max < 1 {
+		errs = append(errs, errors.New("SafeZone.CountRange[1] must be at least 1"))
 	}
 
-	if s.SafeZone.RadiusRange[0] > s.SafeZone.RadiusRange[1] {
-		err = append(err, errors.New("SafeZone.RadiusRange[0] must be less than or equal to SafeZone.RadiusRange[1]"))
-	}
-
-	if s.SafeZone.RadiusRange[0] < 0 {
-		err = append(err, errors.New("SafeZone.RadiusRange values must be at least 0"))
-	}
-
-	if s.SafeZone.CountRange[0] > s.SafeZone.CountRange[1] {
-		err = append(err, errors.New("SafeZone.CountRange[0] must be less than or equal to SafeZone.CountRange[1]"))
-	}
-
-	if s.SafeZone.CountRange[0] < 0 {
-		err = append(err, errors.New("SafeZone.CountRange values must be at least 0"))
-	}
-
-	if s.SafeZone.CountRange[1] < 1 {
-		err = append(err, errors.New("SafeZone.CountRange[1] must be at least 1"))
-	}
-
-	return errors.Join(err...)
+	return errors.Join(errs...)
 }

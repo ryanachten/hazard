@@ -21,7 +21,7 @@ type SafeZone struct {
 
 // CreateSafeZone creates a safe zone at a random open position with a random radius
 func CreateSafeZone(config SafeZoneConfig, grid *pf.Grid) (SafeZone, error) {
-	radius := RandIntInRange(config.RadiusRange)
+	radius := config.RadiusRange.Random()
 
 	origin, err := grid.GetRandomOpenPosition(radius, radius, grid.Width-1-radius, grid.Height-1-radius)
 	if err != nil {

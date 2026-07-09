@@ -121,7 +121,22 @@ go build -o bin/simviz ./cmd/simviz
 
 ---
 
-## 6. JetStream Stream Configuration
+## 6. Path Recalculation Strategy
+
+**Decision**: Each tick, check only the next cell in the citizen's path for blockages, rather than scanning the entire remaining path.
+
+**Rationale**:
+- Citizens move one cell per tick — only the next cell matters for the immediate decision
+- Scanning the entire path for hazards was over-eager: a blocked cell 10 steps away might clear before the citizen arrives (e.g., a hazard dissipates, another citizen moves out of the way)
+- Reducing the check scope avoids unnecessary path recalculations, which is important as citizen count scales
+- When the next cell is blocked, the entire remaining path is recalculated from the current position, so the new path inherently avoids all current blockages
+- This also naturally handles `CellCitizen` occupancy from Phase 7: if another citizen is occupying the next cell, the citizen recalculates around them on the same tick
+
+**Trade-off**: A citizen may walk toward a blockage for multiple ticks if the blockage appears further ahead in the path (e.g., a hazard expanding into a cell 5 steps away). In practice this is negligible — hazards expand slowly and citizens walk toward safe zones, so a blocked cell ahead usually means the entire direction is compromised and the citizen only loses 1–2 ticks of progress.
+
+---
+
+## 7. JetStream Stream Configuration
 
 **Decision**: Single stream `simulation-events` with one subject for v1
 

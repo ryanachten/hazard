@@ -57,7 +57,7 @@ func NewSimulation(config c.SimulationConfig, eventBus *events.EventBus) (Simula
 		safeZoneLocations[cell] = &safeZone
 	}
 
-	obstacles := c.CreateObstacles(config.Obstacle, grid)
+	obstacles := c.CreateObstacles(config.Obstacle, &grid)
 
 	var simulation = Simulation{
 		ID:                uuid.New(),

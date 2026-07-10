@@ -21,16 +21,16 @@ func main() {
 		TickIntervalMs:    100,
 		Height:            100,
 		Width:             100,
-		CitizenCountRange: c.PositiveRange{Min: 20, Max: 40},
+		CitizenCountRange: c.PositiveRange{Min: 25, Max: 40},
 		Hazard: c.HazardConfig{
-			Probability:   0.3,
+			Probability:   0.1,
 			CountRange:    c.Range{Min: 2, Max: 5},
 			DurationRange: c.PositiveRange{Min: 5, Max: 10},
 		},
 		SafeZone: c.SafeZoneConfig{
-			Probability: 0.1,
+			Probability: 0.06,
 			RadiusRange: c.Range{Min: 1, Max: 1},
-			CountRange:  c.Range{Min: 1, Max: 5},
+			CountRange:  c.Range{Min: 1, Max: 3},
 		},
 		Obstacle: c.ObstacleConfig{
 			CountRange: c.Range{Min: 3, Max: 20},

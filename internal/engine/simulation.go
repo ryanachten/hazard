@@ -221,9 +221,7 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 	targetSafeZone := s.Citizens[citizenIndex].TargetSafeZone
 	if safeZoneCreated || targetSafeZone == nil || !targetSafeZone.HasCapacity {
 		if err := s.Citizens[citizenIndex].FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
-			log.Printf("error finding safe zone for citizen %v path: %v", citizenIndex, err)
 			s.Citizens[citizenIndex].Path = nil
-			return
 		}
 		pathUpdated = true
 	} else {
@@ -233,13 +231,11 @@ func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
 		if nextIndex < len(s.Citizens[citizenIndex].Path) {
 			pos := s.Citizens[citizenIndex].Path[nextIndex]
 			if pf.AvoidableCellType[s.Grid.GetCell(pos)] {
-				if err := s.Citizens[citizenIndex].UpdatePath(s.Grid); err != nil {
+				if err := s.Citizens[citizenIndex].RecalculatePath(s.Grid); err != nil {
 					// Destination itself is blocked (e.g. occupied by another citizen).
 					// Find a new safe zone with capacity.
 					if err := s.Citizens[citizenIndex].FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
-						log.Printf("error finding safe zone for citizen %v path: %v", citizenIndex, err)
 						s.Citizens[citizenIndex].Path = nil
-						return
 					}
 				}
 				pathUpdated = true

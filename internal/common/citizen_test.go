@@ -86,7 +86,7 @@ func TestFindNearestSafeZone_ReturnsErrorWhenNoSafeZone(t *testing.T) {
 	require.Empty(t, citizen.Path)
 }
 
-func TestUpdatePath_RecalculatesAroundObstacle(t *testing.T) {
+func TestRecalculatePath_RecalculatesAroundObstacle(t *testing.T) {
 	grid := pf.NewGrid(5, 5, pf.CellOpen)
 
 	// Build a wall that blocks the direct corridor from (0,0) to (4,4),
@@ -103,7 +103,7 @@ func TestUpdatePath_RecalculatesAroundObstacle(t *testing.T) {
 		CurrentDestination: pf.Position{X: 4, Y: 4},
 	}
 
-	err := citizen.UpdatePath(&grid)
+	err := citizen.RecalculatePath(&grid)
 	require.NoError(t, err)
 	require.NotEmpty(t, citizen.Path)
 	require.Equal(t, pf.Position{X: 0, Y: 0}, citizen.Path[0])
@@ -114,7 +114,7 @@ func TestUpdatePath_RecalculatesAroundObstacle(t *testing.T) {
 	}
 }
 
-func TestUpdatePath_ReturnsErrorForUnreachableDestination(t *testing.T) {
+func TestRecalculatePath_ReturnsErrorForUnreachableDestination(t *testing.T) {
 	grid := pf.NewGrid(3, 3, pf.CellObstacle)
 
 	citizen := Citizen{
@@ -124,7 +124,7 @@ func TestUpdatePath_ReturnsErrorForUnreachableDestination(t *testing.T) {
 		CurrentDestination: pf.Position{X: 2, Y: 2},
 	}
 
-	err := citizen.UpdatePath(&grid)
+	err := citizen.RecalculatePath(&grid)
 	require.Error(t, err)
 }
 

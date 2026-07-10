@@ -100,8 +100,8 @@ func (c *Citizen) FindNearestSafeZone(grid *pf.Grid, safeZoneLocations map[pf.Po
 	return nil
 }
 
-// UpdatePath recalculates the path from the citizen's current position to their destination
-func (c *Citizen) UpdatePath(grid *pf.Grid) error {
+// RecalculatePath recalculates the path from the citizen's current position to their destination
+func (c *Citizen) RecalculatePath(grid *pf.Grid) error {
 	path, err := pf.FindPath(grid, c.CurrentPosition, c.CurrentDestination)
 	if err != nil {
 		return fmt.Errorf("pathfinding failed: %w", err)
@@ -120,28 +120,54 @@ func (c *Citizen) IncrementLocation(grid *pf.Grid) (bool, bool) {
 	}
 
 	if len(c.Path) == 0 || c.CurrentPathIndex < 0 || c.CurrentPathIndex >= len(c.Path) {
-		return false, false
+		hasMoved := c.randomWalk(grid)
+		return hasMoved, false
 	}
 
 	hasMoved := false
 
 	if c.CurrentPathIndex < len(c.Path)-1 {
 		c.Status = CitizenNavigating
-
-		// Revert cell to previous type
-		grid.UpdateCell(c.CurrentPosition, c.PreviousCellType)
-
-		// Update current position
 		c.CurrentPathIndex++
-		c.CurrentPosition = c.Path[c.CurrentPathIndex]
+		c.updatePosition(c.Path[c.CurrentPathIndex], grid)
 		hasMoved = true
-
-		// Store previous cell type and update current cell
-		c.PreviousCellType = grid.GetCell(c.CurrentPosition)
-		grid.UpdateCell(c.CurrentPosition, pf.CellCitizen)
 	}
 
 	return hasMoved, c.CurrentPathIndex == len(c.Path)-1
+}
+
+// randomWalk walks 1 step in a random direction
+func (c *Citizen) randomWalk(grid *pf.Grid) bool {
+	curPos := c.CurrentPosition
+	validDirections := []pf.Position{}
+
+	for _, direction := range pf.Directions {
+		dir := pf.Position{
+			X: curPos.X + direction.X,
+			Y: curPos.Y + direction.Y,
+		}
+		if grid.InBounds(dir) && !pf.AvoidableCellType[grid.GetCell(dir)] {
+			validDirections = append(validDirections, dir)
+		}
+	}
+
+	if len(validDirections) == 0 {
+		return false
+	}
+
+	newPos := RandValInSlice(validDirections)
+	c.updatePosition(newPos, grid)
+
+	return true
+}
+
+func (c *Citizen) updatePosition(newPos pf.Position, grid *pf.Grid) {
+	grid.UpdateCell(c.CurrentPosition, c.PreviousCellType)
+
+	c.CurrentPosition = newPos
+
+	c.PreviousCellType = grid.GetCell(c.CurrentPosition)
+	grid.UpdateCell(c.CurrentPosition, pf.CellCitizen)
 }
 
 // Copy returns a deep copy of the Citizen

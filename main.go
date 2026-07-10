@@ -19,7 +19,7 @@ var debugFilename = "debug.log"
 func main() {
 	config := c.SimulationConfig{
 		TickIntervalMs:    100,
-		Height:            100,
+		Height:            50,
 		Width:             100,
 		CitizenCountRange: c.PositiveRange{Min: 25, Max: 40},
 		Hazard: c.HazardConfig{
@@ -94,6 +94,10 @@ func main() {
 
 func logToDebugFile() {
 	_ = os.Remove(debugFilename)
+	_, err := os.Create(debugFilename)
+	if err != nil {
+		log.Fatalf("error creating debug file: %v", err)
+	}
 	f, err := tea.LogToFile(debugFilename, "")
 	if err != nil {
 		log.Fatalf("error logging to debug file: %v", err)

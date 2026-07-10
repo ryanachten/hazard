@@ -135,12 +135,12 @@ description: "Task list for Hazard Simulation System - 12 progressive slices for
 
 **Learning Outcome**: Grid cell state management, pathfinding integration with dynamic blocking, capacity-aware navigation state machine
 
-- [ ] T035 [P] [US1] Add `CellCitizen` to `CellType` enum in `internal/pathfinding/grid.go`, update pathfinding (`astar.go`, `dijkstra.go`) and `GetRandomOpenPosition` to treat it as blocked alongside `CellObstacle` and `CellHazard`
-- [ ] T036 [P] [US1] Implement citizen grid marking/unmarking — mark `CellCitizen` on citizen creation and each move, unmark previous position on departure, wrap in helpers (`markCell`, `unmarkCell`) in `internal/engine/simulation.go`
-- [ ] T037 [P] [US1] Define `StaticObstacle` struct (position, size) and `ObstacleConfig` (count range, size range) in `internal/engine/configuration.go`, add obstacles to `SimulationConfig`
-- [ ] T038 [US1] Implement obstacle placement — generate random non-overlapping rectangular obstacles during `NewSimulation`, mark cells as `CellObstacle`, validate no overlap with safe zones or other obstacles
-- [ ] T039 [P] [US1] Implement `MaxOccupants` and `OccupantIDs` on `SafeZone` struct in `internal/engine/safe_zone.go` — track which citizens are inside, refuse new entries when at capacity
-- [ ] T040 [US1] Wire capacity checking into citizen path selection and write tests: after pathfinding, check if the nearest safe zone is at capacity; if full, recalculate toward the next-nearest available zone. Tests verify: citizen cells block pathfinding, obstacles block pathfinding and avoid overlap, safe zone capacity prevents overfilling
+- [x] T035 [P] [US1] Add `CellCitizen` to `CellType` enum in `internal/pathfinding/grid.go`, update pathfinding (`astar.go`, `dijkstra.go`) and `GetRandomOpenPosition` to treat it as blocked alongside `CellObstacle` and `CellHazard`
+- [x] T036 [P] [US1] Implement citizen grid marking/unmarking — mark `CellCitizen` on citizen creation and each move, unmark previous position on departure, wrap in helpers (`markCell`, `unmarkCell`) in `internal/engine/simulation.go`
+- [x] T037 [P] [US1] Define `StaticObstacle` struct (position, size) and `ObstacleConfig` (count range, size range) in `internal/engine/configuration.go`, add obstacles to `SimulationConfig`
+- [x] T038 [US1] Implement obstacle placement — generate random non-overlapping rectangular obstacles during `NewSimulation`, mark cells as `CellObstacle`, validate no overlap with safe zones or other obstacles
+- [x] T039 [P] [US1] Implement `MaxOccupants` and `OccupantIDs` on `SafeZone` struct in `internal/engine/safe_zone.go` — track which citizens are inside, refuse new entries when at capacity
+- [x] T040 [US1] Wire capacity checking into citizen path selection and write tests: after pathfinding, check if the nearest safe zone is at capacity; if full, recalculate toward the next-nearest available zone. Tests verify: citizen cells block pathfinding, obstacles block pathfinding and avoid overlap, safe zone capacity prevents overfilling
 
 **Checkpoint**: `go test -v ./internal/pathfinding/ && go test -v ./internal/engine/` passes. Obstacles appear on the grid at startup. Citizens cannot occupy the same cell. Safe zones enforce capacity limits.
 

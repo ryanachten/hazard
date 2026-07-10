@@ -57,11 +57,13 @@ func (m Model) View() tea.View {
 	var grid strings.Builder
 
 	for y := range m.grid {
+		if y > 0 {
+			grid.WriteString("\n")
+		}
 		for x := range m.grid[y] {
 			cell := m.grid[y][x]
 			grid.WriteString(cell)
 		}
-		grid.WriteString("\n")
 	}
 
 	styledGrid := gridStyle.SetString(grid.String()).Render()

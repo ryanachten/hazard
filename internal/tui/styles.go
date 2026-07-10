@@ -101,4 +101,4 @@ func getObstacleCell() string {
 	return obstacleStyle.SetString(char).Render()
 }
 
-var gridStyle = lipgloss.NewStyle().MarginRight(2)
+var gridStyle = lipgloss.NewStyle()

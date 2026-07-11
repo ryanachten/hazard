@@ -81,7 +81,22 @@ func main() {
 	}()
 
 	if len(os.Getenv("DEBUG")) > 0 {
-		logToDebugFile()
+		_ = os.Remove(debugFilename)
+		_, err := os.Create(debugFilename)
+		if err != nil {
+			log.Fatalf("error creating debug file: %v", err)
+		}
+		f, err := tea.LogToFile(debugFilename, "")
+		if err != nil {
+			log.Fatalf("error logging to debug file: %v", err)
+		}
+		log.SetOutput(f)
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Printf("error closing file: %v", err)
+
+			}
+		}()
 	}
 
 	p := tea.NewProgram(tui.InitialModel(eventBus))
@@ -90,23 +105,4 @@ func main() {
 	}
 
 	cancel()
-}
-
-func logToDebugFile() {
-	_ = os.Remove(debugFilename)
-	_, err := os.Create(debugFilename)
-	if err != nil {
-		log.Fatalf("error creating debug file: %v", err)
-	}
-	f, err := tea.LogToFile(debugFilename, "")
-	if err != nil {
-		log.Fatalf("error logging to debug file: %v", err)
-	}
-	log.SetOutput(f)
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Printf("error closing file: %v", err)
-
-		}
-	}()
 }

@@ -213,14 +213,21 @@ func TestFindPath_AvoidsCellCitizen(t *testing.T) {
 }
 
 func TestFindPath_AvoidsCellDeadCitizen(t *testing.T) {
-	// CellDeadCitizen is NOT in AvoidableCellType, so pathfinding should pass through it
+	// CellDeadCitizen is NOT in AvoidableCellType, so pathfinding should pass through it.
+	// Bottleneck grid: only route from (0,0) to (2,2) passes through (1,1).
+	//
+	//	O X O
+	//	O . O
+	//	O X O
 	grid := NewGrid(3, 3, CellOpen)
+	grid.Cells[0][1] = CellObstacle
 	grid.Cells[1][1] = CellDeadCitizen
+	grid.Cells[2][1] = CellObstacle
 
 	path, err := FindPath(&grid, Position{X: 0, Y: 0}, Position{X: 2, Y: 2})
 	require.NoError(t, err)
 	require.Contains(t, path, Position{X: 1, Y: 1},
-		"path may pass through CellDeadCitizen since it is not avoidable")
+		"path must pass through CellDeadCitizen since it is not avoidable and is the only route")
 }
 
 func TestFindPathToGoal_AvoidsCellCitizen(t *testing.T) {

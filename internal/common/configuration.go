@@ -65,13 +65,13 @@ func (s *SimulationConfig) Validate() error {
 		errs = append(errs, fmt.Errorf("Obstacle.SizeRange: %w", err))
 	}
 	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {
-		errs = append(errs, errors.New("Hazard.HazardProbability must be between 0.0 and 1.0"))
+		errs = append(errs, errors.New("Hazard.Probability must be between 0.0 and 1.0"))
 	}
 	if s.SafeZone.Probability < 0 || s.SafeZone.Probability > 1 {
 		errs = append(errs, errors.New("SafeZone.Probability must be between 0.0 and 1.0"))
 	}
 	if s.SafeZone.CountRange.Max < 1 {
-		errs = append(errs, errors.New("SafeZone.CountRange[1] must be at least 1"))
+		errs = append(errs, errors.New("SafeZone.CountRange must be at least 1"))
 	}
 
 	return errors.Join(errs...)

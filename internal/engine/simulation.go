@@ -44,8 +44,8 @@ const (
 )
 
 // NewSimulation creates a simulation based on configuration
-func NewSimulation(config c.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
-	grid := pf.NewGrid(config.Width, config.Height, pf.CellOpen)
+func NewSimulation(width, height int, config c.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
+	grid := pf.NewGrid(width, height, pf.CellOpen)
 
 	safeZone, err := c.CreateSafeZone(config.SafeZone, &grid)
 	if err != nil {

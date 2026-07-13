@@ -8,8 +8,6 @@ import (
 // SimulationConfig configuration for a simulation
 type SimulationConfig struct {
 	TickIntervalMs    int
-	Width             int
-	Height            int
 	CitizenCountRange PositiveRange
 	Hazard            HazardConfig
 	SafeZone          SafeZoneConfig
@@ -40,9 +38,6 @@ type ObstacleConfig struct {
 func (s *SimulationConfig) Validate() error {
 	var errs []error
 
-	if s.Width <= 0 || s.Height <= 0 {
-		errs = append(errs, errors.New("simulation width and height must be greater than zero"))
-	}
 	if err := ValidatePositiveRange(s.CitizenCountRange.Min, s.CitizenCountRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("CitizenCountRange: %w", err))
 	}

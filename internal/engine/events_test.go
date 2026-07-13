@@ -13,8 +13,6 @@ import (
 
 func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
 	config := c.SimulationConfig{
-		Width:             5,
-		Height:            5,
 		CitizenCountRange: c.PositiveRange{Min: 0, Max: 0},
 		Hazard: c.HazardConfig{
 			Probability:   0,
@@ -28,7 +26,7 @@ func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
 		},
 	}
 
-	sim, err := NewSimulation(config, events.CreateEventBus())
+	sim, err := NewSimulation(5, 5, config, events.CreateEventBus())
 	require.NoError(t, err)
 
 	evts := sim.eventBus.EventLog

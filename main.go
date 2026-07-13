@@ -19,8 +19,6 @@ var debugFilename = "debug.log"
 func main() {
 	config := c.SimulationConfig{
 		TickIntervalMs:    100,
-		Height:            50,
-		Width:             100,
 		CitizenCountRange: c.PositiveRange{Min: 25, Max: 40},
 		Hazard: c.HazardConfig{
 			Probability:   0.1,
@@ -45,13 +43,10 @@ func main() {
 
 	eventBus := events.CreateEventBus()
 
-	simulation, err := eng.NewSimulation(config, eventBus)
-	if err != nil {
-		log.Fatalf("error creating simulation: %v", err)
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	var simulation eng.Simulation
 
 	go func() {
 		ticker := time.NewTicker(time.Duration(config.TickIntervalMs) * time.Millisecond)
@@ -64,14 +59,28 @@ func main() {
 					simulation.Tick()
 				}
 			case cmd := <-eventBus.SimulationCommands:
-				if cmd.CommandType == events.RestartSimulation {
-					newSim, err := eng.NewSimulation(config, eventBus)
+				switch cmd.CommandType {
+				case events.InitialiseSimulation:
+					payload, ok := cmd.Payload.(events.InitialiseSimulationPayload)
+					if !ok {
+						log.Printf("error parsing initialisation payload: %v", payload)
+						continue
+					}
+					newSim, err := eng.NewSimulation(payload.Width, payload.Height, config, eventBus)
 					if err != nil {
-						log.Printf("error restarting simulation: %v", err)
+						log.Printf("error creating simulation: %v", err)
 						continue
 					}
 					simulation = newSim
-				} else {
+
+				case events.UpdateTickerInterval:
+					newInterval, ok := cmd.Payload.(int)
+					if !ok {
+						log.Printf("error parsing ticket payload: %v", newInterval)
+						continue
+					}
+					ticker.Reset(time.Duration(newInterval) * time.Millisecond)
+				default:
 					simulation.ProcessCommand(cmd)
 				}
 			case <-ctx.Done():

@@ -11,9 +11,7 @@ import (
 )
 
 func newTestSim() (Simulation, error) {
-	return NewSimulation(c.SimulationConfig{
-		Width:             10,
-		Height:            10,
+	return NewSimulation(10, 10, c.SimulationConfig{
 		CitizenCountRange: c.PositiveRange{Min: 0, Max: 0},
 		Hazard: c.HazardConfig{
 			DurationRange: c.PositiveRange{Min: 100, Max: 100},
@@ -98,9 +96,7 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 }
 
 func TestHazard_CreationViaTick(t *testing.T) {
-	sim, err := NewSimulation(c.SimulationConfig{
-		Width:             10,
-		Height:            10,
+	sim, err := NewSimulation(10, 10, c.SimulationConfig{
 		CitizenCountRange: c.PositiveRange{Min: 0, Max: 0},
 		Hazard: c.HazardConfig{
 			DurationRange: c.PositiveRange{Min: 10, Max: 10},

@@ -8,8 +8,6 @@ import (
 
 func TestSimulationConfig_Validate(t *testing.T) {
 	validConfig := SimulationConfig{
-		Width:             5,
-		Height:            5,
 		CitizenCountRange: PositiveRange{Min: 1, Max: 5},
 		Hazard: HazardConfig{
 			DurationRange: PositiveRange{Min: 1, Max: 10},
@@ -35,33 +33,6 @@ func TestSimulationConfig_Validate(t *testing.T) {
 			name:    "valid config",
 			config:  validConfig,
 			wantErr: "",
-		},
-		{
-			name: "zero width",
-			config: func() SimulationConfig {
-				c := validConfig
-				c.Width = 0
-				return c
-			}(),
-			wantErr: "width and height must be greater than zero",
-		},
-		{
-			name: "zero height",
-			config: func() SimulationConfig {
-				c := validConfig
-				c.Height = 0
-				return c
-			}(),
-			wantErr: "width and height must be greater than zero",
-		},
-		{
-			name: "negative width",
-			config: func() SimulationConfig {
-				c := validConfig
-				c.Width = -1
-				return c
-			}(),
-			wantErr: "width and height must be greater than zero",
 		},
 		{
 			name: "negative hazard probability",

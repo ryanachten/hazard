@@ -77,8 +77,6 @@ func TestTick_ObstaclesBlockPathfinding(t *testing.T) {
 	// Obstacles placed at simulation start must block pathfinding,
 	// forcing citizens to route around them.
 	config := c.SimulationConfig{
-		Width:             10,
-		Height:            10,
 		CitizenCountRange: c.PositiveRange{Min: 1, Max: 1},
 		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
@@ -96,7 +94,7 @@ func TestTick_ObstaclesBlockPathfinding(t *testing.T) {
 		},
 	}
 
-	sim, err := NewSimulation(config, events.CreateEventBus())
+	sim, err := NewSimulation(10, 10, config, events.CreateEventBus())
 	require.NoError(t, err)
 
 	// Grid should have safe zone cells marked
@@ -120,8 +118,6 @@ func TestTick_ObstaclesBlockPathfinding(t *testing.T) {
 func TestNewSimulation_InitializesCoreState(t *testing.T) {
 	config := c.SimulationConfig{
 		TickIntervalMs:    100,
-		Width:             8,
-		Height:            6,
 		CitizenCountRange: c.PositiveRange{Min: 3, Max: 3},
 		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
@@ -135,14 +131,14 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 		},
 	}
 
-	simulation, err := NewSimulation(config, events.CreateEventBus())
+	simulation, err := NewSimulation(8, 6, config, events.CreateEventBus())
 
 	require.Nil(t, err)
 	require.Equal(t, SimulationRunning, simulation.State)
 	require.Equal(t, uint64(0), simulation.TickCount)
 	require.NotNil(t, simulation.Grid)
-	require.Equal(t, config.Width, simulation.Grid.Width)
-	require.Equal(t, config.Height, simulation.Grid.Height)
+	require.Equal(t, 8, simulation.Grid.Width)
+	require.Equal(t, 6, simulation.Grid.Height)
 	require.Len(t, simulation.Citizens, 3)
 	require.Len(t, simulation.SafeZones, 1)
 
@@ -404,8 +400,6 @@ func TestTick_CitizenOvertakenByHazardDies(t *testing.T) {
 
 func TestTick_NewSafeZoneAppearsOnSchedule(t *testing.T) {
 	config := c.SimulationConfig{
-		Width:             10,
-		Height:            10,
 		CitizenCountRange: c.PositiveRange{Min: 1, Max: 1},
 		SafeZone: c.SafeZoneConfig{
 			Probability: 1.0,
@@ -419,7 +413,7 @@ func TestTick_NewSafeZoneAppearsOnSchedule(t *testing.T) {
 		},
 	}
 
-	sim, err := NewSimulation(config, events.CreateEventBus())
+	sim, err := NewSimulation(10, 10, config, events.CreateEventBus())
 	require.NoError(t, err)
 	require.Len(t, sim.SafeZones, 1)
 

@@ -4,11 +4,8 @@ package tui
 import (
 	e "hazard/internal/events"
 	pf "hazard/internal/pathfinding"
-	"log"
-	"strconv"
 	"strings"
 
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/google/uuid"
@@ -22,38 +19,35 @@ type citizenState struct {
 
 // Model represents the TUI state for the hazard simulation
 type Model struct {
-	simulationID        uuid.UUID
-	grid                [][]string
-	citizens            map[uuid.UUID]citizenState
-	hazards             map[uuid.UUID]string
-	safeZones           map[uuid.UUID][]pf.Position
-	eventBus            *e.EventBus
-	width               int
-	height              int
-	focusIndex          int
-	focusTargets        int // TODO: this will eventually be driven by an array or something
-	tickerIntervalInput textinput.Model
+	simulationID uuid.UUID
+	grid         [][]string
+	citizens     map[uuid.UUID]citizenState
+	hazards      map[uuid.UUID]string
+	safeZones    map[uuid.UUID][]pf.Position
+	eventBus     *e.EventBus
+	width        int
+	height       int
+	focusIndex   int
+	focusTargets int
+	inputs       InputController
 }
 
 var sidebarWidth = 40
 
 // InitialModel creates the initial TUI model state
 func InitialModel(eventBus *e.EventBus) Model {
-	tickerIntervalInput := textinput.New()
-	tickerIntervalInput.Placeholder = "100"
-	tickerIntervalInput.Prompt = "Frame rate interval"
-	tickerIntervalInput.CharLimit = 4
-	tickerIntervalInput.SetWidth(20)
+	inputs := InitialiseController(eventBus)
+	focusTargets := 1 + len(inputs.inputs)
 
 	return Model{
-		grid:                [][]string{},
-		citizens:            map[uuid.UUID]citizenState{},
-		hazards:             map[uuid.UUID]string{},
-		safeZones:           map[uuid.UUID][]pf.Position{},
-		eventBus:            eventBus,
-		focusIndex:          0,
-		focusTargets:        2,
-		tickerIntervalInput: tickerIntervalInput,
+		grid:         [][]string{},
+		citizens:     map[uuid.UUID]citizenState{},
+		hazards:      map[uuid.UUID]string{},
+		safeZones:    map[uuid.UUID][]pf.Position{},
+		eventBus:     eventBus,
+		focusIndex:   0,
+		focusTargets: focusTargets,
+		inputs:       inputs,
 	}
 }
 
@@ -83,9 +77,9 @@ func (m Model) View() tea.View {
 
 	styledGrid := gridStyle.SetString(grid.String()).Render()
 
-	cursor := m.tickerIntervalInput.Cursor()
+	inputView, cursor := m.inputs.View()
 
-	view := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, styledGrid, m.tickerIntervalInput.View()))
+	view := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, styledGrid, inputView))
 	view.Cursor = cursor
 	return view
 }
@@ -142,23 +136,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		case "tab":
-			prevFocus := m.focusIndex
 			m.focusIndex++
 			if m.focusIndex >= m.focusTargets {
 				m.focusIndex = 0
 			}
-			switch m.focusIndex {
-			case 1:
-				m.tickerIntervalInput.Focus()
-			}
-			switch prevFocus {
-			case 1:
-				val, err := strconv.Atoi(m.tickerIntervalInput.Value())
-				if err != nil {
-					log.Printf("error parsing input value: %v", err)
-				}
-				m.eventBus.UpdateTickerInterval(val)
-				m.tickerIntervalInput.Blur()
+
+		case "shift+tab":
+			m.focusIndex--
+			if m.focusIndex < 0 {
+				m.focusIndex = m.focusTargets - 1
 			}
 
 		case "ctrl+c", "q", "esc":
@@ -178,8 +164,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var cmd tea.Cmd
-	m.tickerIntervalInput, cmd = m.tickerIntervalInput.Update(msg)
+	if m.focusIndex > 0 {
+		focusedID := m.inputs.InputIDs[m.focusIndex-1]
+		cmd := m.inputs.Update(msg, focusedID)
+		return m, cmd
+	}
 
-	return m, cmd
+	return m, nil
 }

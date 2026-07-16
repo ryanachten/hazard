@@ -132,6 +132,13 @@ func (s *Simulation) ProcessCommand(cmd events.SimulationCommand) {
 		} else {
 			s.State = SimulationRunning
 		}
+	case events.UpdateHazardProbability:
+		probability, ok := cmd.Payload.(float32)
+		if !ok {
+			log.Printf("error parsing probability: %v", probability)
+		} else {
+			s.Config.Hazard.Probability = probability
+		}
 	}
 }
 

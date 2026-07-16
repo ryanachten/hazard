@@ -13,8 +13,10 @@ const (
 	InitialiseSimulation commandType = "simulation.initialise"
 	// PauseSimulation toggles the simulation between running and paused states.
 	PauseSimulation commandType = "simulation.pause"
-	// UpdateTickerInterval updates the ticket interval in milliseconds
-	UpdateTickerInterval commandType = "simulation.updateTicketInterval"
+	// UpdateTickerInterval updates the ticker interval in milliseconds
+	UpdateTickerInterval commandType = "simulation.updateTickerInterval"
+	// UpdateHazardProbability updates the probability of hazards occurring
+	UpdateHazardProbability commandType = "simulation.updateHazardProbability"
 )
 
 // InitialiseSimulationPayload passes information required to initialise a simulation
@@ -38,11 +40,19 @@ func (e *EventBus) PauseSimulation() {
 	})
 }
 
-// UpdateTickerInterval updates the ticket interval in milliseconds
+// UpdateTickerInterval updates the ticker interval in milliseconds
 func (e *EventBus) UpdateTickerInterval(intervalMs int) {
 	e.dispatchCommand(SimulationCommand{
 		CommandType: UpdateTickerInterval,
 		Payload:     intervalMs,
+	})
+}
+
+// UpdateHazardProbability updates the probability of hazards occurring
+func (e *EventBus) UpdateHazardProbability(pct float32) {
+	e.dispatchCommand(SimulationCommand{
+		CommandType: UpdateHazardProbability,
+		Payload:     pct,
 	})
 }
 

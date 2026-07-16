@@ -76,7 +76,7 @@ func main() {
 				case events.UpdateTickerInterval:
 					newInterval, ok := cmd.Payload.(int)
 					if !ok {
-						log.Printf("error parsing ticket payload: %v", newInterval)
+						log.Printf("error parsing ticker payload: %v", newInterval)
 						continue
 					}
 					ticker.Reset(time.Duration(newInterval) * time.Millisecond)

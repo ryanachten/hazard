@@ -13,7 +13,7 @@ func TestCreateHazard(t *testing.T) {
 	config := HazardConfig{
 		DurationRange: PositiveRange{Min: 5, Max: 10},
 		Probability:   0.5,
-		CountRange:    Range{Min: 0, Max: 0},
+		Count:         0,
 	}
 
 	hazard, err := CreateHazard(config, &grid)

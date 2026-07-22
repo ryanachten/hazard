@@ -8,14 +8,14 @@ import (
 
 func TestSimulationConfig_Validate(t *testing.T) {
 	validConfig := SimulationConfig{
-		CitizenCountRange: PositiveRange{Min: 1, Max: 5},
+		CitizenCount: 5,
 		Hazard: HazardConfig{
 			DurationRange: PositiveRange{Min: 1, Max: 10},
-			CountRange:    Range{Min: 1, Max: 5},
+			Count:         5,
 			Probability:   0.5,
 		},
 		SafeZone: SafeZoneConfig{
-			CountRange:  Range{Min: 1, Max: 1},
+			Count:       1,
 			RadiusRange: Range{Min: 1, Max: 1},
 		},
 		Obstacle: ObstacleConfig{
@@ -71,13 +71,13 @@ func TestSimulationConfig_Validate(t *testing.T) {
 			wantErr: "SafeZone.Probability must be between 0.0 and 1.0",
 		},
 		{
-			name: "safe zone max count less than 1",
+			name: "safe zone count less than 1",
 			config: func() SimulationConfig {
 				c := validConfig
-				c.SafeZone.CountRange = Range{Min: 0, Max: 0}
+				c.SafeZone.Count = 0
 				return c
 			}(),
-			wantErr: "SafeZone.CountRange must be at least 1",
+			wantErr: "SafeZone.Count must be at least 1",
 		},
 	}
 

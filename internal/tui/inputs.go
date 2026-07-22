@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"hazard/internal/common"
 	"hazard/internal/events"
 	"log"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 )
 
 var inputWidth = 20
+var config = common.DefaultConfig
 
 type input struct {
 	id       string
@@ -27,29 +29,23 @@ type InputController struct {
 	eventBus         *events.EventBus
 }
 
-// InitialiseController creates the controller
+// InitialiseController creates the controller and its inputs
 func InitialiseController(eventBus *events.EventBus) InputController {
 	c := InputController{
 		InputIDs: []string{},
 		inputs:   make(map[string]input),
 		eventBus: eventBus,
 	}
-	c.createInput("tickerInterval", "ticker interval", "100", 4, func() {
-		val, err := strconv.Atoi(c.inputs["tickerInterval"].model.Value())
-		if err != nil {
-			log.Printf("error parsing tickerInterval as int: %v", err)
-		} else {
-			c.eventBus.UpdateTickerInterval(val)
-		}
-	})
-	c.createInput("hazardProbability", "hazard probability", "0.1", 4, func() {
-		val, err := strconv.ParseFloat(c.inputs["hazardProbability"].model.Value(), 32)
-		if err != nil {
-			log.Printf("error parsing tickerInterval as int: %v", err)
-		} else {
-			c.eventBus.UpdateHazardProbability(float32(val))
-		}
-	})
+
+	c.createIntInput("tickerInterval", "ticker interval", config.TickIntervalMs, c.eventBus.UpdateTickerInterval)
+	c.createFloat32Input("hazardProbability", "hazard probability", config.Hazard.Probability, c.eventBus.UpdateHazardProbability)
+	c.createIntInput("hazardCount", "hazard count", config.Hazard.Count, c.eventBus.UpdateHazardCount)
+	c.createIntInput("hazardDurationMin", "hazard duration min", config.Hazard.DurationRange.Min, c.eventBus.UpdateHazardDurationMin)
+	c.createIntInput("hazardDurationMax", "hazard duration max", config.Hazard.DurationRange.Max, c.eventBus.UpdateHazardDurationMax)
+	c.createFloat32Input("safeZoneProbability", "safe zone probability", config.SafeZone.Probability, c.eventBus.UpdateSafeZoneProbability)
+	c.createIntInput("safeZoneCount", "safe zone count", config.SafeZone.Count, c.eventBus.UpdateSafeZoneCount)
+	c.createIntInput("safeZoneRadiusMin", "safe zone radius min", config.SafeZone.RadiusRange.Min, c.eventBus.UpdateSafeZoneRadiusMin)
+	c.createIntInput("safeZoneRadiusMax", "safe zone radius max", config.SafeZone.RadiusRange.Max, c.eventBus.UpdateSafeZoneRadiusMax)
 
 	return c
 }
@@ -113,11 +109,41 @@ func (m *InputController) Update(msg tea.Msg, focusInputID string) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+func (m *InputController) createFloat32Input(
+	id string, label string, placeholder float32, callback func(state float32)) {
+
+	formattedPlaceholder := strconv.FormatFloat(float64(placeholder), 'f', 2, 32)
+
+	m.createInput(id, label, formattedPlaceholder, func() {
+		val, err := strconv.ParseFloat(m.inputs[id].model.Value(), 32)
+		if err != nil {
+			log.Printf("error parsing %v as float: %v", id, err)
+		} else {
+			callback(float32(val))
+		}
+	})
+}
+
+func (m *InputController) createIntInput(
+	id string, label string, placeholder int, callback func(state int)) {
+
+	formattedPlaceholder := strconv.Itoa(placeholder)
+
+	m.createInput(id, label, formattedPlaceholder, func() {
+		val, err := strconv.Atoi(m.inputs[id].model.Value())
+		if err != nil {
+			log.Printf("error parsing %v as int: %v", id, err)
+		} else {
+			callback(val)
+		}
+	})
+}
+
 func (m *InputController) createInput(
-	id string, label string, placeholder string, charLimit int, callback func()) {
+	id string, label string, placeholder string, callback func()) {
 	model := textinput.New()
 	model.Placeholder = placeholder
-	model.CharLimit = charLimit
+	model.CharLimit = 4
 
 	model.SetWidth(inputWidth)
 	model.SetValue(placeholder)

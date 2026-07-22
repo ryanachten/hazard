@@ -77,15 +77,15 @@ func TestTick_ObstaclesBlockPathfinding(t *testing.T) {
 	// Obstacles placed at simulation start must block pathfinding,
 	// forcing citizens to route around them.
 	config := c.SimulationConfig{
-		CitizenCountRange: c.PositiveRange{Min: 1, Max: 1},
+		CitizenCount: 1,
 		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
-			CountRange:  c.Range{Min: 1, Max: 1},
+			Count:       1,
 			RadiusRange: c.Range{Min: 1, Max: 1},
 		},
 		Hazard: c.HazardConfig{
 			Probability:   0,
-			CountRange:    c.Range{Min: 0, Max: 0},
+			Count:         0,
 			DurationRange: c.PositiveRange{Min: 1, Max: 1},
 		},
 		Obstacle: c.ObstacleConfig{
@@ -117,16 +117,16 @@ func TestTick_ObstaclesBlockPathfinding(t *testing.T) {
 
 func TestNewSimulation_InitializesCoreState(t *testing.T) {
 	config := c.SimulationConfig{
-		TickIntervalMs:    100,
-		CitizenCountRange: c.PositiveRange{Min: 3, Max: 3},
+		TickIntervalMs: 100,
+		CitizenCount:   3,
 		SafeZone: c.SafeZoneConfig{
 			Probability: 0,
-			CountRange:  c.Range{Min: 1, Max: 1},
+			Count:       1,
 			RadiusRange: c.Range{Min: 0, Max: 0},
 		},
 		Hazard: c.HazardConfig{
 			Probability:   0,
-			CountRange:    c.Range{Min: 0, Max: 0},
+			Count:         0,
 			DurationRange: c.PositiveRange{Min: 1, Max: 1},
 		},
 	}
@@ -400,15 +400,15 @@ func TestTick_CitizenOvertakenByHazardDies(t *testing.T) {
 
 func TestTick_NewSafeZoneAppearsOnSchedule(t *testing.T) {
 	config := c.SimulationConfig{
-		CitizenCountRange: c.PositiveRange{Min: 1, Max: 1},
+		CitizenCount: 1,
 		SafeZone: c.SafeZoneConfig{
 			Probability: 1.0,
-			CountRange:  c.Range{Min: 2, Max: 2},
+			Count:       2,
 			RadiusRange: c.Range{Min: 1, Max: 1},
 		},
 		Hazard: c.HazardConfig{
 			Probability:   0,
-			CountRange:    c.Range{Min: 0, Max: 0},
+			Count:         0,
 			DurationRange: c.PositiveRange{Min: 1, Max: 1},
 		},
 	}
@@ -444,19 +444,18 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 		Config: c.SimulationConfig{
 			SafeZone: c.SafeZoneConfig{
 				Probability: 1.0,
-				CountRange:  c.Range{Min: 2, Max: 2},
+				Count:       2,
 				RadiusRange: c.Range{Min: 1, Max: 1},
 			},
 			Hazard: c.HazardConfig{
 				Probability:   0,
-				CountRange:    c.Range{Min: 0, Max: 0},
+				Count:         0,
 				DurationRange: c.PositiveRange{Min: 1, Max: 1},
 			},
 		},
 		Grid:              &grid,
 		eventBus:          events.CreateEventBus(),
 		safeZoneLocations: safeZoneLocations,
-		MaxSafeZones:      2,
 		SafeZones: []c.SafeZone{
 			{Position: pf.Position{X: 9, Y: 9}, Radius: 1},
 		},
@@ -523,7 +522,6 @@ func TestTick_SafeZoneCapacityPreventsOverfilling(t *testing.T) {
 		eventBus:          events.CreateEventBus(),
 		safeZoneLocations: safeZoneLocations,
 		SafeZones:         []c.SafeZone{sz1, sz2},
-		MaxSafeZones:      2,
 		Citizens: []c.Citizen{
 			{
 				ID:               uuid.New(),

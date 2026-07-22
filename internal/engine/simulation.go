@@ -21,9 +21,7 @@ type Simulation struct {
 	Citizens             []c.Citizen
 	DeadCitizensCount    int
 	EscapedCitizensCount int
-	MaxHazards           int
 	Hazards              []c.Hazard
-	MaxSafeZones         int
 	SafeZones            []c.SafeZone
 	eventBus             *events.EventBus
 	safeZoneLocations    map[pf.Position]*c.SafeZone
@@ -65,10 +63,8 @@ func NewSimulation(width, height int, config c.SimulationConfig, eventBus *event
 		State:             SimulationRunning,
 		TickCount:         0,
 		Grid:              &grid,
-		MaxHazards:        config.Hazard.CountRange.Random(),
-		MaxSafeZones:      config.SafeZone.CountRange.Random(),
 		SafeZones:         []c.SafeZone{safeZone},
-		Citizens:          c.CreateCitizens(config.CitizenCountRange, &grid, safeZoneLocations),
+		Citizens:          c.CreateCitizens(config.CitizenCount, &grid, safeZoneLocations),
 		eventBus:          eventBus,
 		safeZoneLocations: safeZoneLocations,
 	}
@@ -139,6 +135,55 @@ func (s *Simulation) ProcessCommand(cmd events.SimulationCommand) {
 		} else {
 			s.Config.Hazard.Probability = probability
 		}
+	case events.UpdateHazardCount:
+		count, ok := cmd.Payload.(int)
+		if !ok {
+			log.Printf("error parsing count: %v", count)
+		} else {
+			s.Config.Hazard.Count = count
+		}
+	case events.UpdateHazardDurationMin:
+		duration, ok := cmd.Payload.(int)
+		if !ok {
+			log.Printf("error parsing duration: %v", duration)
+		} else {
+			s.Config.Hazard.DurationRange.Min = duration
+		}
+	case events.UpdateHazardDurationMax:
+		duration, ok := cmd.Payload.(int)
+		if !ok {
+			log.Printf("error parsing duration: %v", duration)
+		} else {
+			s.Config.Hazard.DurationRange.Max = duration
+		}
+	case events.UpdateSafeZoneProbability:
+		probability, ok := cmd.Payload.(float32)
+		if !ok {
+			log.Printf("error parsing probability: %v", probability)
+		} else {
+			s.Config.SafeZone.Probability = probability
+		}
+	case events.UpdateSafeZoneCount:
+		count, ok := cmd.Payload.(int)
+		if !ok {
+			log.Printf("error parsing count: %v", count)
+		} else {
+			s.Config.SafeZone.Count = count
+		}
+	case events.UpdateSafeZoneRadiusMin:
+		radius, ok := cmd.Payload.(int)
+		if !ok {
+			log.Printf("error parsing radius: %v", radius)
+		} else {
+			s.Config.SafeZone.RadiusRange.Min = radius
+		}
+	case events.UpdateSafeZoneRadiusMax:
+		radius, ok := cmd.Payload.(int)
+		if !ok {
+			log.Printf("error parsing radius: %v", radius)
+		} else {
+			s.Config.SafeZone.RadiusRange.Max = radius
+		}
 	}
 }
 
@@ -158,7 +203,7 @@ func (s *Simulation) updateOrRemoveHazards() {
 
 func (s *Simulation) generateIntermittentHazard() {
 	hazardConfig := s.Config.Hazard
-	if len(s.Hazards) >= s.MaxHazards || rand.Float32() > hazardConfig.Probability {
+	if len(s.Hazards) >= hazardConfig.Count || rand.Float32() > hazardConfig.Probability {
 		return
 	}
 
@@ -179,7 +224,7 @@ func (s *Simulation) generateIntermittentHazard() {
 
 func (s *Simulation) generateIntermittentSafeZone() bool {
 	safeZoneConfig := s.Config.SafeZone
-	if len(s.SafeZones) >= s.MaxSafeZones || rand.Float32() > safeZoneConfig.Probability {
+	if len(s.SafeZones) >= safeZoneConfig.Count || rand.Float32() > safeZoneConfig.Probability {
 		return false
 	}
 

@@ -93,7 +93,7 @@ func getObstacleCell() string {
 	return obstacleStyle.SetString(char).Render()
 }
 
-var gridStyle = lipgloss.NewStyle().PaddingRight(1).MarginRight(1).Border(lipgloss.ThickBorder(), false, true, false, false)
+var gridStyle = lipgloss.NewStyle().PaddingRight(2).MarginRight(2).Border(lipgloss.ThickBorder(), false, true, false, false)
 
 var logo = lipgloss.NewStyle().
 	Width(sidebarWidth).
@@ -103,3 +103,8 @@ var logo = lipgloss.NewStyle().
 		"░█▀█░█▀█░▄▀░░█▀█░█▀▄░█░█\n" +
 		"░▀░▀░▀░▀░▀▀▀░▀░▀░▀░▀░▀▀░").
 	Render()
+
+var heading = lipgloss.NewStyle().
+	Bold(true).
+	Underline(true).
+	Width(sidebarWidth)

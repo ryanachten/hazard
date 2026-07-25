@@ -37,11 +37,12 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 	// Initialise citizens
 	for _, citizen := range payload.Citizens {
 		pos := citizen.CurrentPosition
-		m.grid[pos.Y][pos.X] = getCitizenCell()
+		m.grid[pos.Y][pos.X] = citizenCharacter
 		m.citizens[citizen.ID] = citizenState{
 			Position: citizen.CurrentPosition,
 		}
 	}
+	m.activeCitizenCount = len(payload.Citizens)
 
 	// Initialise obstacles
 	for _, obstacle := range payload.Obstacles {
@@ -71,7 +72,7 @@ func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
 		Position:     newPosition,
 		PreviousCell: m.grid[newPosition.Y][newPosition.X],
 	}
-	m.grid[newPosition.Y][newPosition.X] = getCitizenCell()
+	m.grid[newPosition.Y][newPosition.X] = citizenCharacter
 }
 
 func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
@@ -89,16 +90,28 @@ func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
 		m.grid[curPos.Y][curPos.X] = m.citizens[event.EntityID].PreviousCell
 	}
 
-	m.grid[assignedPos.Y][assignedPos.X] = getEscapedCitizenCell()
+	m.grid[assignedPos.Y][assignedPos.X] = citizenEscapedCharacter
 
 	state := m.citizens[event.EntityID]
 	state.Position = assignedPos
 	m.citizens[event.EntityID] = state
+
+	m.escapedCitizenCount = payload.TotalEscaped
+	m.activeCitizenCount = payload.TotalRemaining
 }
 
 func (m *Model) handleCitizenDied(event events.SimulationEvent) {
+	payload, ok := event.Payload.(events.CitizenDiedPayload)
+	if !ok {
+		log.Printf("error converting payload to CitizenDiedPayload: %v", event.Payload)
+		return
+	}
+
 	var currentPosition = m.citizens[event.EntityID].Position
-	m.grid[currentPosition.Y][currentPosition.X] = getDeadCitizenCell()
+	m.grid[currentPosition.Y][currentPosition.X] = citizenDeadCharacter
+
+	m.deadCitizenCount = payload.TotalDead
+	m.activeCitizenCount = payload.TotalRemaining
 }
 
 func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {

@@ -103,6 +103,8 @@ func (e *EventBus) CitizenPathUpdated(citizenID uuid.UUID, path []pf.Position, m
 type CitizenEscapedPayload struct {
 	SafeZoneID       uuid.UUID
 	AssignedPosition pf.Position
+	TotalEscaped     int
+	TotalRemaining   int
 }
 
 // CitizenEscaped raised when a citizen escapes hazards by reaching a safe zone
@@ -110,9 +112,15 @@ func (e *EventBus) CitizenEscaped(citizenID uuid.UUID, payload CitizenEscapedPay
 	e.createEvent(CitizenEscaped, citizenID, metadata, payload)
 }
 
+// CitizenDiedPayload for citizen death event
+type CitizenDiedPayload struct {
+	TotalDead      int
+	TotalRemaining int
+}
+
 // CitizenDied raised when a citizen has been killed by a hazard
-func (e *EventBus) CitizenDied(citizenID uuid.UUID, metadata EventMetadata) {
-	e.createEvent(CitizenDied, citizenID, metadata, nil)
+func (e *EventBus) CitizenDied(citizenID uuid.UUID, payload CitizenDiedPayload, metadata EventMetadata) {
+	e.createEvent(CitizenDied, citizenID, metadata, payload)
 }
 
 // SafeZoneEmergedPayload for safe zone emergence event

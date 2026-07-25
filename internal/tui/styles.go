@@ -6,24 +6,28 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-var citizenCharacter = "@"
 var citizenStyle = lipgloss.NewStyle().
-	SetString(citizenCharacter).
 	Foreground(lipgloss.Color("#eab308")).
-	Background(lipgloss.Color("#2a2000")).Render()
-
-var citizenDeadCharacter = "†"
-var citizenDeadStyle = lipgloss.NewStyle().
-	SetString(citizenDeadCharacter).
-	Foreground(lipgloss.Color("#991b1b")).
-	Background(lipgloss.Color("#2a0505")).
+	Background(lipgloss.Color("#2a2000"))
+var citizenCharacter = lipgloss.NewStyle().
+	Inherit(citizenStyle).
+	SetString("@").
 	Render()
 
-var citizenEscapedCharacter = "♦"
+var citizenDeadStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#991b1b")).
+	Background(lipgloss.Color("#2a0505"))
+var citizenDeadCharacter = lipgloss.NewStyle().
+	Inherit(citizenDeadStyle).
+	SetString("†").
+	Render()
+
 var citizenEscapedStyle = lipgloss.NewStyle().
-	SetString(citizenEscapedCharacter).
 	Foreground(lipgloss.Color("#4ade80")).
-	Background(lipgloss.Color("#0d2a0d")).
+	Background(lipgloss.Color("#0d2a0d"))
+var citizenEscapedCharacter = lipgloss.NewStyle().
+	Inherit(citizenEscapedStyle).
+	SetString("♦").
 	Render()
 
 var openCharacters = []string{"·", ".", ",", " "}
@@ -63,18 +67,6 @@ func getOpenCell() string {
 		SetString(char).
 		Background(lipgloss.Lighten(bgColour, bgOffset)).
 		Render()
-}
-
-func getCitizenCell() string {
-	return citizenStyle
-}
-
-func getDeadCitizenCell() string {
-	return citizenDeadStyle
-}
-
-func getEscapedCitizenCell() string {
-	return citizenEscapedStyle
 }
 
 func getFireCell() string {

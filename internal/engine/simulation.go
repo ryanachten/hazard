@@ -260,7 +260,10 @@ func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
 	s.Citizens[citizenIndex].Status = c.CitizenDead
 	s.Grid.UpdateCell(s.Citizens[citizenIndex].CurrentPosition, pf.CellDeadCitizen)
 	s.DeadCitizensCount++
-	s.eventBus.CitizenDied(s.Citizens[citizenIndex].ID, s.getEventMetadata())
+	s.eventBus.CitizenDied(s.Citizens[citizenIndex].ID, events.CitizenDiedPayload{
+		TotalDead:      s.DeadCitizensCount,
+		TotalRemaining: len(s.Citizens) - s.DeadCitizensCount - s.EscapedCitizensCount,
+	}, s.getEventMetadata())
 
 	return true
 }
@@ -325,6 +328,8 @@ func (s *Simulation) updateCitizenLocation(citizenIndex int) {
 			s.eventBus.CitizenEscaped(citizen.ID, events.CitizenEscapedPayload{
 				SafeZoneID:       safeZone.ID,
 				AssignedPosition: assignedPosition,
+				TotalEscaped:     s.EscapedCitizensCount,
+				TotalRemaining:   len(s.Citizens) - s.DeadCitizensCount - s.EscapedCitizensCount,
 			}, s.getEventMetadata())
 		}
 	}

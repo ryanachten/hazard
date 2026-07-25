@@ -2,6 +2,7 @@
 package tui
 
 import (
+	"fmt"
 	e "hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"strings"
@@ -19,17 +20,20 @@ type citizenState struct {
 
 // Model represents the TUI state for the hazard simulation
 type Model struct {
-	simulationID uuid.UUID
-	grid         [][]string
-	citizens     map[uuid.UUID]citizenState
-	hazards      map[uuid.UUID]string
-	safeZones    map[uuid.UUID][]pf.Position
-	eventBus     *e.EventBus
-	width        int
-	height       int
-	focusIndex   int
-	focusTargets int
-	inputs       InputController
+	simulationID        uuid.UUID
+	grid                [][]string
+	citizens            map[uuid.UUID]citizenState
+	escapedCitizenCount int
+	deadCitizenCount    int
+	activeCitizenCount  int
+	hazards             map[uuid.UUID]string
+	safeZones           map[uuid.UUID][]pf.Position
+	eventBus            *e.EventBus
+	width               int
+	height              int
+	focusIndex          int
+	focusTargets        int
+	inputs              InputController
 }
 
 var sidebarWidth = 40
@@ -76,9 +80,9 @@ func (m Model) View() tea.View {
 	}
 
 	styledGrid := gridStyle.SetString(grid.String()).Render()
-
 	inputView, cursor := m.inputs.View()
-	rightColumn := logo + inputView
+
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, logo, m.renderCitizenStatus(), inputView)
 
 	view := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, styledGrid, rightColumn))
 	view.Cursor = cursor
@@ -172,4 +176,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func (m Model) renderCitizenStatus() string {
+	activeCitizens := citizenStyle.
+		SetString(fmt.Sprintf("Active: %d", m.activeCitizenCount)).
+		MarginRight(1).
+		Render()
+
+	deadCitizens := citizenDeadStyle.
+		SetString(fmt.Sprintf("Dead: %d", m.deadCitizenCount)).
+		MarginRight(1).
+		Render()
+
+	escapedCitizens := citizenEscapedStyle.
+		SetString(fmt.Sprintf("Escaped: %d", m.escapedCitizenCount)).
+		MarginBottom(1).
+		Render()
+
+	return activeCitizens + deadCitizens + escapedCitizens
 }

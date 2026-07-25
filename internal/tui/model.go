@@ -78,8 +78,9 @@ func (m Model) View() tea.View {
 	styledGrid := gridStyle.SetString(grid.String()).Render()
 
 	inputView, cursor := m.inputs.View()
+	rightColumn := logo + inputView
 
-	view := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, styledGrid, inputView))
+	view := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, styledGrid, rightColumn))
 	view.Cursor = cursor
 	return view
 }
@@ -135,13 +136,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 
-		case "tab":
+		case "tab", "down":
 			m.focusIndex++
 			if m.focusIndex >= m.focusTargets {
 				m.focusIndex = 0
 			}
 
-		case "shift+tab":
+		case "shift+tab", "up":
 			m.focusIndex--
 			if m.focusIndex < 0 {
 				m.focusIndex = m.focusTargets - 1

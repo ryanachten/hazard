@@ -2,7 +2,6 @@
 package tui
 
 import (
-	"fmt"
 	e "hazard/internal/events"
 	pf "hazard/internal/pathfinding"
 	"strings"
@@ -36,7 +35,7 @@ type Model struct {
 	inputs              InputController
 }
 
-var sidebarWidth = 40
+var sidebarWidth = 35
 
 // InitialModel creates the initial TUI model state
 func InitialModel(eventBus *e.EventBus) Model {
@@ -80,9 +79,8 @@ func (m Model) View() tea.View {
 	}
 
 	styledGrid := gridStyle.SetString(grid.String()).Render()
-	inputView, cursor := m.inputs.View()
 
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, logo, m.renderCitizenStatus(), inputView)
+	rightColumn, cursor := m.renderSidebar()
 
 	view := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, styledGrid, rightColumn))
 	view.Cursor = cursor
@@ -176,23 +174,4 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
-}
-
-func (m Model) renderCitizenStatus() string {
-	activeCitizens := citizenStyle.
-		SetString(fmt.Sprintf("Active: %d", m.activeCitizenCount)).
-		MarginRight(1).
-		Render()
-
-	deadCitizens := citizenDeadStyle.
-		SetString(fmt.Sprintf("Dead: %d", m.deadCitizenCount)).
-		MarginRight(1).
-		Render()
-
-	escapedCitizens := citizenEscapedStyle.
-		SetString(fmt.Sprintf("Escaped: %d", m.escapedCitizenCount)).
-		MarginBottom(1).
-		Render()
-
-	return activeCitizens + deadCitizens + escapedCitizens
 }

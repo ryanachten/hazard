@@ -37,15 +37,15 @@ func InitialiseController(eventBus *events.EventBus) InputController {
 		eventBus: eventBus,
 	}
 
-	c.createIntInput("tickerInterval", "ticker interval", config.TickIntervalMs, c.eventBus.UpdateTickerInterval)
-	c.createFloat32Input("hazardProbability", "hazard probability", config.Hazard.Probability, c.eventBus.UpdateHazardProbability)
-	c.createIntInput("hazardCount", "hazard count", config.Hazard.Count, c.eventBus.UpdateHazardCount)
-	c.createIntInput("hazardDurationMin", "hazard duration min", config.Hazard.DurationRange.Min, c.eventBus.UpdateHazardDurationMin)
-	c.createIntInput("hazardDurationMax", "hazard duration max", config.Hazard.DurationRange.Max, c.eventBus.UpdateHazardDurationMax)
-	c.createFloat32Input("safeZoneProbability", "safe zone probability", config.SafeZone.Probability, c.eventBus.UpdateSafeZoneProbability)
-	c.createIntInput("safeZoneCount", "safe zone count", config.SafeZone.Count, c.eventBus.UpdateSafeZoneCount)
-	c.createIntInput("safeZoneRadiusMin", "safe zone radius min", config.SafeZone.RadiusRange.Min, c.eventBus.UpdateSafeZoneRadiusMin)
-	c.createIntInput("safeZoneRadiusMax", "safe zone radius max", config.SafeZone.RadiusRange.Max, c.eventBus.UpdateSafeZoneRadiusMax)
+	c.createIntInput("tickerInterval", "Ticker interval", config.TickIntervalMs, c.eventBus.UpdateTickerInterval)
+	c.createFloat32Input("hazardProbability", "Hazard probability", config.Hazard.Probability, c.eventBus.UpdateHazardProbability)
+	c.createIntInput("hazardCount", "Hazard count", config.Hazard.Count, c.eventBus.UpdateHazardCount)
+	c.createIntInput("hazardDurationMin", "Hazard duration min", config.Hazard.DurationRange.Min, c.eventBus.UpdateHazardDurationMin)
+	c.createIntInput("hazardDurationMax", "Hazard duration max", config.Hazard.DurationRange.Max, c.eventBus.UpdateHazardDurationMax)
+	c.createFloat32Input("safeZoneProbability", "Safe zone probability", config.SafeZone.Probability, c.eventBus.UpdateSafeZoneProbability)
+	c.createIntInput("safeZoneCount", "Safe zone count", config.SafeZone.Count, c.eventBus.UpdateSafeZoneCount)
+	c.createIntInput("safeZoneRadiusMin", "Safe zone radius min", config.SafeZone.RadiusRange.Min, c.eventBus.UpdateSafeZoneRadiusMin)
+	c.createIntInput("safeZoneRadiusMax", "Safe zone radius max", config.SafeZone.RadiusRange.Max, c.eventBus.UpdateSafeZoneRadiusMax)
 
 	return c
 }
@@ -55,15 +55,15 @@ func (m *InputController) View() (string, *tea.Cursor) {
 	var b strings.Builder
 	var c *tea.Cursor
 
+	b.WriteString(heading.SetString("Settings").Render())
+
 	for i, id := range m.InputIDs {
 		b.WriteString(m.inputs[id].label)
 		b.WriteString(" ")
 
 		inputModel := m.inputs[id].model
 		b.WriteString(inputModel.View())
-		if i < len(m.inputs)-1 {
-			b.WriteRune('\n')
-		}
+		b.WriteRune('\n')
 
 		cursor := inputModel.Cursor()
 		if inputModel.Focused() && cursor != nil {

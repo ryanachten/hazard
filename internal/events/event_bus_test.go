@@ -126,9 +126,14 @@ func TestCitizenEvents_StoreCorrectTypes(t *testing.T) {
 	bus.CitizenPathUpdated(citizenID, []pf.Position{{X: 0, Y: 0}},
 		EventMetadata{SimulationID: simID, Tick: 1})
 	bus.CitizenEscaped(citizenID, CitizenEscapedPayload{
-		SafeZoneID: uuid.New(),
+		SafeZoneID:     uuid.New(),
+		TotalEscaped:   1,
+		TotalRemaining: 9,
 	}, EventMetadata{SimulationID: simID, Tick: 2})
-	bus.CitizenDied(citizenID, EventMetadata{SimulationID: simID, Tick: 1})
+	bus.CitizenDied(citizenID, CitizenDiedPayload{
+		TotalDead:      1,
+		TotalRemaining: 9,
+	}, EventMetadata{SimulationID: simID, Tick: 1})
 
 	require.Len(t, bus.EventLog, 4)
 	require.Equal(t, CitizenMoved, bus.EventLog[0].EventType)

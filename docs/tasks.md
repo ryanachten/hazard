@@ -148,16 +148,16 @@ description: "Task list for Hazard Simulation System - 12 progressive slices for
 
 ## Phase 8: User Story 1 — Config Sidebar (P1) 🎯 MVP SLICE 8/8
 
-**Goal**: A configuration sidebar sits alongside the grid, exposing live-adjustable simulation parameters mapped to `SimulationConfig`. Fields use Bubble Tea `textinput`-style controls with Tab focus cycling and ↑↓ adjustment.
+**Goal**: A configuration sidebar sits alongside the grid, exposing live-adjustable simulation parameters mapped to `SimulationConfig`. Fields use Bubble Tea `textinput`-style controls with Tab/↑↓ focus cycling.
 
-**Independent Test**: Start `simviz`, verify the config sidebar renders alongside the grid. Verify Tab cycles focus through fields and ↑↓ adjusts values. Verify adjusted values take effect on the next tick.
+**Independent Test**: Start `simviz`, verify the config sidebar renders alongside the grid. Verify Tab and ↑↓ cycle focus through fields. Verify adjusted values take effect when the user edits a field and tabs away.
 
 **Learning Outcome**: Horizontal split-pane composition with Lipgloss, focus management, config-as-UI mapping
 
-- [ ] T041 [P] [US1] Implement config sidebar view — render config sections (Simulation, Hazard, Safe Zone) with adjustable `textinput`-style fields for each `SimulationConfig` value, apply focus highlight on active field in `internal/tui/config_view.go`
-- [ ] T042 [US1] Add config focus/adjust keyboard controls — Tab cycles focus focusable fields, ↑↓ adjusts the focused field value — extend controls in `internal/tui/controls.go`
-- [ ] T043 [US1] Compose split-pane layout — join grid and config sidebar horizontally with `lipgloss.JoinHorizontal(lipgloss.Top, gridView, sidebarView)`, add status bar above and help bar below in `internal/tui/model.go`
-- [ ] T044 [US1] Wire and verify: start `simviz`, confirm split-pane layout renders, config sidebar responds to Tab/↑↓, values propagate to simulation engine
+- [x] T041 [P] [US1] Implement config sidebar view — render adjustable `textinput`-style fields for each `SimulationConfig` value in `internal/tui/inputs.go`, compose sidebar (logo, citizen status, inputs, help legend) in `internal/tui/sidebar.go`
+- [x] T042 [US1] Add config focus/cycle keyboard controls — Tab and ↑↓ cycle focus through fields, values dispatch to simulation engine on blur — extend controls in `internal/tui/model.go`
+- [x] T043 [US1] Compose split-pane layout — join grid and config sidebar horizontally with `lipgloss.JoinHorizontal(lipgloss.Top, gridView, sidebarView)`, render citizen status and help legend within the sidebar in `internal/tui/model.go`
+- [x] T044 [US1] Wire and verify: start `simviz`, confirm split-pane layout renders, config sidebar responds to Tab/↑↓, values propagate to simulation engine
 
 **Checkpoint**: The TUI shows a live config sidebar alongside the simulation grid. You understand split-pane composition with Lipgloss and keyboard-driven focus management.
 
@@ -293,7 +293,7 @@ Phase 6: US1 Core TUI      Phase 7: US1 Entity-Grid Occupancy
 - Phase 3 (US1/Hazards): T015 is independent
 - Phase 6 (US1/TUI Core): T028, T029, T030, T031, T032 can all run in parallel (events/ EventBus + tui/ components)
 - Phase 7 (US1/Entity-Grid Occupancy): T035, T036, T037, T039 can run in parallel (different packages/files); T038 depends on T037; T040 depends on all
-- Phase 8 (US1/Config Sidebar): T041 is independent; T041, T042 can run in parallel
+- Phase 8 (US1/Config Sidebar): T041 is independent; T041, T042 can run in parallel (different files: inputs.go + sidebar.go vs model.go)
 - Phase 9 (US2/Event Fan-Out): T045 is independent; T048 is stretch
 - Phase 10 (US1/CLI): All tasks are sequential
 - Phase 11 (US3/NATS/JetStream): T054, T055 can run in parallel
@@ -316,8 +316,8 @@ Phase 6: US1 Core TUI      Phase 7: US1 Entity-Grid Occupancy
 
 ```bash
 # Launch all parallel tasks for Phase 8 together:
-# Task T041: config sidebar view
-# Task T042: focus/adjust keyboard controls
+# Task T041: config sidebar view (inputs.go + sidebar.go)
+# Task T042: focus/cycle keyboard controls (model.go)
 
 # Then assemble:
 # Task T043: compose split-pane layout (depends on T041, T042, plus Phase 6 T029, T030)

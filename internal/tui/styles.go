@@ -97,11 +97,11 @@ var gridStyle = lipgloss.NewStyle().PaddingRight(2).MarginRight(2).Border(lipglo
 
 var logo = lipgloss.NewStyle().
 	Width(sidebarWidth).
-	MarginTop(1).
-	MarginBottom(1).
-	SetString("░█░█░█▀█░▀▀█░█▀█░█▀▄░█▀▄\n" +
-		"░█▀█░█▀█░▄▀░░█▀█░█▀▄░█░█\n" +
-		"░▀░▀░▀░▀░▀▀▀░▀░▀░▀░▀░▀▀░").
+	SetString(`
+░█░█░█▀█░▀▀█░█▀█░█▀▄░█▀▄
+░█▀█░█▀█░▄▀░░█▀█░█▀▄░█░█
+░▀░▀░▀░▀░▀▀▀░▀░▀░▀░▀░▀▀░
+`).
 	Render()
 
 var heading = lipgloss.NewStyle().

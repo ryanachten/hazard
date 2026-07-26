@@ -30,7 +30,7 @@ func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
 		},
 	}
 
-	sim, err := NewSimulation(5, 5, config, events.CreateEventBus())
+	sim, err := NewSimulation(5, 5, config, events.New())
 	require.NoError(t, err)
 
 	evts := sim.eventBus.EventLog
@@ -52,7 +52,7 @@ func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -97,7 +97,7 @@ func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -138,7 +138,7 @@ func TestTick_EmitsCitizenDiedEvent(t *testing.T) {
 
 	sim := Simulation{
 		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		eventBus: events.New(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.StatusIdle,
@@ -167,7 +167,7 @@ func TestTick_EmitsHazardExpandedEvents(t *testing.T) {
 
 	sim := Simulation{
 		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		eventBus: events.New(),
 		Hazards: []h.Hazard{
 			{
 				ID:            uuid.New(),
@@ -210,7 +210,7 @@ func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -250,7 +250,7 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -293,7 +293,7 @@ func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -348,7 +348,7 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 	}
 
 	sim := Simulation{
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		Grid:              &grid,
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
@@ -398,7 +398,7 @@ func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
 	sim := Simulation{
 		ID:                uuid.New(),
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -466,7 +466,7 @@ func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -515,7 +515,7 @@ func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 	sim := Simulation{
 		ID:       simID,
 		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		eventBus: events.New(),
 		Citizens: []c.Citizen{
 			{
 				ID:               citizenID,
@@ -547,7 +547,7 @@ func TestPausedSimulation_EmitsNoEvents(t *testing.T) {
 	sim := Simulation{
 		State:    SimulationPaused,
 		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		eventBus: events.New(),
 		Citizens: []c.Citizen{
 			{
 				Status:           c.StatusIdle,
@@ -578,7 +578,7 @@ func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{

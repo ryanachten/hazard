@@ -6,45 +6,45 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateRange(t *testing.T) {
+func TestValidate(t *testing.T) {
 	t.Run("valid range", func(t *testing.T) {
-		err := ValidateRange(0, 5)
+		err := Validate(0, 5)
 		require.NoError(t, err)
 	})
 
 	t.Run("negative min", func(t *testing.T) {
-		err := ValidateRange(-1, 5)
+		err := Validate(-1, 5)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "min must be at least 0")
 	})
 
 	t.Run("min greater than max", func(t *testing.T) {
-		err := ValidateRange(5, 3)
+		err := Validate(5, 3)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "must be less than or equal to")
 	})
 }
 
-func TestValidatePositiveRange(t *testing.T) {
+func TestValidatePositive(t *testing.T) {
 	t.Run("valid positive range", func(t *testing.T) {
-		err := ValidatePositiveRange(1, 5)
+		err := ValidatePositive(1, 5)
 		require.NoError(t, err)
 	})
 
 	t.Run("zero min", func(t *testing.T) {
-		err := ValidatePositiveRange(0, 5)
+		err := ValidatePositive(0, 5)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "min must be positive")
 	})
 
 	t.Run("negative min", func(t *testing.T) {
-		err := ValidatePositiveRange(-1, 5)
+		err := ValidatePositive(-1, 5)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "min must be positive")
 	})
 
 	t.Run("min greater than max", func(t *testing.T) {
-		err := ValidatePositiveRange(5, 3)
+		err := ValidatePositive(5, 3)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "must be less than or equal to")
 	})

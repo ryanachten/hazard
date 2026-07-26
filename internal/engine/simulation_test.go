@@ -99,7 +99,7 @@ func TestTick_ObstaclesBlockPathfinding(t *testing.T) {
 		},
 	}
 
-	sim, err := NewSimulation(10, 10, cfg, events.CreateEventBus())
+	sim, err := NewSimulation(10, 10, cfg, events.New())
 	require.NoError(t, err)
 
 	// Grid should have safe zone cells marked
@@ -136,7 +136,7 @@ func TestNewSimulation_InitializesCoreState(t *testing.T) {
 		},
 	}
 
-	simulation, err := NewSimulation(8, 6, cfg, events.CreateEventBus())
+	simulation, err := NewSimulation(8, 6, cfg, events.New())
 
 	require.Nil(t, err)
 	require.Equal(t, SimulationRunning, simulation.State)
@@ -174,7 +174,7 @@ func TestTick_AdvancesCitizenOneStepPerTick(t *testing.T) {
 
 	simulation := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -205,7 +205,7 @@ func TestTick_CitizenStopsAtGoal(t *testing.T) {
 	grid := pf.NewGrid(2, 1, pf.CellOpen)
 	simulation := Simulation{
 		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		eventBus: events.New(),
 		Citizens: []c.Citizen{
 			{
 				Status: c.StatusIdle,
@@ -238,7 +238,7 @@ func TestTick_MultipleCitizensMoveIndependently(t *testing.T) {
 
 	simulation := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -349,7 +349,7 @@ func TestTick_CitizenReachesSafeZoneAndEscapes(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
@@ -383,7 +383,7 @@ func TestTick_CitizenOvertakenByHazardDies(t *testing.T) {
 
 	sim := Simulation{
 		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		eventBus: events.New(),
 		Citizens: []c.Citizen{
 			{
 				Status:          c.StatusIdle,
@@ -418,7 +418,7 @@ func TestTick_NewSafeZoneAppearsOnSchedule(t *testing.T) {
 		},
 	}
 
-	sim, err := NewSimulation(10, 10, cfg, events.CreateEventBus())
+	sim, err := NewSimulation(10, 10, cfg, events.New())
 	require.NoError(t, err)
 	require.Len(t, sim.SafeZones, 1)
 
@@ -459,7 +459,7 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 			},
 		},
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		SafeZones: []sz.SafeZone{
 			{Position: pf.Position{X: 9, Y: 9}, Radius: 1},
@@ -524,7 +524,7 @@ func TestTick_SafeZoneCapacityPreventsOverfilling(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		SafeZones:         []sz.SafeZone{sz1, sz2},
 		Citizens: []c.Citizen{
@@ -598,7 +598,7 @@ func TestTick_SimulationCompletesWhenAllResolved(t *testing.T) {
 
 	sim := Simulation{
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		DeadCitizensCount: 1,
 		Citizens: []c.Citizen{

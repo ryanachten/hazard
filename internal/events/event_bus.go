@@ -9,8 +9,8 @@ type EventBus struct {
 	EventLog           []SimulationEvent
 }
 
-// CreateEventBus instantiates an event bus
-func CreateEventBus() *EventBus {
+// New instantiates an event bus
+func New() *EventBus {
 	return &EventBus{
 		SimulationCommands: make(chan SimulationCommand, eventBufferSize),
 		SimulationEvents:   make(chan SimulationEvent, eventBufferSize),

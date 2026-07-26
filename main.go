@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("error validation config: %v", err)
 	}
 
-	eventBus := events.CreateEventBus()
+	eventBus := events.New()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

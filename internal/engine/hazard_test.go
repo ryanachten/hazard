@@ -27,7 +27,7 @@ func newTestSim() (Simulation, error) {
 			Count:       1,
 			RadiusRange: r.Range{Min: 1, Max: 1},
 		},
-	}, events.CreateEventBus())
+	}, events.New())
 }
 
 func TestHazard_RadiusGrowsEachTick(t *testing.T) {
@@ -62,7 +62,7 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 
 	sim := Simulation{
 		Grid:     &grid,
-		eventBus: events.CreateEventBus(),
+		eventBus: events.New(),
 		SafeZones: []sz.SafeZone{
 			{Position: pf.Position{X: 9, Y: 9}, Radius: 1},
 		},
@@ -111,7 +111,7 @@ func TestHazard_CreationViaTick(t *testing.T) {
 			Count:       0,
 			RadiusRange: r.Range{Min: 1, Max: 1},
 		},
-	}, events.CreateEventBus())
+	}, events.New())
 	require.NoError(t, err)
 	require.Empty(t, sim.Hazards)
 
@@ -183,7 +183,7 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		},
 		State:             SimulationCreated,
 		Grid:              &grid,
-		eventBus:          events.CreateEventBus(),
+		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
 		SafeZones:         []sz.SafeZone{sz1},
 		Citizens: []c.Citizen{

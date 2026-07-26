@@ -4,7 +4,7 @@ package safe_zone
 import (
 	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
-	"log"
+	"log/slog"
 	"maps"
 
 	"github.com/google/uuid"
@@ -51,7 +51,7 @@ func Create(config Config, grid *pf.Grid) (SafeZone, error) {
 
 	id := uuid.New()
 
-	log.Printf("safe zone %v created at %v", id, origin)
+	slog.Info("safe zone created", "id", id, "origin", origin)
 
 	return SafeZone{
 		ID:            id,

@@ -4,7 +4,7 @@ package obstacle
 import (
 	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
-	"log"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -32,7 +32,7 @@ func CreateObstacles(config Config, grid *pf.Grid) []Obstacle {
 		origin, err := grid.GetRandomOpenPosition(width, height, grid.Width-1-width, grid.Height-1-height)
 
 		if err != nil {
-			log.Printf("error creating obstacle: %v", err)
+			slog.Warn("error creating obstacle", "err", err)
 			continue
 		}
 

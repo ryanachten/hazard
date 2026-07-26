@@ -6,7 +6,7 @@ import (
 	pf "hazard/internal/pathfinding"
 	"hazard/internal/random"
 	sz "hazard/internal/safe_zone"
-	"log"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -44,7 +44,7 @@ func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Po
 	for range citizenCount {
 		startPosition, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
 		if err != nil {
-			log.Printf("error getting position for citizen: %v", err)
+			slog.Warn("error getting position for citizen", "err", err)
 			continue
 		}
 
@@ -57,7 +57,7 @@ func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Po
 
 		err = citizen.FindNearestSafeZone(grid, safeZoneLocations)
 		if err != nil {
-			log.Printf("error updating citizen %v path: %v", citizen.ID, err)
+			slog.Warn("error updating citizen", "citizenID", citizen.ID, "err", err)
 			continue
 		}
 

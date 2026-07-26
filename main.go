@@ -8,6 +8,7 @@ import (
 	"hazard/internal/events"
 	"hazard/internal/tui"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -46,12 +47,12 @@ func main() {
 				case events.InitialiseSimulation:
 					payload, ok := cmd.Payload.(events.InitialiseSimulationPayload)
 					if !ok {
-						log.Printf("error parsing initialisation payload: %v", payload)
+						slog.Error("error parsing initialisation payload", "payload", payload)
 						continue
 					}
 					newSim, err := eng.NewSimulation(payload.Width, payload.Height, config, eventBus)
 					if err != nil {
-						log.Printf("error creating simulation: %v", err)
+						slog.Error("error creating simulation", "err", err)
 						continue
 					}
 					simulation = newSim
@@ -59,7 +60,7 @@ func main() {
 				case events.UpdateTickerInterval:
 					newInterval, ok := cmd.Payload.(int)
 					if !ok {
-						log.Printf("error parsing ticker payload: %v", newInterval)
+						slog.Error("error parsing ticker payload", "newInterval", newInterval)
 						continue
 					}
 					ticker.Reset(time.Duration(newInterval) * time.Millisecond)
@@ -72,24 +73,21 @@ func main() {
 		}
 	}()
 
-	if len(os.Getenv("DEBUG")) > 0 {
-		_ = os.Remove(debugFilename)
-		_, err := os.Create(debugFilename)
-		if err != nil {
-			log.Fatalf("error creating debug file: %v", err)
-		}
-		f, err := tea.LogToFile(debugFilename, "")
-		if err != nil {
-			log.Fatalf("error logging to debug file: %v", err)
-		}
-		log.SetOutput(f)
-		defer func() {
-			if err := f.Close(); err != nil {
-				log.Printf("error closing file: %v", err)
-
-			}
-		}()
+	_ = os.Remove(debugFilename)
+	_, err = os.Create(debugFilename)
+	if err != nil {
+		log.Fatalf("error creating debug file: %v", err)
 	}
+	f, err := tea.LogToFile(debugFilename, "")
+	if err != nil {
+		log.Fatalf("error logging to debug file: %v", err)
+	}
+	log.SetOutput(f)
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("error closing file: %v", err)
+		}
+	}()
 
 	p := tea.NewProgram(tui.InitialModel(eventBus))
 	if _, err := p.Run(); err != nil {

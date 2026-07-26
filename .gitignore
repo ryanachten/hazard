@@ -1,6 +1,6 @@
-.DS_Store
-
+# Build and runtime output
 debug*.log
+hazard
 
 # Coverage reports
 cov.out
@@ -9,3 +9,6 @@ cov.out
 .specify/*
 !.specify/memory/
 .opencode/*
+
+# Misc
+.DS_Store

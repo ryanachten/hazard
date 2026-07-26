@@ -8,7 +8,7 @@ import (
 	o "hazard/internal/obstacle"
 	pf "hazard/internal/pathfinding"
 	sz "hazard/internal/safe_zone"
-	"log"
+	"log/slog"
 	"math/rand"
 	"slices"
 
@@ -135,56 +135,56 @@ func (s *Simulation) ProcessCommand(cmd events.SimulationCommand) {
 	case events.UpdateHazardProbability:
 		probability, ok := cmd.Payload.(float32)
 		if !ok {
-			log.Printf("error parsing probability: %v", probability)
+			slog.Error("error parsing probability", "probability", probability)
 		} else {
 			s.Config.Hazard.Probability = probability
 		}
 	case events.UpdateHazardCount:
 		count, ok := cmd.Payload.(int)
 		if !ok {
-			log.Printf("error parsing count: %v", count)
+			slog.Error("error parsing count", "count", count)
 		} else {
 			s.Config.Hazard.Count = count
 		}
 	case events.UpdateHazardDurationMin:
 		duration, ok := cmd.Payload.(int)
 		if !ok {
-			log.Printf("error parsing duration: %v", duration)
+			slog.Error("error parsing duration", "duration", duration)
 		} else {
 			s.Config.Hazard.DurationRange.Min = duration
 		}
 	case events.UpdateHazardDurationMax:
 		duration, ok := cmd.Payload.(int)
 		if !ok {
-			log.Printf("error parsing duration: %v", duration)
+			slog.Error("error parsing duration", "duration", duration)
 		} else {
 			s.Config.Hazard.DurationRange.Max = duration
 		}
 	case events.UpdateSafeZoneProbability:
 		probability, ok := cmd.Payload.(float32)
 		if !ok {
-			log.Printf("error parsing probability: %v", probability)
+			slog.Error("error parsing probability", "probability", probability)
 		} else {
 			s.Config.SafeZone.Probability = probability
 		}
 	case events.UpdateSafeZoneCount:
 		count, ok := cmd.Payload.(int)
 		if !ok {
-			log.Printf("error parsing count: %v", count)
+			slog.Error("error parsing count", "count", count)
 		} else {
 			s.Config.SafeZone.Count = count
 		}
 	case events.UpdateSafeZoneRadiusMin:
 		radius, ok := cmd.Payload.(int)
 		if !ok {
-			log.Printf("error parsing radius: %v", radius)
+			slog.Error("error parsing radius", "radius", radius)
 		} else {
 			s.Config.SafeZone.RadiusRange.Min = radius
 		}
 	case events.UpdateSafeZoneRadiusMax:
 		radius, ok := cmd.Payload.(int)
 		if !ok {
-			log.Printf("error parsing radius: %v", radius)
+			slog.Error("error parsing radius", "radius", radius)
 		} else {
 			s.Config.SafeZone.RadiusRange.Max = radius
 		}
@@ -213,7 +213,7 @@ func (s *Simulation) generateIntermittentHazard() {
 
 	hazard, err := h.Create(hazardConfig, s.Grid)
 	if err != nil {
-		log.Printf("error creating hazard: %v", err)
+		slog.Warn("error creating hazard", "err", err)
 		return
 	}
 
@@ -234,7 +234,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 
 	safeZone, err := sz.Create(safeZoneConfig, s.Grid)
 	if err != nil {
-		log.Printf("error creating safe zone: %v", err)
+		slog.Warn("error creating safe zone", "err", err)
 		return false
 	}
 

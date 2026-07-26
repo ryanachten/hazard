@@ -16,11 +16,15 @@ pre-commit install --hook-type pre-push
 ```
 
 ## Running locally
-- Run Go application: `DEBUG=1 go run .`
-    - Set `DEBUG=1` environment variable for log output
+- Run Go application: `go run .`
+- Build and run Go application:
+```bash
+go build -o hazard .
+./hazard
+```
 
 ## Tests
-
+- Run all tests `go test ./...`
 - Get code coverage for path
 ```bash
 go test -coverprofile=cov.out ./internal/pathfinding/ && go tool cover -func=cov.out

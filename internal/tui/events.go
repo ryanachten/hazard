@@ -5,7 +5,7 @@ import (
 	h "hazard/internal/hazard"
 	pf "hazard/internal/pathfinding"
 	"hazard/internal/random"
-	"log"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -13,7 +13,7 @@ import (
 func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 	payload, ok := event.Payload.(events.SimulationCreatedPayload)
 	if !ok {
-		log.Printf("error converting payload to SimulationCreatedPayload: %v", event.Payload)
+		slog.Error("error converting payload to SimulationCreatedPayload", "payload", event.Payload)
 	}
 
 	// Reset model state
@@ -57,7 +57,7 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
 	newPosition, ok := event.Payload.(pf.Position)
 	if !ok {
-		log.Printf("error converting payload to pf.Position: %v", event.Payload)
+		slog.Error("error converting payload to pf.Position", "payload", event.Payload)
 	}
 
 	state := m.citizens[event.EntityID]
@@ -79,7 +79,7 @@ func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
 func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
 	payload, ok := event.Payload.(events.CitizenEscapedPayload)
 	if !ok {
-		log.Printf("error converting payload to CitizenEscapedPayload: %v", event.Payload)
+		slog.Error("error converting payload to CitizenEscapedPayload", "payload", event.Payload)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
 func (m *Model) handleCitizenDied(event events.SimulationEvent) {
 	payload, ok := event.Payload.(events.CitizenDiedPayload)
 	if !ok {
-		log.Printf("error converting payload to CitizenDiedPayload: %v", event.Payload)
+		slog.Error("error converting payload to CitizenDiedPayload", "payload", event.Payload)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (m *Model) handleCitizenDied(event events.SimulationEvent) {
 func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {
 	payload, ok := event.Payload.(events.SafeZoneEmergedPayload)
 	if !ok {
-		log.Printf("error converting payload to SafeZoneEmergedPayload: %v", event.Payload)
+		slog.Error("error converting payload to SafeZoneEmergedPayload", "payload", event.Payload)
 	}
 
 	m.createSafeZone(payload.ID, payload.Cells)
@@ -127,7 +127,7 @@ func (m *Model) handleSafeZoneEmerged(event events.SimulationEvent) {
 func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
 	payload, ok := event.Payload.(events.HazardEmergedPayload)
 	if !ok {
-		log.Printf("error converting payload to HazardEmergedPayload: %v", event.Payload)
+		slog.Error("error converting payload to HazardEmergedPayload", "payload", event.Payload)
 	}
 
 	var character string
@@ -148,7 +148,7 @@ func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
 func (m *Model) handleHazardExpanded(event events.SimulationEvent) {
 	updatedCells, ok := event.Payload.([]pf.Position)
 	if !ok {
-		log.Printf("error converting payload to []pf.Position: %v", event.Payload)
+		slog.Error("error converting payload to []pf.Position", "payload", event.Payload)
 	}
 
 	character := m.hazards[event.EntityID]
@@ -161,7 +161,7 @@ func (m *Model) handleHazardExpanded(event events.SimulationEvent) {
 func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
 	updatedCells, ok := event.Payload.([]pf.Position)
 	if !ok {
-		log.Printf("error converting payload to []pf.Position: %v", event.Payload)
+		slog.Error("error converting payload to []pf.Position", "payload", event.Payload)
 	}
 
 	for _, cell := range updatedCells {

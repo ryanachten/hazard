@@ -3,7 +3,7 @@ package tui
 import (
 	"hazard/internal/configuration"
 	"hazard/internal/events"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -117,7 +117,7 @@ func (m *InputController) createFloat32Input(
 	m.createInput(id, label, formattedPlaceholder, func() {
 		val, err := strconv.ParseFloat(m.inputs[id].model.Value(), 32)
 		if err != nil {
-			log.Printf("error parsing %v as float: %v", id, err)
+			slog.Error("error parsing input value as float", "inputId", id, "err", err)
 		} else {
 			callback(float32(val))
 		}
@@ -132,7 +132,7 @@ func (m *InputController) createIntInput(
 	m.createInput(id, label, formattedPlaceholder, func() {
 		val, err := strconv.Atoi(m.inputs[id].model.Value())
 		if err != nil {
-			log.Printf("error parsing %v as int: %v", id, err)
+			slog.Error("error parsing input value as int", "inputId", id, "err", err)
 		} else {
 			callback(val)
 		}

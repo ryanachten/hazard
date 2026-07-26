@@ -33,6 +33,7 @@ type Model struct {
 	focusIndex          int
 	focusTargets        int
 	inputs              InputController
+	showSidebar         bool
 }
 
 var sidebarWidth = 35
@@ -80,10 +81,15 @@ func (m Model) View() tea.View {
 
 	styledGrid := gridStyle.SetString(grid.String()).Render()
 
-	rightColumn, cursor := m.renderSidebar()
+	if m.showSidebar {
+		rightColumn, cursor := m.renderSidebar()
 
-	view := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, styledGrid, rightColumn))
-	view.Cursor = cursor
+		view := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, styledGrid, rightColumn))
+		view.Cursor = cursor
+		return view
+	}
+
+	view := tea.NewView(styledGrid)
 	return view
 }
 
@@ -92,9 +98,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
-	// TODO: handle resize events
 	case tea.WindowSizeMsg:
-		m.width = msg.Width - sidebarWidth
+		if msg.Width > sidebarWidth*2 {
+			m.width = msg.Width - sidebarWidth
+			m.showSidebar = true
+		} else {
+			m.width = msg.Width
+			m.showSidebar = false
+		}
+
 		m.height = msg.Height
 
 		m.eventBus.InitialiseSimulation(e.InitialiseSimulationPayload{

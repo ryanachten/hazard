@@ -1,6 +1,7 @@
-package common
+package hazard
 
 import (
+	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
 	"testing"
 
@@ -10,8 +11,8 @@ import (
 
 func TestCreateHazard(t *testing.T) {
 	grid := pf.NewGrid(10, 10, pf.CellOpen)
-	config := HazardConfig{
-		DurationRange: PositiveRange{Min: 5, Max: 10},
+	config := Config{
+		DurationRange: r.PositiveRange{Min: 5, Max: 10},
 		Probability:   0.5,
 		Count:         0,
 	}
@@ -20,7 +21,7 @@ func TestCreateHazard(t *testing.T) {
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, hazard.Duration, 5)
 	require.LessOrEqual(t, hazard.Duration, 10)
-	require.Contains(t, []HazardType{FireHazard, FloodHazard, LavaHazard}, hazard.Type)
+	require.Contains(t, []Type{FireHazard, FloodHazard, LavaHazard}, hazard.Type)
 	require.True(t, grid.InBounds(hazard.Origin))
 	require.Equal(t, pf.CellHazard, grid.GetCell(hazard.Origin))
 	require.NotEqual(t, uuid.Nil, hazard.ID)
@@ -28,8 +29,8 @@ func TestCreateHazard(t *testing.T) {
 
 func TestCreateHazard_NoOpenCells(t *testing.T) {
 	grid := pf.NewGrid(2, 2, pf.CellObstacle)
-	config := HazardConfig{
-		DurationRange: PositiveRange{Min: 5, Max: 5},
+	config := Config{
+		DurationRange: r.PositiveRange{Min: 5, Max: 5},
 	}
 
 	_, err := CreateHazard(config, &grid)
@@ -37,17 +38,17 @@ func TestCreateHazard_NoOpenCells(t *testing.T) {
 	require.Contains(t, err.Error(), "no open cells available")
 }
 
-func TestRandomHazardType(t *testing.T) {
+func TestRandomType(t *testing.T) {
 	grid := pf.NewGrid(20, 20, pf.CellOpen)
-	config := HazardConfig{
-		DurationRange: PositiveRange{Min: 5, Max: 10},
+	config := Config{
+		DurationRange: r.PositiveRange{Min: 5, Max: 10},
 	}
 
-	seen := make(map[HazardType]bool)
+	seen := make(map[Type]bool)
 	for range 100 {
 		hazard, err := CreateHazard(config, &grid)
 		require.NoError(t, err)
-		require.Contains(t, []HazardType{FireHazard, FloodHazard, LavaHazard}, hazard.Type)
+		require.Contains(t, []Type{FireHazard, FloodHazard, LavaHazard}, hazard.Type)
 		seen[hazard.Type] = true
 	}
 	require.GreaterOrEqual(t, len(seen), 2)

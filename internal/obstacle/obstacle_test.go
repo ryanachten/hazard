@@ -1,6 +1,7 @@
-package common
+package obstacle
 
 import (
+	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
 	"testing"
 
@@ -15,9 +16,9 @@ func newGridWithSafeZone(width, height int) *pf.Grid {
 
 func TestCreateObstacles_PlacesExpectedCount(t *testing.T) {
 	grid := newGridWithSafeZone(20, 20)
-	config := ObstacleConfig{
-		CountRange: Range{Min: 3, Max: 3},
-		SizeRange:  PositiveRange{Min: 1, Max: 1},
+	config := Config{
+		CountRange: r.Range{Min: 3, Max: 3},
+		SizeRange:  r.PositiveRange{Min: 1, Max: 1},
 	}
 
 	obstacles := CreateObstacles(config, grid)
@@ -37,9 +38,9 @@ func TestCreateObstacles_DoesNotOverwriteNonOpenCells(t *testing.T) {
 	// Mark a safe zone cell that obstacles should not overwrite
 	grid.UpdateCell(pf.Position{X: 5, Y: 5}, pf.CellSafeZone)
 
-	config := ObstacleConfig{
-		CountRange: Range{Min: 10, Max: 10},
-		SizeRange:  PositiveRange{Min: 1, Max: 1},
+	config := Config{
+		CountRange: r.Range{Min: 10, Max: 10},
+		SizeRange:  r.PositiveRange{Min: 1, Max: 1},
 	}
 
 	obstacles := CreateObstacles(config, &grid)
@@ -59,9 +60,9 @@ func TestCreateObstacles_DoesNotOverwriteNonOpenCells(t *testing.T) {
 
 func TestCreateObstacles_ReturnsEmptyWhenGridFull(t *testing.T) {
 	grid := pf.NewGrid(3, 3, pf.CellObstacle)
-	config := ObstacleConfig{
-		CountRange: Range{Min: 1, Max: 1},
-		SizeRange:  PositiveRange{Min: 1, Max: 1},
+	config := Config{
+		CountRange: r.Range{Min: 1, Max: 1},
+		SizeRange:  r.PositiveRange{Min: 1, Max: 1},
 	}
 
 	obstacles := CreateObstacles(config, &grid)

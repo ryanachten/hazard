@@ -1,54 +1,63 @@
-package common
+// Package hazard defines how hazards behave in the simulation
+package hazard
 
 import (
+	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
 	"math/rand/v2"
 
 	"github.com/google/uuid"
 )
 
+// Config configures simulation hazards
+type Config struct {
+	Probability   float32
+	Count         int
+	DurationRange r.PositiveRange
+}
+
 // Hazard in a simulation
 type Hazard struct {
 	ID            uuid.UUID
-	Type          HazardType
+	Type          Type
 	CreatedAt     uint64
 	Duration      int
 	Origin        pf.Position
 	CurrentRadius int
 }
 
-// HazardKind categorizes how a hazard behaves during simulation ticks.
-type HazardKind string
+// Kind categorizes how a hazard behaves during simulation ticks.
+type Kind string
 
 const (
-	// HazardKindExpanding hazard expands over time (i.e. flood)
-	HazardKindExpanding HazardKind = "expanding"
-	// HazardKindStrike hazard strikes specific cells (i.e. lightning)
-	HazardKindStrike HazardKind = "strike"
-	// HazardKindGlobal hazard impacts entire map (i.e. earthquake)
-	HazardKindGlobal HazardKind = "global"
+	// KindExpanding hazard expands over time (i.e. flood)
+	KindExpanding Kind = "expanding"
+	// KindStrike hazard strikes specific cells (i.e. lightning)
+	KindStrike Kind = "strike"
+	// KindGlobal hazard impacts entire map (i.e. earthquake)
+	KindGlobal Kind = "global"
 )
 
-// HazardType is a registry-level type identifier.
-type HazardType string
+// Type is a registry-level type identifier.
+type Type string
 
 const (
 	// FireHazard fire-type hazard
-	FireHazard HazardType = "fire"
+	FireHazard Type = "fire"
 	// FloodHazard flood-type hazard
-	FloodHazard HazardType = "flood"
+	FloodHazard Type = "flood"
 	// LavaHazard lava-type hazard
-	LavaHazard HazardType = "lava"
+	LavaHazard Type = "lava"
 )
 
-var hazardTypes = []HazardType{
+var hazardTypes = []Type{
 	FireHazard,
 	FloodHazard,
 	LavaHazard,
 }
 
 // CreateHazard creates a new hazard at a random open position on the grid
-func CreateHazard(config HazardConfig, grid *pf.Grid) (Hazard, error) {
+func CreateHazard(config Config, grid *pf.Grid) (Hazard, error) {
 	duration := config.DurationRange.Random()
 
 	origin, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)

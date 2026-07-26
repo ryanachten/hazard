@@ -1,6 +1,7 @@
-package common
+package safe_zone
 
 import (
+	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
 	"testing"
 
@@ -10,9 +11,9 @@ import (
 
 func TestCreateSafeZone_PlacedAtOpenPosition(t *testing.T) {
 	grid := pf.NewGrid(10, 10, pf.CellOpen)
-	config := SafeZoneConfig{
+	config := Config{
 		Count:       1,
-		RadiusRange: Range{Min: 1, Max: 1},
+		RadiusRange: r.Range{Min: 1, Max: 1},
 	}
 
 	safeZone, err := CreateSafeZone(config, &grid)
@@ -28,9 +29,9 @@ func TestCreateSafeZone_PlacedAtOpenPosition(t *testing.T) {
 
 func TestCreateSafeZone_RadiusZeroMarksOnlyOrigin(t *testing.T) {
 	grid := pf.NewGrid(5, 5, pf.CellOpen)
-	config := SafeZoneConfig{
+	config := Config{
 		Count:       1,
-		RadiusRange: Range{Min: 0, Max: 0},
+		RadiusRange: r.Range{Min: 0, Max: 0},
 	}
 
 	safeZone, err := CreateSafeZone(config, &grid)
@@ -46,9 +47,9 @@ func TestCreateSafeZone_DoesNotOverwriteNonOpenCells(t *testing.T) {
 	// Only one open cell, forcing the origin to (2,1) with radius 1
 	grid.UpdateCell(pf.Position{X: 2, Y: 1}, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 2, Y: 2}, pf.CellObstacle)
-	config := SafeZoneConfig{
+	config := Config{
 		Count:       1,
-		RadiusRange: Range{Min: 1, Max: 1},
+		RadiusRange: r.Range{Min: 1, Max: 1},
 	}
 
 	safeZone, err := CreateSafeZone(config, &grid)
@@ -64,9 +65,9 @@ func TestCreateSafeZone_DoesNotOverwriteNonOpenCells(t *testing.T) {
 
 func TestCreateSafeZone_ReturnsErrorWhenNoOpenCells(t *testing.T) {
 	grid := pf.NewGrid(4, 4, pf.CellObstacle)
-	config := SafeZoneConfig{
+	config := Config{
 		Count:       1,
-		RadiusRange: Range{Min: 1, Max: 1},
+		RadiusRange: r.Range{Min: 1, Max: 1},
 	}
 
 	_, err := CreateSafeZone(config, &grid)
@@ -77,9 +78,9 @@ func TestCreateSafeZone_ReturnsErrorWhenNoOpenCells(t *testing.T) {
 
 func TestCreateSafeZone_RadiusMarksMultipleCells(t *testing.T) {
 	grid := pf.NewGrid(5, 5, pf.CellOpen)
-	config := SafeZoneConfig{
+	config := Config{
 		Count:       1,
-		RadiusRange: Range{Min: 2, Max: 2},
+		RadiusRange: r.Range{Min: 2, Max: 2},
 	}
 
 	safeZone, err := CreateSafeZone(config, &grid)

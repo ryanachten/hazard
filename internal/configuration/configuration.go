@@ -1,56 +1,41 @@
-package common
+// Package configuration defines the simulation configuration
+package configuration
 
 import (
 	"errors"
 	"fmt"
+	h "hazard/internal/hazard"
+	r "hazard/internal/numrange"
+	o "hazard/internal/obstacle"
+	sz "hazard/internal/safe_zone"
 )
 
 // SimulationConfig configuration for a simulation
 type SimulationConfig struct {
 	TickIntervalMs int
 	CitizenCount   int
-	Hazard         HazardConfig
-	SafeZone       SafeZoneConfig
-	Obstacle       ObstacleConfig
-}
-
-// HazardConfig configures simulation hazards
-type HazardConfig struct {
-	Probability   float32
-	Count         int
-	DurationRange PositiveRange
-}
-
-// SafeZoneConfig configures simulation safe zones
-type SafeZoneConfig struct {
-	Probability float32
-	Count       int
-	RadiusRange Range
-}
-
-// ObstacleConfig configures simulation obstacles
-type ObstacleConfig struct {
-	CountRange Range
-	SizeRange  PositiveRange
+	Hazard         h.Config
+	SafeZone       sz.Config
+	Obstacle       o.Config
 }
 
 // DefaultConfig for the simulation
 var DefaultConfig = SimulationConfig{
 	TickIntervalMs: 100,
 	CitizenCount:   30,
-	Hazard: HazardConfig{
+	Hazard: h.Config{
 		Probability:   0.1,
 		Count:         4,
-		DurationRange: PositiveRange{Min: 5, Max: 10},
+		DurationRange: r.PositiveRange{Min: 5, Max: 10},
 	},
-	SafeZone: SafeZoneConfig{
+	SafeZone: sz.Config{
 		Probability: 0.06,
 		Count:       3,
-		RadiusRange: Range{Min: 1, Max: 1},
+		RadiusRange: r.Range{Min: 1, Max: 1},
 	},
-	Obstacle: ObstacleConfig{
-		CountRange: Range{Min: 3, Max: 20},
-		SizeRange:  PositiveRange{Min: 1, Max: 3},
+	Obstacle: o.Config{
+		CountRange: r.Range{Min: 3, Max: 20},
+		SizeRange:  r.PositiveRange{Min: 1, Max: 3},
 	},
 }
 
@@ -67,16 +52,16 @@ func (s *SimulationConfig) Validate() error {
 	if s.SafeZone.Count < 1 {
 		errs = append(errs, errors.New("SafeZone.Count must be at least 1"))
 	}
-	if err := ValidatePositiveRange(s.Hazard.DurationRange.Min, s.Hazard.DurationRange.Max); err != nil {
+	if err := r.ValidatePositiveRange(s.Hazard.DurationRange.Min, s.Hazard.DurationRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("Hazard.DurationRange: %w", err))
 	}
-	if err := ValidateRange(s.SafeZone.RadiusRange.Min, s.SafeZone.RadiusRange.Max); err != nil {
+	if err := r.ValidateRange(s.SafeZone.RadiusRange.Min, s.SafeZone.RadiusRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("SafeZone.RadiusRange: %w", err))
 	}
-	if err := ValidateRange(s.Obstacle.CountRange.Min, s.Obstacle.CountRange.Max); err != nil {
+	if err := r.ValidateRange(s.Obstacle.CountRange.Min, s.Obstacle.CountRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("Obstacle.CountRange: %w", err))
 	}
-	if err := ValidatePositiveRange(s.Obstacle.SizeRange.Min, s.Obstacle.SizeRange.Max); err != nil {
+	if err := r.ValidatePositiveRange(s.Obstacle.SizeRange.Min, s.Obstacle.SizeRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("Obstacle.SizeRange: %w", err))
 	}
 	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {

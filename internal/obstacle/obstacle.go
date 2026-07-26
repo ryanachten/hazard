@@ -1,11 +1,19 @@
-package common
+// Package obstacle defines how obstacles behave in the simulation
+package obstacle
 
 import (
+	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
 	"log"
 
 	"github.com/google/uuid"
 )
+
+// Config configures simulation obstacles
+type Config struct {
+	CountRange r.Range
+	SizeRange  r.PositiveRange
+}
 
 // Obstacle like a building which must be avoided but can be destroyed
 type Obstacle struct {
@@ -14,7 +22,7 @@ type Obstacle struct {
 }
 
 // CreateObstacles randomly on a grid
-func CreateObstacles(config ObstacleConfig, grid *pf.Grid) []Obstacle {
+func CreateObstacles(config Config, grid *pf.Grid) []Obstacle {
 	obstacleCount := config.CountRange.Random()
 	obstacles := []Obstacle{}
 
@@ -58,13 +66,4 @@ func (o *Obstacle) Copy() Obstacle {
 		ID:    o.ID,
 		Cells: cells,
 	}
-}
-
-// ObstaclesSize calculates the total cells occupied by all obstacles
-func ObstaclesSize(obstacles []Obstacle) int {
-	total := 0
-	for _, obs := range obstacles {
-		total += len(obs.Cells)
-	}
-	return total
 }

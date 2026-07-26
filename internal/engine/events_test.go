@@ -2,9 +2,13 @@
 package engine
 
 import (
-	c "hazard/internal/common"
+	c "hazard/internal/citizen"
+	config "hazard/internal/configuration"
 	"hazard/internal/events"
+	h "hazard/internal/hazard"
+	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
+	sz "hazard/internal/safe_zone"
 	"testing"
 
 	"github.com/google/uuid"
@@ -12,17 +16,17 @@ import (
 )
 
 func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
-	config := c.SimulationConfig{
+	config := config.SimulationConfig{
 		CitizenCount: 0,
-		Hazard: c.HazardConfig{
+		Hazard: h.Config{
 			Probability:   0,
 			Count:         0,
-			DurationRange: c.PositiveRange{Min: 1, Max: 1},
+			DurationRange: r.PositiveRange{Min: 1, Max: 1},
 		},
-		SafeZone: c.SafeZoneConfig{
+		SafeZone: sz.Config{
 			Probability: 0,
 			Count:       1,
-			RadiusRange: c.Range{Min: 1, Max: 1},
+			RadiusRange: r.Range{Min: 1, Max: 1},
 		},
 	}
 
@@ -37,13 +41,13 @@ func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
 func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Cells:       []pf.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
-		{X: 2, Y: 0}: &sz,
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+		{X: 2, Y: 0}: &sz1,
 	}
 
 	sim := Simulation{
@@ -52,11 +56,11 @@ func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
-				TargetSafeZone:   &sz,
+				TargetSafeZone:   &sz1,
 			},
 		},
 	}
@@ -80,15 +84,15 @@ func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    pf.Position{X: 2, Y: 0},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
-		{X: 2, Y: 0}: &sz,
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+		{X: 2, Y: 0}: &sz1,
 	}
 
 	sim := Simulation{
@@ -97,7 +101,7 @@ func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
@@ -137,7 +141,7 @@ func TestTick_EmitsCitizenDiedEvent(t *testing.T) {
 		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
 				CurrentPathIndex: 0,
@@ -164,7 +168,7 @@ func TestTick_EmitsHazardExpandedEvents(t *testing.T) {
 	sim := Simulation{
 		Grid:     &grid,
 		eventBus: events.CreateEventBus(),
-		Hazards: []c.Hazard{
+		Hazards: []h.Hazard{
 			{
 				ID:            uuid.New(),
 				CreatedAt:     0,
@@ -193,15 +197,15 @@ func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    pf.Position{X: 2, Y: 0},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
-		{X: 2, Y: 0}: &sz,
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+		{X: 2, Y: 0}: &sz1,
 	}
 
 	sim := Simulation{
@@ -210,7 +214,7 @@ func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
@@ -233,15 +237,15 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 	grid := pf.NewGrid(5, 1, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 4, Y: 0}, pf.CellSafeZone)
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    pf.Position{X: 4, Y: 0},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 4, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
-		{X: 4, Y: 0}: &sz,
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+		{X: 4, Y: 0}: &sz1,
 	}
 
 	sim := Simulation{
@@ -250,7 +254,7 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
@@ -278,13 +282,13 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Cells:       []pf.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
-		{X: 2, Y: 0}: &sz,
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+		{X: 2, Y: 0}: &sz1,
 	}
 
 	sim := Simulation{
@@ -293,11 +297,11 @@ func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
-				TargetSafeZone:   &sz,
+				TargetSafeZone:   &sz1,
 			},
 		},
 	}
@@ -320,15 +324,15 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 
 	grid.UpdateCell(pf.Position{X: 4, Y: 4}, pf.CellSafeZone)
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    pf.Position{X: 4, Y: 4},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 4, Y: 4}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
-		{X: 4, Y: 4}: &sz,
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+		{X: 4, Y: 4}: &sz1,
 	}
 
 	path := []pf.Position{
@@ -350,12 +354,12 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 		Citizens: []c.Citizen{
 			{
 				ID:                 uuid.New(),
-				Status:             c.CitizenIdle,
+				Status:             c.StatusIdle,
 				CurrentPosition:    pf.Position{X: 0, Y: 0},
 				CurrentDestination: destination,
 				Path:               path,
 				CurrentPathIndex:   1,
-				TargetSafeZone:     &sz,
+				TargetSafeZone:     &sz1,
 			},
 		},
 	}
@@ -380,15 +384,15 @@ func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
 	grid := pf.NewGrid(5, 1, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 4, Y: 0}, pf.CellSafeZone)
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    pf.Position{X: 4, Y: 0},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 4, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
-		{X: 4, Y: 0}: &sz,
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+		{X: 4, Y: 0}: &sz1,
 	}
 
 	sim := Simulation{
@@ -399,7 +403,7 @@ func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
 		Citizens: []c.Citizen{
 			{
 				ID:               uuid.New(),
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
@@ -441,21 +445,21 @@ func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
 	citizen1ID := uuid.New()
 	citizen2ID := uuid.New()
 
-	sz1 := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    pf.Position{X: 4, Y: 0},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 4, Y: 0}},
 		HasCapacity: true,
 	}
-	sz2 := c.SafeZone{
+	sz2 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    pf.Position{X: 4, Y: 1},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 4, Y: 1}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
 		{X: 4, Y: 0}: &sz1,
 		{X: 4, Y: 1}: &sz2,
 	}
@@ -467,14 +471,14 @@ func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
 		Citizens: []c.Citizen{
 			{
 				ID:               citizen1ID,
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 			{
 				ID:               citizen2ID,
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 1},
 				Path:             []pf.Position{{X: 0, Y: 1}, {X: 1, Y: 1}, {X: 2, Y: 1}, {X: 3, Y: 1}, {X: 4, Y: 1}},
 				CurrentPathIndex: 0,
@@ -515,7 +519,7 @@ func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 		Citizens: []c.Citizen{
 			{
 				ID:               citizenID,
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
 				CurrentPathIndex: 0,
@@ -546,7 +550,7 @@ func TestPausedSimulation_EmitsNoEvents(t *testing.T) {
 		eventBus: events.CreateEventBus(),
 		Citizens: []c.Citizen{
 			{
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
 			},
@@ -561,15 +565,15 @@ func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    pf.Position{X: 2, Y: 0},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*c.SafeZone{
-		{X: 2, Y: 0}: &sz,
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+		{X: 2, Y: 0}: &sz1,
 	}
 
 	sim := Simulation{
@@ -578,7 +582,7 @@ func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
 		safeZoneLocations: safeZoneLocations,
 		Citizens: []c.Citizen{
 			{
-				Status:           c.CitizenIdle,
+				Status:           c.StatusIdle,
 				CurrentPosition:  pf.Position{X: 0, Y: 0},
 				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,

@@ -1,12 +1,21 @@
-package common
+// Package safe_zone defines safe zone entities for citizens to reach
+package safe_zone
 
 import (
+	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
 	"log"
 	"maps"
 
 	"github.com/google/uuid"
 )
+
+// Config configures simulation safe zones
+type Config struct {
+	Probability float32
+	Count       int
+	RadiusRange r.Range
+}
 
 // SafeZone represents an area safe from hazards for citizens to navigate to
 type SafeZone struct {
@@ -20,7 +29,7 @@ type SafeZone struct {
 }
 
 // CreateSafeZone creates a safe zone at a random open position with a random radius
-func CreateSafeZone(config SafeZoneConfig, grid *pf.Grid) (SafeZone, error) {
+func CreateSafeZone(config Config, grid *pf.Grid) (SafeZone, error) {
 	radius := config.RadiusRange.Random()
 
 	origin, err := grid.GetRandomOpenPosition(radius, radius, grid.Width-1-radius, grid.Height-1-radius)

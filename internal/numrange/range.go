@@ -12,8 +12,8 @@ type Range struct {
 	Max int
 }
 
-// ValidateRange checks that the range invariants hold for Range.
-func ValidateRange(minVal, maxVal int) error {
+// Validate checks that the range invariants hold for Range.
+func Validate(minVal, maxVal int) error {
 	if minVal < 0 {
 		return fmt.Errorf("min must be at least 0, got %d", minVal)
 	}
@@ -34,8 +34,8 @@ type PositiveRange struct {
 	Max int
 }
 
-// ValidatePositiveRange checks that the range invariants hold for PositiveRange.
-func ValidatePositiveRange(minVal, maxVal int) error {
+// ValidatePositive checks that the range invariants hold for PositiveRange.
+func ValidatePositive(minVal, maxVal int) error {
 	if minVal <= 0 {
 		return fmt.Errorf("min must be positive, got %d", minVal)
 	}

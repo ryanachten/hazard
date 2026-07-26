@@ -28,8 +28,8 @@ type SafeZone struct {
 	occupiedCells map[pf.Position]bool
 }
 
-// CreateSafeZone creates a safe zone at a random open position with a random radius
-func CreateSafeZone(config Config, grid *pf.Grid) (SafeZone, error) {
+// Create creates a safe zone at a random open position with a random radius
+func Create(config Config, grid *pf.Grid) (SafeZone, error) {
 	radius := config.RadiusRange.Random()
 
 	origin, err := grid.GetRandomOpenPosition(radius, radius, grid.Width-1-radius, grid.Height-1-radius)

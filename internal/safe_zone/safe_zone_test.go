@@ -16,7 +16,7 @@ func TestCreateSafeZone_PlacedAtOpenPosition(t *testing.T) {
 		RadiusRange: r.Range{Min: 1, Max: 1},
 	}
 
-	safeZone, err := CreateSafeZone(config, &grid)
+	safeZone, err := Create(config, &grid)
 
 	require.NoError(t, err)
 	require.True(t, grid.InBounds(safeZone.Position))
@@ -34,7 +34,7 @@ func TestCreateSafeZone_RadiusZeroMarksOnlyOrigin(t *testing.T) {
 		RadiusRange: r.Range{Min: 0, Max: 0},
 	}
 
-	safeZone, err := CreateSafeZone(config, &grid)
+	safeZone, err := Create(config, &grid)
 
 	require.NoError(t, err)
 	require.Len(t, safeZone.Cells, 1)
@@ -52,7 +52,7 @@ func TestCreateSafeZone_DoesNotOverwriteNonOpenCells(t *testing.T) {
 		RadiusRange: r.Range{Min: 1, Max: 1},
 	}
 
-	safeZone, err := CreateSafeZone(config, &grid)
+	safeZone, err := Create(config, &grid)
 
 	require.NoError(t, err)
 	require.Equal(t, pf.CellObstacle, grid.GetCell(pf.Position{X: 2, Y: 2}),
@@ -70,7 +70,7 @@ func TestCreateSafeZone_ReturnsErrorWhenNoOpenCells(t *testing.T) {
 		RadiusRange: r.Range{Min: 1, Max: 1},
 	}
 
-	_, err := CreateSafeZone(config, &grid)
+	_, err := Create(config, &grid)
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no open cells")
@@ -83,7 +83,7 @@ func TestCreateSafeZone_RadiusMarksMultipleCells(t *testing.T) {
 		RadiusRange: r.Range{Min: 2, Max: 2},
 	}
 
-	safeZone, err := CreateSafeZone(config, &grid)
+	safeZone, err := Create(config, &grid)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, safeZone.Radius)

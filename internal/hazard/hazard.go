@@ -56,8 +56,8 @@ var hazardTypes = []Type{
 	LavaHazard,
 }
 
-// CreateHazard creates a new hazard at a random open position on the grid
-func CreateHazard(config Config, grid *pf.Grid) (Hazard, error) {
+// Create creates a new hazard at a random open position on the grid
+func Create(config Config, grid *pf.Grid) (Hazard, error) {
 	duration := config.DurationRange.Random()
 
 	origin, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
@@ -83,8 +83,8 @@ var expandTypes = map[pf.CellType]struct{}{
 	pf.CellCitizen: {},
 }
 
-// ExpandHazard increases the hazard radius and marks affected cells on the grid
-func (h *Hazard) ExpandHazard(grid *pf.Grid) []pf.Position {
+// Expand increases the hazard radius and marks affected cells on the grid
+func (h *Hazard) Expand(grid *pf.Grid) []pf.Position {
 	h.CurrentRadius++
 	return h.updateCells(grid, expandTypes, pf.CellHazard)
 }
@@ -94,8 +94,8 @@ var removalTypes = map[pf.CellType]struct{}{
 	pf.CellHazard: {},
 }
 
-// RemoveHazard clears the hazard's cells from the grid
-func (h *Hazard) RemoveHazard(grid *pf.Grid) []pf.Position {
+// Remove clears the hazard's cells from the grid
+func (h *Hazard) Remove(grid *pf.Grid) []pf.Position {
 	return h.updateCells(grid, removalTypes, pf.CellOpen)
 }
 

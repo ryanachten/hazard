@@ -12,6 +12,7 @@ shell commands, and other important information, read the current plan at `docs/
 - A variable's name should be independent of its type. Avoid redundancy in variable and parameter naming that can be inferred from the type.
 - Avoid non-descriptive package names like `common` and `utility`. Prefer multiple packages focused on the domain type
 - Avoid repetition. i.e. `bytes.Buffer` not `bytes.BytesBuffer` etc. 
+- Use `.New()` method naming when returning a pointer to a given type
 
 ### References
 - Dave Cheney's [Practical Go](https://dave.cheney.net/practical-go)

@@ -49,7 +49,7 @@ const (
 func NewSimulation(width, height int, config config.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
 	grid := pf.NewGrid(width, height, pf.CellOpen)
 
-	safeZone, err := sz.CreateSafeZone(config.SafeZone, &grid)
+	safeZone, err := sz.Create(config.SafeZone, &grid)
 	if err != nil {
 		return Simulation{}, err
 	}
@@ -195,11 +195,11 @@ func (s *Simulation) updateOrRemoveHazards() {
 	for i := len(s.Hazards) - 1; i >= 0; i-- {
 		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
 			hazardID := s.Hazards[i].ID
-			updatedCells := s.Hazards[i].RemoveHazard(s.Grid)
+			updatedCells := s.Hazards[i].Remove(s.Grid)
 			s.Hazards = slices.Delete(s.Hazards, i, i+1)
 			s.eventBus.HazardDissipated(hazardID, updatedCells, s.getEventMetadata())
 		} else {
-			updatedCells := s.Hazards[i].ExpandHazard(s.Grid)
+			updatedCells := s.Hazards[i].Expand(s.Grid)
 			s.eventBus.HazardExpanded(s.Hazards[i].ID, updatedCells, s.getEventMetadata())
 		}
 	}
@@ -211,7 +211,7 @@ func (s *Simulation) generateIntermittentHazard() {
 		return
 	}
 
-	hazard, err := h.CreateHazard(hazardConfig, s.Grid)
+	hazard, err := h.Create(hazardConfig, s.Grid)
 	if err != nil {
 		log.Printf("error creating hazard: %v", err)
 		return
@@ -232,7 +232,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 		return false
 	}
 
-	safeZone, err := sz.CreateSafeZone(safeZoneConfig, s.Grid)
+	safeZone, err := sz.Create(safeZoneConfig, s.Grid)
 	if err != nil {
 		log.Printf("error creating safe zone: %v", err)
 		return false

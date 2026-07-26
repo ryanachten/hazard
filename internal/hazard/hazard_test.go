@@ -17,7 +17,7 @@ func TestCreateHazard(t *testing.T) {
 		Count:         0,
 	}
 
-	hazard, err := CreateHazard(config, &grid)
+	hazard, err := Create(config, &grid)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, hazard.Duration, 5)
 	require.LessOrEqual(t, hazard.Duration, 10)
@@ -33,7 +33,7 @@ func TestCreateHazard_NoOpenCells(t *testing.T) {
 		DurationRange: r.PositiveRange{Min: 5, Max: 5},
 	}
 
-	_, err := CreateHazard(config, &grid)
+	_, err := Create(config, &grid)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no open cells available")
 }
@@ -46,7 +46,7 @@ func TestRandomType(t *testing.T) {
 
 	seen := make(map[Type]bool)
 	for range 100 {
-		hazard, err := CreateHazard(config, &grid)
+		hazard, err := Create(config, &grid)
 		require.NoError(t, err)
 		require.Contains(t, []Type{FireHazard, FloodHazard, LavaHazard}, hazard.Type)
 		seen[hazard.Type] = true
@@ -64,7 +64,7 @@ func TestHazard_CellsBlockPathfinding(t *testing.T) {
 	}
 
 	grid.UpdateCell(pf.Position{X: 2, Y: 2}, pf.CellHazard)
-	hazard.ExpandHazard(&grid)
+	hazard.Expand(&grid)
 
 	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 2, Y: 2}))
 	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 2, Y: 1}))

@@ -13,7 +13,7 @@ import (
 )
 
 func TestCreateEventBus_InitializesFields(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 
 	require.NotNil(t, bus)
 	require.NotNil(t, bus.SimulationCommands)
@@ -22,14 +22,14 @@ func TestCreateEventBus_InitializesFields(t *testing.T) {
 }
 
 func TestCreateEventBus_ChannelsAreBuffered(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 
 	require.Equal(t, eventBufferSize, cap(bus.SimulationCommands))
 	require.Equal(t, eventBufferSize, cap(bus.SimulationEvents))
 }
 
 func TestEventLog_AccumulatesEvents(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	simID := uuid.New()
 	meta := EventMetadata{SimulationID: simID, Tick: 0}
 
@@ -40,7 +40,7 @@ func TestEventLog_AccumulatesEvents(t *testing.T) {
 }
 
 func TestSimulationCreated_StoresCorrectType(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	simID := uuid.New()
 	grid := pf.NewGrid(3, 3, pf.CellOpen)
 	payload := SimulationCreatedPayload{
@@ -61,7 +61,7 @@ func TestSimulationCreated_StoresCorrectType(t *testing.T) {
 }
 
 func TestSimulationCompleted_StoresCorrectType(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 
 	bus.SimulationCompleted(EventMetadata{SimulationID: uuid.New(), Tick: 5})
 
@@ -71,7 +71,7 @@ func TestSimulationCompleted_StoresCorrectType(t *testing.T) {
 }
 
 func TestHazardEmerged_StoresPayload(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	hazardID := uuid.New()
 	hazardType := h.FireHazard
 	pos := pf.Position{X: 3, Y: 4}
@@ -91,7 +91,7 @@ func TestHazardEmerged_StoresPayload(t *testing.T) {
 }
 
 func TestHazardExpanded_StoresUpdatedCells(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	hazardID := uuid.New()
 	cells := []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}}
 
@@ -108,7 +108,7 @@ func TestHazardExpanded_StoresUpdatedCells(t *testing.T) {
 }
 
 func TestHazardDissipated_StoresUpdatedCells(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	hazardID := uuid.New()
 	cells := []pf.Position{{X: 5, Y: 5}, {X: 5, Y: 6}}
 
@@ -119,7 +119,7 @@ func TestHazardDissipated_StoresUpdatedCells(t *testing.T) {
 }
 
 func TestCitizenEvents_StoreCorrectTypes(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	citizenID := uuid.New()
 	simID := uuid.New()
 
@@ -145,7 +145,7 @@ func TestCitizenEvents_StoreCorrectTypes(t *testing.T) {
 }
 
 func TestSafeZoneEmerged_StoresCells(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	safeZoneID := uuid.New()
 	cells := []pf.Position{{X: 2, Y: 2}, {X: 3, Y: 2}}
 
@@ -158,7 +158,7 @@ func TestSafeZoneEmerged_StoresCells(t *testing.T) {
 }
 
 func TestEventLog_TimestampsAreSet(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	before := time.Now().UTC()
 
 	bus.SimulationCreated(SimulationCreatedPayload{}, EventMetadata{SimulationID: uuid.New(), Tick: 0})
@@ -171,7 +171,7 @@ func TestEventLog_TimestampsAreSet(t *testing.T) {
 }
 
 func TestEventLog_EventIDsAreUnique(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	meta := EventMetadata{SimulationID: uuid.New(), Tick: 0}
 
 	bus.SimulationCreated(SimulationCreatedPayload{}, meta)
@@ -182,7 +182,7 @@ func TestEventLog_EventIDsAreUnique(t *testing.T) {
 }
 
 func TestEventBus_SimulationEventsChannelReceivesEvents(t *testing.T) {
-	bus := CreateEventBus()
+	bus := New()
 	simID := uuid.New()
 	meta := EventMetadata{SimulationID: simID, Tick: 0}
 

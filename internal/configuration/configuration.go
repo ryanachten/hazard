@@ -52,16 +52,16 @@ func (s *SimulationConfig) Validate() error {
 	if s.SafeZone.Count < 1 {
 		errs = append(errs, errors.New("SafeZone.Count must be at least 1"))
 	}
-	if err := r.ValidatePositiveRange(s.Hazard.DurationRange.Min, s.Hazard.DurationRange.Max); err != nil {
+	if err := r.ValidatePositive(s.Hazard.DurationRange.Min, s.Hazard.DurationRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("Hazard.DurationRange: %w", err))
 	}
-	if err := r.ValidateRange(s.SafeZone.RadiusRange.Min, s.SafeZone.RadiusRange.Max); err != nil {
+	if err := r.Validate(s.SafeZone.RadiusRange.Min, s.SafeZone.RadiusRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("SafeZone.RadiusRange: %w", err))
 	}
-	if err := r.ValidateRange(s.Obstacle.CountRange.Min, s.Obstacle.CountRange.Max); err != nil {
+	if err := r.Validate(s.Obstacle.CountRange.Min, s.Obstacle.CountRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("Obstacle.CountRange: %w", err))
 	}
-	if err := r.ValidatePositiveRange(s.Obstacle.SizeRange.Min, s.Obstacle.SizeRange.Max); err != nil {
+	if err := r.ValidatePositive(s.Obstacle.SizeRange.Min, s.Obstacle.SizeRange.Max); err != nil {
 		errs = append(errs, fmt.Errorf("Obstacle.SizeRange: %w", err))
 	}
 	if s.Hazard.Probability < 0 || s.Hazard.Probability > 1 {

@@ -1,4 +1,4 @@
-package common
+package random
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRandomFloat(t *testing.T) {
+func TestFloat(t *testing.T) {
 	tests := []struct {
 		name string
 		low  float64
@@ -20,7 +20,7 @@ func TestRandomFloat(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			for range 100 {
-				result := RandomFloat(tt.low, tt.high)
+				result := Float(tt.low, tt.high)
 				require.GreaterOrEqual(t, result, tt.low)
 				require.LessOrEqual(t, result, tt.high)
 			}
@@ -33,7 +33,7 @@ func TestRandValInSlice(t *testing.T) {
 
 	seen := make(map[int]bool)
 	for range 100 {
-		result := RandValInSlice(values)
+		result := ValInSlice(values)
 		require.Contains(t, values, result)
 		seen[result] = true
 	}
@@ -43,6 +43,6 @@ func TestRandValInSlice(t *testing.T) {
 
 func TestRandValInSlice_SingleElement(t *testing.T) {
 	values := []string{"only"}
-	result := RandValInSlice(values)
+	result := ValInSlice(values)
 	require.Equal(t, "only", result)
 }

@@ -1,7 +1,8 @@
-package common
+package citizen
 
 import (
 	pf "hazard/internal/pathfinding"
+	sz "hazard/internal/safe_zone"
 	"testing"
 
 	"github.com/google/uuid"
@@ -13,13 +14,13 @@ func TestCreateCitizens_PlacedOnOpenGridCells(t *testing.T) {
 	// Place a safe zone so pathfinding works
 	grid.UpdateCell(pf.Position{X: 9, Y: 9}, pf.CellSafeZone)
 
-	safeZone := SafeZone{
+	safeZone := sz.SafeZone{
 		Position:    pf.Position{X: 9, Y: 9},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 9, Y: 9}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*SafeZone{
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
 		{X: 9, Y: 9}: &safeZone,
 	}
 
@@ -28,7 +29,7 @@ func TestCreateCitizens_PlacedOnOpenGridCells(t *testing.T) {
 	require.Len(t, citizens, 3)
 	for _, c := range citizens {
 		require.NotEqual(t, uuid.Nil, c.ID)
-		require.Equal(t, CitizenIdle, c.Status)
+		require.Equal(t, StatusIdle, c.Status)
 		require.True(t, grid.InBounds(c.CurrentPosition))
 		require.NotEmpty(t, c.Path)
 		require.Equal(t, pf.CellSafeZone, grid.GetCell(c.Path[len(c.Path)-1]),
@@ -40,7 +41,7 @@ func TestCreateCitizens_PlacedOnOpenGridCells(t *testing.T) {
 func TestCreateCitizens_ReturnsEmptyWhenNoOpenCells(t *testing.T) {
 	grid := pf.NewGrid(2, 2, pf.CellObstacle)
 
-	citizens := CreateCitizens(5, &grid, make(map[pf.Position]*SafeZone))
+	citizens := CreateCitizens(5, &grid, make(map[pf.Position]*sz.SafeZone))
 
 	require.Empty(t, citizens)
 }
@@ -49,19 +50,19 @@ func TestFindNearestSafeZone_FindsPathToSafeZone(t *testing.T) {
 	grid := pf.NewGrid(5, 5, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 4, Y: 4}, pf.CellSafeZone)
 
-	safeZone := SafeZone{
+	safeZone := sz.SafeZone{
 		Position:    pf.Position{X: 4, Y: 4},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 4, Y: 4}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*SafeZone{
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
 		{X: 4, Y: 4}: &safeZone,
 	}
 
 	citizen := Citizen{
 		ID:              uuid.New(),
-		Status:          CitizenIdle,
+		Status:          StatusIdle,
 		CurrentPosition: pf.Position{X: 0, Y: 0},
 	}
 
@@ -77,11 +78,11 @@ func TestFindNearestSafeZone_ReturnsErrorWhenNoSafeZone(t *testing.T) {
 
 	citizen := Citizen{
 		ID:              uuid.New(),
-		Status:          CitizenIdle,
+		Status:          StatusIdle,
 		CurrentPosition: pf.Position{X: 0, Y: 0},
 	}
 
-	err := citizen.FindNearestSafeZone(&grid, make(map[pf.Position]*SafeZone))
+	err := citizen.FindNearestSafeZone(&grid, make(map[pf.Position]*sz.SafeZone))
 	require.Error(t, err)
 	require.Empty(t, citizen.Path)
 }
@@ -98,7 +99,7 @@ func TestRecalculatePath_RecalculatesAroundObstacle(t *testing.T) {
 
 	citizen := Citizen{
 		ID:                 uuid.New(),
-		Status:             CitizenIdle,
+		Status:             StatusIdle,
 		CurrentPosition:    pf.Position{X: 0, Y: 0},
 		CurrentDestination: pf.Position{X: 4, Y: 4},
 	}
@@ -119,7 +120,7 @@ func TestRecalculatePath_ReturnsErrorForUnreachableDestination(t *testing.T) {
 
 	citizen := Citizen{
 		ID:                 uuid.New(),
-		Status:             CitizenIdle,
+		Status:             StatusIdle,
 		CurrentPosition:    pf.Position{X: 0, Y: 0},
 		CurrentDestination: pf.Position{X: 2, Y: 2},
 	}
@@ -132,7 +133,7 @@ func TestIncrementLocation_MovesCitizenOneStep(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 
 	citizen := Citizen{
-		Status:           CitizenIdle,
+		Status:           StatusIdle,
 		CurrentPosition:  pf.Position{X: 0, Y: 0},
 		Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 		CurrentPathIndex: 0,
@@ -143,14 +144,14 @@ func TestIncrementLocation_MovesCitizenOneStep(t *testing.T) {
 	require.True(t, moved)
 	require.Equal(t, 1, citizen.CurrentPathIndex)
 	require.Equal(t, pf.Position{X: 1, Y: 0}, citizen.CurrentPosition)
-	require.Equal(t, CitizenNavigating, citizen.Status)
+	require.Equal(t, StatusNavigating, citizen.Status)
 }
 
 func TestIncrementLocation_ReachingEndReportsEscaped(t *testing.T) {
 	grid := pf.NewGrid(2, 1, pf.CellOpen)
 
 	citizen := Citizen{
-		Status:           CitizenIdle,
+		Status:           StatusIdle,
 		CurrentPosition:  pf.Position{X: 0, Y: 0},
 		Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
 		CurrentPathIndex: 0,
@@ -159,7 +160,7 @@ func TestIncrementLocation_ReachingEndReportsEscaped(t *testing.T) {
 	moved, escaped := citizen.IncrementLocation(&grid)
 	require.True(t, moved)
 	require.True(t, escaped, "last step should report escaped")
-	require.Equal(t, CitizenNavigating, citizen.Status)
+	require.Equal(t, StatusNavigating, citizen.Status)
 
 	moved, escaped = citizen.IncrementLocation(&grid)
 
@@ -167,13 +168,13 @@ func TestIncrementLocation_ReachingEndReportsEscaped(t *testing.T) {
 	require.True(t, escaped, "citizen at path end should report escaped")
 	require.Equal(t, 1, citizen.CurrentPathIndex)
 	require.Equal(t, pf.Position{X: 1, Y: 0}, citizen.CurrentPosition)
-	require.Equal(t, CitizenNavigating, citizen.Status,
-		"IncrementLocation no longer sets CitizenEscaped; caller must handle it")
+	require.Equal(t, StatusNavigating, citizen.Status,
+		"IncrementLocation no longer sets StatusEscaped; caller must handle it")
 }
 
 func TestIncrementLocation_DoesNotMoveEscapedCitizen(t *testing.T) {
 	citizen := Citizen{
-		Status:           CitizenEscaped,
+		Status:           StatusEscaped,
 		CurrentPosition:  pf.Position{X: 2, Y: 0},
 		Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 		CurrentPathIndex: 2,
@@ -183,12 +184,12 @@ func TestIncrementLocation_DoesNotMoveEscapedCitizen(t *testing.T) {
 
 	require.False(t, moved)
 	require.Equal(t, 2, citizen.CurrentPathIndex)
-	require.Equal(t, CitizenEscaped, citizen.Status)
+	require.Equal(t, StatusEscaped, citizen.Status)
 }
 
 func TestIncrementLocation_DoesNotMoveDeadCitizen(t *testing.T) {
 	citizen := Citizen{
-		Status:           CitizenDead,
+		Status:           StatusDead,
 		CurrentPosition:  pf.Position{X: 1, Y: 0},
 		Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 		CurrentPathIndex: 1,
@@ -198,20 +199,20 @@ func TestIncrementLocation_DoesNotMoveDeadCitizen(t *testing.T) {
 
 	require.False(t, moved)
 	require.Equal(t, 1, citizen.CurrentPathIndex)
-	require.Equal(t, CitizenDead, citizen.Status)
+	require.Equal(t, StatusDead, citizen.Status)
 }
 
 func TestCreateCitizens_MarksCellCitizenOnGrid(t *testing.T) {
 	grid := pf.NewGrid(10, 10, pf.CellOpen)
 	grid.UpdateCell(pf.Position{X: 9, Y: 9}, pf.CellSafeZone)
 
-	safeZone := SafeZone{
+	safeZone := sz.SafeZone{
 		Position:    pf.Position{X: 9, Y: 9},
 		Radius:      0,
 		Cells:       []pf.Position{{X: 9, Y: 9}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*SafeZone{
+	safeZoneLocations := map[pf.Position]*sz.SafeZone{
 		{X: 9, Y: 9}: &safeZone,
 	}
 
@@ -228,7 +229,7 @@ func TestIncrementLocation_UnmarksPreviousCellAndMarksNewCell(t *testing.T) {
 	grid := pf.NewGrid(3, 1, pf.CellOpen)
 
 	citizen := Citizen{
-		Status:           CitizenIdle,
+		Status:           StatusIdle,
 		CurrentPosition:  pf.Position{X: 0, Y: 0},
 		Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 		CurrentPathIndex: 0,
@@ -256,7 +257,7 @@ func TestIncrementLocation_RestoresPreviousCellTypeOnMove(t *testing.T) {
 	grid.UpdateCell(pf.Position{X: 1, Y: 0}, pf.CellSafeZone)
 
 	citizen := Citizen{
-		Status:           CitizenIdle,
+		Status:           StatusIdle,
 		CurrentPosition:  pf.Position{X: 0, Y: 0},
 		Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
 		CurrentPathIndex: 0,

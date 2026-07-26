@@ -2,8 +2,11 @@
 package events
 
 import (
-	c "hazard/internal/common"
+	c "hazard/internal/citizen"
+	h "hazard/internal/hazard"
+	o "hazard/internal/obstacle"
 	pf "hazard/internal/pathfinding"
+	sz "hazard/internal/safe_zone"
 	"time"
 
 	"github.com/google/uuid"
@@ -55,8 +58,8 @@ const (
 type SimulationCreatedPayload struct {
 	Grid      pf.Grid
 	Citizens  []c.Citizen
-	SafeZones []c.SafeZone
-	Obstacles []c.Obstacle
+	SafeZones []sz.SafeZone
+	Obstacles []o.Obstacle
 }
 
 // SimulationCreated raised when simulation starts
@@ -66,12 +69,12 @@ func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata 
 		citizenSnapshot[i] = citizen.Copy()
 	}
 
-	safeZoneSnapshot := make([]c.SafeZone, len(payload.SafeZones))
+	safeZoneSnapshot := make([]sz.SafeZone, len(payload.SafeZones))
 	for i, safeZone := range payload.SafeZones {
 		safeZoneSnapshot[i] = safeZone.Copy()
 	}
 
-	obstacleSnapshot := make([]c.Obstacle, len(payload.Obstacles))
+	obstacleSnapshot := make([]o.Obstacle, len(payload.Obstacles))
 	for i, obstacle := range payload.Obstacles {
 		obstacleSnapshot[i] = obstacle.Copy()
 	}
@@ -139,7 +142,7 @@ func (e *EventBus) SafeZoneEmerged(safeZoneID uuid.UUID, payload SafeZoneEmerged
 
 // HazardEmergedPayload for hazard emergence event
 type HazardEmergedPayload struct {
-	Type     c.HazardType
+	Type     h.Type
 	Position pf.Position
 }
 

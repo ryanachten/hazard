@@ -1,7 +1,7 @@
 package tui
 
 import (
-	c "hazard/internal/common"
+	"hazard/internal/random"
 
 	"charm.land/lipgloss/v2"
 )
@@ -59,8 +59,8 @@ var safeZoneStyle = lipgloss.NewStyle().
 	Background(lipgloss.Color("#0d2a0d"))
 
 func getOpenCell() string {
-	char := c.RandValInSlice(openCharacters)
-	bgOffset := c.RandomFloat(0, 0.04)
+	char := random.ValInSlice(openCharacters)
+	bgOffset := random.Float(0, 0.04)
 	bgColour := lipgloss.Color("#0d1117")
 
 	return openStyle.
@@ -70,17 +70,17 @@ func getOpenCell() string {
 }
 
 func getFireCell() string {
-	char := c.RandValInSlice(fireCharacters)
+	char := random.ValInSlice(fireCharacters)
 	return fireStyle.SetString(char).Render()
 }
 
 func getFloodCell() string {
-	char := c.RandValInSlice(floodCharacters)
+	char := random.ValInSlice(floodCharacters)
 	return floodStyle.SetString(char).Render()
 }
 
 func getLavaCell() string {
-	char := c.RandValInSlice(lavaCharacters)
+	char := random.ValInSlice(lavaCharacters)
 	return lavaStyle.SetString(char).Render()
 }
 
@@ -89,7 +89,7 @@ func getSafeZoneCell(char string) string {
 }
 
 func getObstacleCell() string {
-	char := c.RandValInSlice(obstacleCharacters)
+	char := random.ValInSlice(obstacleCharacters)
 	return obstacleStyle.SetString(char).Render()
 }
 

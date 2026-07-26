@@ -1,6 +1,10 @@
-package common
+package configuration
 
 import (
+	h "hazard/internal/hazard"
+	r "hazard/internal/numrange"
+	o "hazard/internal/obstacle"
+	sz "hazard/internal/safe_zone"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,18 +13,18 @@ import (
 func TestSimulationConfig_Validate(t *testing.T) {
 	validConfig := SimulationConfig{
 		CitizenCount: 5,
-		Hazard: HazardConfig{
-			DurationRange: PositiveRange{Min: 1, Max: 10},
+		Hazard: h.Config{
+			DurationRange: r.PositiveRange{Min: 1, Max: 10},
 			Count:         5,
 			Probability:   0.5,
 		},
-		SafeZone: SafeZoneConfig{
+		SafeZone: sz.Config{
 			Count:       1,
-			RadiusRange: Range{Min: 1, Max: 1},
+			RadiusRange: r.Range{Min: 1, Max: 1},
 		},
-		Obstacle: ObstacleConfig{
-			CountRange: Range{Min: 1, Max: 5},
-			SizeRange:  PositiveRange{Min: 2, Max: 5},
+		Obstacle: o.Config{
+			CountRange: r.Range{Min: 1, Max: 5},
+			SizeRange:  r.PositiveRange{Min: 2, Max: 5},
 		},
 	}
 

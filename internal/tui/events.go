@@ -1,9 +1,10 @@
 package tui
 
 import (
-	c "hazard/internal/common"
 	"hazard/internal/events"
+	h "hazard/internal/hazard"
 	pf "hazard/internal/pathfinding"
+	"hazard/internal/random"
 	"log"
 
 	"github.com/google/uuid"
@@ -132,11 +133,11 @@ func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
 	var character string
 
 	switch payload.Type {
-	case c.FireHazard:
+	case h.FireHazard:
 		character = getFireCell()
-	case c.FloodHazard:
+	case h.FloodHazard:
 		character = getFloodCell()
-	case c.LavaHazard:
+	case h.LavaHazard:
 		character = getLavaCell()
 	}
 
@@ -169,7 +170,7 @@ func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
 }
 
 func (m *Model) createSafeZone(safeZoneID uuid.UUID, cells []pf.Position) {
-	safeZoneChar := getSafeZoneCell(c.RandValInSlice(safeZoneCharacters))
+	safeZoneChar := getSafeZoneCell(random.ValInSlice(safeZoneCharacters))
 	m.safeZones[safeZoneID] = make([]pf.Position, len(cells))
 
 	for i, cellPos := range cells {

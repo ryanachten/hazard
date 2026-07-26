@@ -1,9 +1,13 @@
 package engine
 
 import (
-	c "hazard/internal/common"
+	c "hazard/internal/citizen"
+	config "hazard/internal/configuration"
 	"hazard/internal/events"
+	h "hazard/internal/hazard"
+	o "hazard/internal/obstacle"
 	pf "hazard/internal/pathfinding"
+	sz "hazard/internal/safe_zone"
 	"log"
 	"math/rand"
 	"slices"
@@ -14,17 +18,17 @@ import (
 // Simulation engine for hazards
 type Simulation struct {
 	ID                   uuid.UUID
-	Config               c.SimulationConfig
+	Config               config.SimulationConfig
 	State                SimulationState
 	TickCount            uint64
 	Grid                 *pf.Grid
 	Citizens             []c.Citizen
 	DeadCitizensCount    int
 	EscapedCitizensCount int
-	Hazards              []c.Hazard
-	SafeZones            []c.SafeZone
+	Hazards              []h.Hazard
+	SafeZones            []sz.SafeZone
 	eventBus             *events.EventBus
-	safeZoneLocations    map[pf.Position]*c.SafeZone
+	safeZoneLocations    map[pf.Position]*sz.SafeZone
 }
 
 // SimulationState phases of a simulation
@@ -42,20 +46,20 @@ const (
 )
 
 // NewSimulation creates a simulation based on configuration
-func NewSimulation(width, height int, config c.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
+func NewSimulation(width, height int, config config.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
 	grid := pf.NewGrid(width, height, pf.CellOpen)
 
-	safeZone, err := c.CreateSafeZone(config.SafeZone, &grid)
+	safeZone, err := sz.CreateSafeZone(config.SafeZone, &grid)
 	if err != nil {
 		return Simulation{}, err
 	}
 
-	safeZoneLocations := make(map[pf.Position]*c.SafeZone)
+	safeZoneLocations := make(map[pf.Position]*sz.SafeZone)
 	for _, cell := range safeZone.Cells {
 		safeZoneLocations[cell] = &safeZone
 	}
 
-	obstacles := c.CreateObstacles(config.Obstacle, &grid)
+	obstacles := o.CreateObstacles(config.Obstacle, &grid)
 
 	var simulation = Simulation{
 		ID:                uuid.New(),
@@ -63,7 +67,7 @@ func NewSimulation(width, height int, config c.SimulationConfig, eventBus *event
 		State:             SimulationRunning,
 		TickCount:         0,
 		Grid:              &grid,
-		SafeZones:         []c.SafeZone{safeZone},
+		SafeZones:         []sz.SafeZone{safeZone},
 		Citizens:          c.CreateCitizens(config.CitizenCount, &grid, safeZoneLocations),
 		eventBus:          eventBus,
 		safeZoneLocations: safeZoneLocations,
@@ -98,7 +102,7 @@ func (s *Simulation) Tick() {
 
 	for i := range s.Citizens {
 
-		if s.Citizens[i].Status == c.CitizenDead || s.Citizens[i].Status == c.CitizenEscaped {
+		if s.Citizens[i].Status == c.StatusDead || s.Citizens[i].Status == c.StatusEscaped {
 			continue
 		}
 
@@ -207,7 +211,7 @@ func (s *Simulation) generateIntermittentHazard() {
 		return
 	}
 
-	hazard, err := c.CreateHazard(hazardConfig, s.Grid)
+	hazard, err := h.CreateHazard(hazardConfig, s.Grid)
 	if err != nil {
 		log.Printf("error creating hazard: %v", err)
 		return
@@ -228,7 +232,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 		return false
 	}
 
-	safeZone, err := c.CreateSafeZone(safeZoneConfig, s.Grid)
+	safeZone, err := sz.CreateSafeZone(safeZoneConfig, s.Grid)
 	if err != nil {
 		log.Printf("error creating safe zone: %v", err)
 		return false
@@ -249,7 +253,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 }
 
 func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
-	if s.Citizens[citizenIndex].Status == c.CitizenEscaped {
+	if s.Citizens[citizenIndex].Status == c.StatusEscaped {
 		return false
 	}
 
@@ -257,7 +261,7 @@ func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
 		return false
 	}
 
-	s.Citizens[citizenIndex].Status = c.CitizenDead
+	s.Citizens[citizenIndex].Status = c.StatusDead
 	s.Grid.UpdateCell(s.Citizens[citizenIndex].CurrentPosition, pf.CellDeadCitizen)
 	s.DeadCitizensCount++
 	s.eventBus.CitizenDied(s.Citizens[citizenIndex].ID, events.CitizenDiedPayload{
@@ -318,7 +322,7 @@ func (s *Simulation) updateCitizenLocation(citizenIndex int) {
 			s.updateCitizenPath(citizenIndex, true)
 		} else {
 			s.EscapedCitizensCount++
-			citizen.Status = c.CitizenEscaped
+			citizen.Status = c.StatusEscaped
 
 			if assignedPosition != citizen.CurrentPosition {
 				s.Grid.UpdateCell(citizen.CurrentPosition, citizen.PreviousCellType)

@@ -1,8 +1,10 @@
 package events
 
 import (
-	c "hazard/internal/common"
+	c "hazard/internal/citizen"
+	h "hazard/internal/hazard"
 	pf "hazard/internal/pathfinding"
+	sz "hazard/internal/safe_zone"
 	"testing"
 	"time"
 
@@ -44,7 +46,7 @@ func TestSimulationCreated_StoresCorrectType(t *testing.T) {
 	payload := SimulationCreatedPayload{
 		Grid:      grid.Copy(),
 		Citizens:  []c.Citizen{},
-		SafeZones: []c.SafeZone{},
+		SafeZones: []sz.SafeZone{},
 	}
 
 	bus.SimulationCreated(payload, EventMetadata{SimulationID: simID, Tick: 0})
@@ -71,7 +73,7 @@ func TestSimulationCompleted_StoresCorrectType(t *testing.T) {
 func TestHazardEmerged_StoresPayload(t *testing.T) {
 	bus := CreateEventBus()
 	hazardID := uuid.New()
-	hazardType := c.FireHazard
+	hazardType := h.FireHazard
 	pos := pf.Position{X: 3, Y: 4}
 
 	bus.HazardEmerged(hazardID, HazardEmergedPayload{Type: hazardType, Position: pos},

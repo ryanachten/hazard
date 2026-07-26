@@ -1,9 +1,11 @@
-// Package common define common types and utilities in the project
-package common
+// Package citizen defines how citizens behave in the simulation
+package citizen
 
 import (
 	"fmt"
 	pf "hazard/internal/pathfinding"
+	"hazard/internal/random"
+	sz "hazard/internal/safe_zone"
 	"log"
 
 	"github.com/google/uuid"
@@ -12,31 +14,31 @@ import (
 // Citizen subjected to a hazard
 type Citizen struct {
 	ID                 uuid.UUID
-	Status             CitizenStatus
+	Status             Status
 	CurrentPosition    pf.Position
 	CurrentDestination pf.Position
-	TargetSafeZone     *SafeZone
+	TargetSafeZone     *sz.SafeZone
 	Path               []pf.Position
 	CurrentPathIndex   int
 	PreviousCellType   pf.CellType
 }
 
-// CitizenStatus defines the state of citizen activity
-type CitizenStatus string
+// Status defines the state of citizen activity
+type Status string
 
 const (
-	// CitizenIdle state pre-hazard taking place
-	CitizenIdle CitizenStatus = "idle"
-	// CitizenNavigating when moving towards a given destination
-	CitizenNavigating CitizenStatus = "navigating"
-	// CitizenEscaped when the citizen has reached a safe zone
-	CitizenEscaped CitizenStatus = "escaped"
-	// CitizenDead when the citizen has been overtaken by a hazard
-	CitizenDead CitizenStatus = "dead"
+	// StatusIdle state pre-hazard taking place
+	StatusIdle Status = "idle"
+	// StatusNavigating when moving towards a given destination
+	StatusNavigating Status = "navigating"
+	// StatusEscaped when the citizen has reached a safe zone
+	StatusEscaped Status = "escaped"
+	// StatusDead when the citizen has been overtaken by a hazard
+	StatusDead Status = "dead"
 )
 
 // CreateCitizens instantiates citizens in a grid
-func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Position]*SafeZone) []Citizen {
+func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Position]*sz.SafeZone) []Citizen {
 	citizens := make([]Citizen, 0, citizenCount)
 
 	for range citizenCount {
@@ -48,7 +50,7 @@ func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Po
 
 		citizen := Citizen{
 			ID:               uuid.New(),
-			Status:           CitizenIdle,
+			Status:           StatusIdle,
 			CurrentPosition:  startPosition,
 			CurrentPathIndex: 0,
 		}
@@ -69,7 +71,7 @@ func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Po
 }
 
 // FindNearestSafeZone finds a path from the citizen's current position to the nearest safe zone with capacity
-func (c *Citizen) FindNearestSafeZone(grid *pf.Grid, safeZoneLocations map[pf.Position]*SafeZone) error {
+func (c *Citizen) FindNearestSafeZone(grid *pf.Grid, safeZoneLocations map[pf.Position]*sz.SafeZone) error {
 	isGoal := func(pos pf.Position) bool {
 		if grid.GetCell(pos) != pf.CellSafeZone {
 			return false
@@ -114,8 +116,8 @@ func (c *Citizen) RecalculatePath(grid *pf.Grid) error {
 // IncrementLocation moves the citizen one step along their path and updates their status
 func (c *Citizen) IncrementLocation(grid *pf.Grid) (bool, bool) {
 
-	if c.Status == CitizenEscaped || c.Status == CitizenDead {
-		return false, c.Status == CitizenEscaped
+	if c.Status == StatusEscaped || c.Status == StatusDead {
+		return false, c.Status == StatusEscaped
 	}
 
 	if len(c.Path) == 0 || c.CurrentPathIndex < 0 || c.CurrentPathIndex >= len(c.Path) {
@@ -126,7 +128,7 @@ func (c *Citizen) IncrementLocation(grid *pf.Grid) (bool, bool) {
 	hasMoved := false
 
 	if c.CurrentPathIndex < len(c.Path)-1 {
-		c.Status = CitizenNavigating
+		c.Status = StatusNavigating
 		c.CurrentPathIndex++
 		c.updatePosition(c.Path[c.CurrentPathIndex], grid)
 		hasMoved = true
@@ -154,7 +156,7 @@ func (c *Citizen) randomWalk(grid *pf.Grid) bool {
 		return false
 	}
 
-	newPos := RandValInSlice(validDirections)
+	newPos := random.ValInSlice(validDirections)
 	c.updatePosition(newPos, grid)
 
 	return true

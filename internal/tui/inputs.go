@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"hazard/internal/common"
+	"hazard/internal/configuration"
 	"hazard/internal/events"
 	"log"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 var inputWidth = 20
-var config = common.DefaultConfig
+var config = configuration.DefaultConfig
 
 type input struct {
 	id       string

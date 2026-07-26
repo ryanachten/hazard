@@ -1,4 +1,5 @@
-package common
+// Package ranging defines numeric range utilities
+package ranging
 
 import (
 	"fmt"

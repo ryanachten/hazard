@@ -3,7 +3,7 @@ package main
 
 import (
 	"context"
-	c "hazard/internal/common"
+	c "hazard/internal/configuration"
 	eng "hazard/internal/engine"
 	"hazard/internal/events"
 	"hazard/internal/tui"

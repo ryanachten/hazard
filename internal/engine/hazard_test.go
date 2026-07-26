@@ -1,9 +1,13 @@
 package engine
 
 import (
-	c "hazard/internal/common"
+	c "hazard/internal/citizen"
+	config "hazard/internal/configuration"
 	"hazard/internal/events"
+	h "hazard/internal/hazard"
+	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
+	sz "hazard/internal/safe_zone"
 	"testing"
 
 	"github.com/google/uuid"
@@ -11,17 +15,17 @@ import (
 )
 
 func newTestSim() (Simulation, error) {
-	return NewSimulation(10, 10, c.SimulationConfig{
+	return NewSimulation(10, 10, config.SimulationConfig{
 		CitizenCount: 0,
-		Hazard: c.HazardConfig{
-			DurationRange: c.PositiveRange{Min: 100, Max: 100},
+		Hazard: h.Config{
+			DurationRange: r.PositiveRange{Min: 100, Max: 100},
 			Probability:   0,
 			Count:         0,
 		},
-		SafeZone: c.SafeZoneConfig{
+		SafeZone: sz.Config{
 			Probability: 0,
 			Count:       1,
-			RadiusRange: c.Range{Min: 1, Max: 1},
+			RadiusRange: r.Range{Min: 1, Max: 1},
 		},
 	}, events.CreateEventBus())
 }
@@ -30,9 +34,9 @@ func TestHazard_RadiusGrowsEachTick(t *testing.T) {
 	sim, err := newTestSim()
 	require.NoError(t, err)
 
-	sim.Hazards = append(sim.Hazards, c.Hazard{
+	sim.Hazards = append(sim.Hazards, h.Hazard{
 		ID:            uuid.New(),
-		Type:          c.FireHazard,
+		Type:          h.FireHazard,
 		CreatedAt:     0,
 		Duration:      100,
 		Origin:        pf.Position{X: 5, Y: 5},
@@ -59,14 +63,14 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 	sim := Simulation{
 		Grid:     &grid,
 		eventBus: events.CreateEventBus(),
-		SafeZones: []c.SafeZone{
+		SafeZones: []sz.SafeZone{
 			{Position: pf.Position{X: 9, Y: 9}, Radius: 1},
 		},
 	}
 
-	hazard := c.Hazard{
+	hazard := h.Hazard{
 		ID:            uuid.New(),
-		Type:          c.FloodHazard,
+		Type:          h.FloodHazard,
 		CreatedAt:     0,
 		Duration:      1,
 		Origin:        pf.Position{X: 5, Y: 5},
@@ -95,17 +99,17 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 }
 
 func TestHazard_CreationViaTick(t *testing.T) {
-	sim, err := NewSimulation(10, 10, c.SimulationConfig{
+	sim, err := NewSimulation(10, 10, config.SimulationConfig{
 		CitizenCount: 0,
-		Hazard: c.HazardConfig{
-			DurationRange: c.PositiveRange{Min: 10, Max: 10},
+		Hazard: h.Config{
+			DurationRange: r.PositiveRange{Min: 10, Max: 10},
 			Probability:   1.0,
 			Count:         5,
 		},
-		SafeZone: c.SafeZoneConfig{
+		SafeZone: sz.Config{
 			Probability: 0,
 			Count:       0,
-			RadiusRange: c.Range{Min: 1, Max: 1},
+			RadiusRange: r.Range{Min: 1, Max: 1},
 		},
 	}, events.CreateEventBus())
 	require.NoError(t, err)
@@ -114,15 +118,15 @@ func TestHazard_CreationViaTick(t *testing.T) {
 	sim.Tick()
 	require.Len(t, sim.Hazards, 1)
 
-	h := sim.Hazards[0]
-	require.NotEqual(t, uuid.Nil, h.ID)
-	require.Contains(t, []c.HazardType{c.FireHazard, c.FloodHazard, c.LavaHazard}, h.Type)
-	require.Equal(t, 0, h.CurrentRadius)
-	require.GreaterOrEqual(t, h.Duration, 10)
-	require.LessOrEqual(t, h.Duration, 10)
-	require.Equal(t, uint64(0), h.CreatedAt)
-	require.True(t, sim.Grid.InBounds(h.Origin))
-	require.Equal(t, pf.CellHazard, sim.Grid.GetCell(h.Origin))
+	h1 := sim.Hazards[0]
+	require.NotEqual(t, uuid.Nil, h1.ID)
+	require.Contains(t, []h.Type{h.FireHazard, h.FloodHazard, h.LavaHazard}, h1.Type)
+	require.Equal(t, 0, h1.CurrentRadius)
+	require.GreaterOrEqual(t, h1.Duration, 10)
+	require.LessOrEqual(t, h1.Duration, 10)
+	require.Equal(t, uint64(0), h1.CreatedAt)
+	require.True(t, sim.Grid.InBounds(h1.Origin))
+	require.Equal(t, pf.CellHazard, sim.Grid.GetCell(h1.Origin))
 
 	sim.Tick()
 	require.Len(t, sim.Hazards, 2)
@@ -147,7 +151,7 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		{X: 4, Y: 4},
 	}
 
-	sz := c.SafeZone{
+	sz1 := sz.SafeZone{
 		ID:          uuid.New(),
 		Position:    destination,
 		Radius:      1,
@@ -158,21 +162,21 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		{X: 3, Y: 3}, {X: 3, Y: 4},
 		{X: 4, Y: 3}, {X: 4, Y: 4},
 	}
-	safeZoneLocations := make(map[pf.Position]*c.SafeZone, len(safeZoneCells))
+	safeZoneLocations := make(map[pf.Position]*sz.SafeZone, len(safeZoneCells))
 	for _, cell := range safeZoneCells {
 		grid.UpdateCell(cell, pf.CellSafeZone)
-		safeZoneLocations[cell] = &sz
+		safeZoneLocations[cell] = &sz1
 	}
-	sz.Cells = safeZoneCells
+	sz1.Cells = safeZoneCells
 
 	sim := Simulation{
-		Config: c.SimulationConfig{
-			SafeZone: c.SafeZoneConfig{
+		Config: config.SimulationConfig{
+			SafeZone: sz.Config{
 				Count:       1,
-				RadiusRange: c.Range{Min: 1, Max: 1},
+				RadiusRange: r.Range{Min: 1, Max: 1},
 			},
-			Hazard: c.HazardConfig{
-				DurationRange: c.PositiveRange{Min: 100, Max: 100},
+			Hazard: h.Config{
+				DurationRange: r.PositiveRange{Min: 100, Max: 100},
 				Probability:   0,
 				Count:         0,
 			},
@@ -181,19 +185,19 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.CreateEventBus(),
 		safeZoneLocations: safeZoneLocations,
-		SafeZones:         []c.SafeZone{sz},
+		SafeZones:         []sz.SafeZone{sz1},
 		Citizens: []c.Citizen{
 			{
 				ID:                 uuid.New(),
-				Status:             c.CitizenIdle,
+				Status:             c.StatusIdle,
 				CurrentPosition:    pf.Position{X: 0, Y: 0},
 				CurrentDestination: destination,
 				Path:               path,
 				CurrentPathIndex:   1,
-				TargetSafeZone:     &sz,
+				TargetSafeZone:     &sz1,
 			},
 		},
-		Hazards: []c.Hazard{},
+		Hazards: []h.Hazard{},
 	}
 
 	blockedCell := pf.Position{X: 0, Y: 2}

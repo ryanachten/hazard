@@ -78,7 +78,7 @@ description: "Task list for Hazard Simulation System - 12 progressive slices for
 
 **Learning Outcome**: Multiple termination conditions, collision detection, scheduled emergence, path recalculation triggers
 
-- [x] T019 [P] [US1] Implement `SafeZone` struct and environment generation (initial safe zone placement, obstacle placement, citizen seeding) in `internal/engine/safe_zone.go`
+- [x] T019 [P] [US1] Implement `SafeZone` struct and environment generation (initial safe zone placement, obstacle placement, citizen seeding) in `internal/engine/safezone.go`
 - [x] T020 [US1] Implement escape detection (citizen position within safe zone radius) and death detection (hazard radius reaches citizen position) in `Simulation.Tick()`
 - [x] T021 [US1] Implement dynamic safe zone emergence scheduling: at a configurable interval, place a new safe zone at a random valid position, mark its cells on the grid, and trigger citizen path recalculation toward the nearest zone
 - [x] T022 [US1] Implement simulation completion: detect when all citizens are `escaped` or `dead`, set simulation state to `completed` in `internal/engine/simulation.go`
@@ -115,7 +115,7 @@ description: "Task list for Hazard Simulation System - 12 progressive slices for
 
 **Learning Outcome**: External Go library integration, Bubbletea Elm architecture (Model/Update/View), Lipgloss composable styles, terminal event handling, `tea.Program`, alt-screen rendering
 
-- [x] T028 [P] [US1] Define `EventBus` struct in `internal/events/event_bus.go` — holds `SimulationEvents` (chan `SimulationEvent`, 256-buffered) and `SimulationCommands` (chan `SimulationCommand`, 256-buffered) channels plus an in-memory `EventLog`. `CreateEventBus()` constructor initialises both channels. Producer (engine) writes to `SimulationEvents`, consumer (TUI) reads from it; TUI writes commands to `SimulationCommands`, engine reads from it. This is the bridge contract between engine and TUI.
+- [x] T028 [P] [US1] Define `EventBus` struct in `internal/events/eventbus.go` — holds `SimulationEvents` (chan `SimulationEvent`, 256-buffered) and `SimulationCommands` (chan `SimulationCommand`, 256-buffered) channels plus an in-memory `EventLog`. `CreateEventBus()` constructor initialises both channels. Producer (engine) writes to `SimulationEvents`, consumer (TUI) reads from it; TUI writes commands to `SimulationCommands`, engine reads from it. This is the bridge contract between engine and TUI.
 - [x] T029 [P] [US1] Define Bubbletea `Model` struct in `internal/tui/model.go` — holds render grid (`[][]string`), citizen positions (`map[uuid.UUID]Position`), hazard glyphs (`map[uuid.UUID]string`), and `*events.EventBus` field for reading events and writing commands.
 - [x] T030 [P] [US1] Implement grid view rendering in `Model.View()` in `internal/tui/model.go` — iterate over `m.grid` cells (pre-styled strings set by event handlers), compose into a single string output. Styles are applied at event-handling time rather than render time.
 - [x] T031 [P] [US1] Implement keyboard controls in `Model.Update()` in `internal/tui/model.go` — Enter/Space toggle pause, q/Esc quit, r restarts.
@@ -139,7 +139,7 @@ description: "Task list for Hazard Simulation System - 12 progressive slices for
 - [x] T036 [P] [US1] Implement citizen grid marking/unmarking — mark `CellCitizen` on citizen creation and each move, unmark previous position on departure, wrap in helpers (`markCell`, `unmarkCell`) in `internal/engine/simulation.go`
 - [x] T037 [P] [US1] Define `StaticObstacle` struct (position, size) and `ObstacleConfig` (count range, size range) in `internal/engine/configuration.go`, add obstacles to `SimulationConfig`
 - [x] T038 [US1] Implement obstacle placement — generate random non-overlapping rectangular obstacles during `NewSimulation`, mark cells as `CellObstacle`, validate no overlap with safe zones or other obstacles
-- [x] T039 [P] [US1] Implement `MaxOccupants` and `OccupantIDs` on `SafeZone` struct in `internal/engine/safe_zone.go` — track which citizens are inside, refuse new entries when at capacity
+- [x] T039 [P] [US1] Implement `MaxOccupants` and `OccupantIDs` on `SafeZone` struct in `internal/engine/safezone.go` — track which citizens are inside, refuse new entries when at capacity
 - [x] T040 [US1] Wire capacity checking into citizen path selection and write tests: after pathfinding, check if the nearest safe zone is at capacity; if full, recalculate toward the next-nearest available zone. Tests verify: citizen cells block pathfinding, obstacles block pathfinding and avoid overlap, safe zone capacity prevents overfilling
 
 **Checkpoint**: `go test -v ./internal/pathfinding/ && go test -v ./internal/engine/` passes. Obstacles appear on the grid at startup. Citizens cannot occupy the same cell. Safe zones enforce capacity limits.

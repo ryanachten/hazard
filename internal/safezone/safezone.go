@@ -1,5 +1,5 @@
-// Package safe_zone defines safe zone entities for citizens to reach
-package safe_zone
+// Package safezone defines safe zone entities for citizens to reach
+package safezone
 
 import (
 	pf "hazard/internal/pathfinding"

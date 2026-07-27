@@ -1,4 +1,4 @@
-package safe_zone
+package safezone
 
 import (
 	pf "hazard/internal/pathfinding"

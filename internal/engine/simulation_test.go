@@ -8,7 +8,7 @@ import (
 	o "hazard/internal/obstacle"
 	pf "hazard/internal/pathfinding"
 	r "hazard/internal/ranging"
-	sz "hazard/internal/safe_zone"
+	sz "hazard/internal/safezone"
 	"testing"
 
 	"github.com/google/uuid"

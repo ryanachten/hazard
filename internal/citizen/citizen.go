@@ -5,7 +5,7 @@ import (
 	"fmt"
 	pf "hazard/internal/pathfinding"
 	"hazard/internal/random"
-	sz "hazard/internal/safe_zone"
+	sz "hazard/internal/safezone"
 	"log/slog"
 
 	"github.com/google/uuid"

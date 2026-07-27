@@ -7,7 +7,7 @@ import (
 	h "hazard/internal/hazard"
 	o "hazard/internal/obstacle"
 	pf "hazard/internal/pathfinding"
-	sz "hazard/internal/safe_zone"
+	sz "hazard/internal/safezone"
 	"log/slog"
 	"math/rand"
 	"slices"

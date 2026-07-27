@@ -1,6 +1,11 @@
 package engine
 
 import (
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"hazard/internal/bounds"
 	"hazard/internal/citizen"
 	"hazard/internal/configuration"
@@ -8,10 +13,6 @@ import (
 	"hazard/internal/hazard"
 	"hazard/internal/pathfinding"
 	"hazard/internal/safezone"
-	"testing"
-
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 )
 
 func newTestSim() (Simulation, error) {
@@ -68,7 +69,7 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 		},
 	}
 
-	hazard := hazard.Hazard{
+	hz := hazard.Hazard{
 		ID:            uuid.New(),
 		Type:          hazard.FloodHazard,
 		CreatedAt:     0,
@@ -77,7 +78,7 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 		CurrentRadius: 0,
 	}
 	sim.Grid.UpdateCell(pathfinding.Position{X: 5, Y: 5}, pathfinding.CellHazard)
-	sim.Hazards = append(sim.Hazards, hazard)
+	sim.Hazards = append(sim.Hazards, hz)
 
 	require.Len(t, sim.Hazards, 1)
 

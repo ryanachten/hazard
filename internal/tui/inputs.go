@@ -1,14 +1,15 @@
 package tui
 
 import (
-	"hazard/internal/configuration"
-	"hazard/internal/events"
 	"log/slog"
 	"strconv"
 	"strings"
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
+
+	"hazard/internal/configuration"
+	"hazard/internal/events"
 )
 
 var inputWidth = 20
@@ -80,17 +81,17 @@ func (ic *InputController) Update(msg tea.Msg, focusInputID string) tea.Cmd {
 	if focusInputID != ic.prevFocusInputID {
 		_, ok := ic.inputs[ic.prevFocusInputID]
 		if ok {
-			input := ic.inputs[ic.prevFocusInputID]
-			input.callback()
-			input.model.Blur()
-			ic.inputs[ic.prevFocusInputID] = input
+			entry := ic.inputs[ic.prevFocusInputID]
+			entry.callback()
+			entry.model.Blur()
+			ic.inputs[ic.prevFocusInputID] = entry
 		}
 
 		_, ok = ic.inputs[focusInputID]
 		if ok {
-			input := ic.inputs[focusInputID]
-			input.model.Focus()
-			ic.inputs[focusInputID] = input
+			entry := ic.inputs[focusInputID]
+			entry.model.Focus()
+			ic.inputs[focusInputID] = entry
 			ic.prevFocusInputID = focusInputID
 		}
 	}
@@ -100,9 +101,9 @@ func (ic *InputController) Update(msg tea.Msg, focusInputID string) tea.Cmd {
 	for i, id := range ic.InputIDs {
 		var model textinput.Model
 		model, cmds[i] = ic.inputs[id].model.Update(msg)
-		input := ic.inputs[id]
-		input.model = model
-		ic.inputs[id] = input
+		entry := ic.inputs[id]
+		entry.model = model
+		ic.inputs[id] = entry
 	}
 
 	return tea.Batch(cmds...)

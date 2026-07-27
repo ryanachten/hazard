@@ -1,12 +1,13 @@
 package citizen
 
 import (
-	"hazard/internal/pathfinding"
-	"hazard/internal/safezone"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"hazard/internal/pathfinding"
+	"hazard/internal/safezone"
 )
 
 func TestCreateCitizens_PlacedOnOpenGridCells(t *testing.T) {

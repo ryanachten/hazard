@@ -44,7 +44,7 @@ func FindPath(grid *Grid, from, to Position) ([]Position, error) {
 
 	// Process queue until we have determined distances
 	for pq.Len() > 0 {
-		curItem := heap.Pop(&pq).(*Item)
+		curItem, _ := heap.Pop(&pq).(*Item)
 		curPos := curItem.value
 
 		if curPos == to {

@@ -2,11 +2,12 @@
 package obstacle
 
 import (
-	"hazard/internal/bounds"
-	"hazard/internal/pathfinding"
 	"log/slog"
 
 	"github.com/google/uuid"
+
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 )
 
 // Config configures simulation obstacles

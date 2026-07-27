@@ -1,15 +1,16 @@
 package events
 
 import (
-	"hazard/internal/citizen"
-	"hazard/internal/hazard"
-	"hazard/internal/pathfinding"
-	"hazard/internal/safezone"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"hazard/internal/citizen"
+	"hazard/internal/hazard"
+	"hazard/internal/pathfinding"
+	"hazard/internal/safezone"
 )
 
 func TestCreateEventBus_InitializesFields(t *testing.T) {

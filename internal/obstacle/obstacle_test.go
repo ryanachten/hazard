@@ -1,11 +1,12 @@
 package obstacle
 
 import (
-	"hazard/internal/bounds"
-	"hazard/internal/pathfinding"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 )
 
 func newGridWithSafeZone(width, height int) *pathfinding.Grid {

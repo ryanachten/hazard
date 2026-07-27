@@ -2,12 +2,13 @@
 package safezone
 
 import (
-	"hazard/internal/bounds"
-	"hazard/internal/pathfinding"
 	"log/slog"
 	"maps"
 
 	"github.com/google/uuid"
+
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 )
 
 // Config configures simulation safe zones

@@ -1,13 +1,14 @@
 package tui
 
 import (
+	"log/slog"
+
+	"github.com/google/uuid"
+
 	"hazard/internal/events"
 	"hazard/internal/hazard"
 	"hazard/internal/pathfinding"
 	"hazard/internal/random"
-	"log/slog"
-
-	"github.com/google/uuid"
 )
 
 func (m *Model) handleSimulationCreated(event events.SimulationEvent) {

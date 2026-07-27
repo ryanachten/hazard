@@ -3,15 +3,16 @@ package main
 
 import (
 	"context"
-	"hazard/internal/configuration"
-	"hazard/internal/engine"
-	"hazard/internal/events"
-	"hazard/internal/tui"
 	"log/slog"
 	"os"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+
+	"hazard/internal/configuration"
+	"hazard/internal/engine"
+	"hazard/internal/events"
+	"hazard/internal/tui"
 )
 
 var debugFilename = "debug.log"
@@ -19,8 +20,7 @@ var debugFilename = "debug.log"
 func main() {
 	// Validate configuration
 	config := configuration.DefaultConfig
-	err := config.Validate()
-	if err != nil {
+	if err := config.Validate(); err != nil {
 		slog.Error("error validating config", "err", err)
 		os.Exit(1)
 	}

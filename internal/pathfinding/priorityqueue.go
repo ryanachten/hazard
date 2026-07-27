@@ -31,7 +31,7 @@ func (pq PriorityQueue) Swap(i, j int) {
 // Push an item to the queue
 func (pq *PriorityQueue) Push(x any) {
 	n := len(*pq)
-	item := x.(*Item)
+	item, _ := x.(*Item) //nolint:errcheck // heap.Interface contract guarantees *Item
 	item.index = n
 	*pq = append(*pq, item)
 }

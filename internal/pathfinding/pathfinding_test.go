@@ -216,9 +216,9 @@ func TestFindPath_AvoidsCellDeadCitizen(t *testing.T) {
 	// CellDeadCitizen is NOT in AvoidableCellType, so pathfinding should pass through it.
 	// Bottleneck grid: only route from (0,0) to (2,2) passes through (1,1).
 	//
-	//	O X O
-	//	O . O
-	//	O X O
+	//	O X O //nolint:dupword // ASCII art grid diagram
+	//	O . O //nolint:dupword // ASCII art grid diagram
+	//	O X O //nolint:dupword // ASCII art grid diagram
 	grid := NewGrid(3, 3, CellOpen)
 	grid.Cells[0][1] = CellObstacle
 	grid.Cells[1][1] = CellDeadCitizen

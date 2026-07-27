@@ -2,14 +2,15 @@
 package events
 
 import (
+	"time"
+
+	"github.com/google/uuid"
+
 	"hazard/internal/citizen"
 	"hazard/internal/hazard"
 	"hazard/internal/obstacle"
 	"hazard/internal/pathfinding"
 	"hazard/internal/safezone"
-	"time"
-
-	"github.com/google/uuid"
 )
 
 // SimulationEvent represents a domain event that occurred during a simulation
@@ -65,8 +66,8 @@ type SimulationCreatedPayload struct {
 // SimulationCreated raised when simulation starts
 func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata EventMetadata) {
 	citizenSnapshot := make([]citizen.Citizen, len(payload.Citizens))
-	for i, citizen := range payload.Citizens {
-		citizenSnapshot[i] = citizen.Copy()
+	for i, c := range payload.Citizens {
+		citizenSnapshot[i] = c.Copy()
 	}
 
 	safeZoneSnapshot := make([]*safezone.SafeZone, len(payload.SafeZones))
@@ -76,8 +77,8 @@ func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata 
 	}
 
 	obstacleSnapshot := make([]obstacle.Obstacle, len(payload.Obstacles))
-	for i, obstacle := range payload.Obstacles {
-		obstacleSnapshot[i] = obstacle.Copy()
+	for i, o := range payload.Obstacles {
+		obstacleSnapshot[i] = o.Copy()
 	}
 
 	e.createEvent(SimulationCreated, metadata.SimulationID, metadata, SimulationCreatedPayload{

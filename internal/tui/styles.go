@@ -1,9 +1,9 @@
 package tui
 
 import (
-	"hazard/internal/random"
-
 	"charm.land/lipgloss/v2"
+
+	"hazard/internal/random"
 )
 
 var citizenStyle = lipgloss.NewStyle().

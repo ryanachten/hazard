@@ -2,8 +2,8 @@
 package obstacle
 
 import (
-	pf "hazard/internal/pathfinding"
-	r "hazard/internal/ranging"
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -11,18 +11,18 @@ import (
 
 // Config configures simulation obstacles
 type Config struct {
-	CountRange r.Range
-	SizeRange  r.PositiveRange
+	CountRange bounds.Range
+	SizeRange  bounds.PositiveRange
 }
 
 // Obstacle like a building which must be avoided but can be destroyed
 type Obstacle struct {
 	ID    uuid.UUID
-	Cells []pf.Position
+	Cells []pathfinding.Position
 }
 
 // CreateObstacles randomly on a grid
-func CreateObstacles(config Config, grid *pf.Grid) []Obstacle {
+func CreateObstacles(config Config, grid *pathfinding.Grid) []Obstacle {
 	obstacleCount := config.CountRange.Random()
 	var obstacles []Obstacle
 
@@ -37,12 +37,12 @@ func CreateObstacles(config Config, grid *pf.Grid) []Obstacle {
 		}
 
 		// Mark all open cells as part of the obstacle
-		var cells []pf.Position
+		var cells []pathfinding.Position
 		for dx := -width; dx <= width; dx++ {
 			for dy := -height; dy <= height; dy++ {
-				pos := pf.Position{X: origin.X + dx, Y: origin.Y + dy}
-				if grid.InBounds(pos) && grid.GetCell(pos) == pf.CellOpen {
-					grid.UpdateCell(pos, pf.CellObstacle)
+				pos := pathfinding.Position{X: origin.X + dx, Y: origin.Y + dy}
+				if grid.InBounds(pos) && grid.GetCell(pos) == pathfinding.CellOpen {
+					grid.UpdateCell(pos, pathfinding.CellObstacle)
 					cells = append(cells, pos)
 				}
 			}
@@ -59,7 +59,7 @@ func CreateObstacles(config Config, grid *pf.Grid) []Obstacle {
 
 // Copy creates a copy of an obstacle
 func (o *Obstacle) Copy() Obstacle {
-	cells := make([]pf.Position, len(o.Cells))
+	cells := make([]pathfinding.Position, len(o.Cells))
 	copy(cells, o.Cells)
 
 	return Obstacle{

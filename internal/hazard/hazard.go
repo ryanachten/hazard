@@ -2,8 +2,8 @@
 package hazard
 
 import (
-	pf "hazard/internal/pathfinding"
-	r "hazard/internal/ranging"
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 	"math/rand/v2"
 
 	"github.com/google/uuid"
@@ -13,7 +13,7 @@ import (
 type Config struct {
 	Probability   float32
 	Count         int
-	DurationRange r.PositiveRange
+	DurationRange bounds.PositiveRange
 }
 
 // Hazard in a simulation
@@ -22,7 +22,7 @@ type Hazard struct {
 	Type          Type
 	CreatedAt     uint64
 	Duration      int
-	Origin        pf.Position
+	Origin        pathfinding.Position
 	CurrentRadius int
 }
 
@@ -57,7 +57,7 @@ var hazardTypes = []Type{
 }
 
 // Create creates a new hazard at a random open position on the grid
-func Create(config Config, grid *pf.Grid) (Hazard, error) {
+func Create(config Config, grid *pathfinding.Grid) (Hazard, error) {
 	duration := config.DurationRange.Random()
 
 	origin, err := grid.GetRandomOpenPosition(0, 0, grid.Width-1, grid.Height-1)
@@ -65,7 +65,7 @@ func Create(config Config, grid *pf.Grid) (Hazard, error) {
 		return Hazard{}, err
 	}
 
-	grid.UpdateCell(origin, pf.CellHazard)
+	grid.UpdateCell(origin, pathfinding.CellHazard)
 
 	hazard := Hazard{
 		ID:       uuid.New(),
@@ -78,33 +78,33 @@ func Create(config Config, grid *pf.Grid) (Hazard, error) {
 }
 
 // expandTypes define what cells can be overwritten during expansion
-var expandTypes = map[pf.CellType]struct{}{
-	pf.CellOpen:    {},
-	pf.CellCitizen: {},
+var expandTypes = map[pathfinding.CellType]struct{}{
+	pathfinding.CellOpen:    {},
+	pathfinding.CellCitizen: {},
 }
 
 // Expand increases the hazard radius and marks affected cells on the grid
-func (h *Hazard) Expand(grid *pf.Grid) []pf.Position {
+func (h *Hazard) Expand(grid *pathfinding.Grid) []pathfinding.Position {
 	h.CurrentRadius++
-	return h.updateCells(grid, expandTypes, pf.CellHazard)
+	return h.updateCells(grid, expandTypes, pathfinding.CellHazard)
 }
 
 // removalTypes define what cells can be overwritten during removal
-var removalTypes = map[pf.CellType]struct{}{
-	pf.CellHazard: {},
+var removalTypes = map[pathfinding.CellType]struct{}{
+	pathfinding.CellHazard: {},
 }
 
 // Remove clears the hazard's cells from the grid
-func (h *Hazard) Remove(grid *pf.Grid) []pf.Position {
-	return h.updateCells(grid, removalTypes, pf.CellOpen)
+func (h *Hazard) Remove(grid *pathfinding.Grid) []pathfinding.Position {
+	return h.updateCells(grid, removalTypes, pathfinding.CellOpen)
 }
 
-func (h *Hazard) updateCells(grid *pf.Grid, oldTypes map[pf.CellType]struct{}, newType pf.CellType) []pf.Position {
-	updatedCells := []pf.Position{}
+func (h *Hazard) updateCells(grid *pathfinding.Grid, oldTypes map[pathfinding.CellType]struct{}, newType pathfinding.CellType) []pathfinding.Position {
+	updatedCells := []pathfinding.Position{}
 
 	for dx := -h.CurrentRadius; dx <= h.CurrentRadius; dx++ {
 		for dy := -h.CurrentRadius; dy <= h.CurrentRadius; dy++ {
-			pos := pf.Position{X: h.Origin.X + dx, Y: h.Origin.Y + dy}
+			pos := pathfinding.Position{X: h.Origin.X + dx, Y: h.Origin.Y + dy}
 			if grid.InBounds(pos) {
 				if _, validType := oldTypes[grid.GetCell(pos)]; validType {
 					grid.UpdateCell(pos, newType)

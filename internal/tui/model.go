@@ -2,8 +2,8 @@
 package tui
 
 import (
-	e "hazard/internal/events"
-	pf "hazard/internal/pathfinding"
+	"hazard/internal/events"
+	"hazard/internal/pathfinding"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -12,7 +12,7 @@ import (
 )
 
 type citizenState struct {
-	Position     pf.Position
+	Position     pathfinding.Position
 	SafeZoneID   uuid.UUID
 	PreviousCell string
 }
@@ -26,8 +26,8 @@ type Model struct {
 	deadCitizenCount    int
 	activeCitizenCount  int
 	hazards             map[uuid.UUID]string
-	safeZones           map[uuid.UUID][]pf.Position
-	eventBus            *e.EventBus
+	safeZones           map[uuid.UUID][]pathfinding.Position
+	eventBus            *events.EventBus
 	width               int
 	height              int
 	focusIndex          int
@@ -39,7 +39,7 @@ type Model struct {
 var sidebarWidth = 35
 
 // InitialModel creates the initial TUI model state
-func InitialModel(eventBus *e.EventBus) Model {
+func InitialModel(eventBus *events.EventBus) Model {
 	inputs := InitialiseController(eventBus)
 	focusTargets := 1 + len(inputs.inputs)
 
@@ -47,7 +47,7 @@ func InitialModel(eventBus *e.EventBus) Model {
 		grid:         [][]string{},
 		citizens:     map[uuid.UUID]citizenState{},
 		hazards:      map[uuid.UUID]string{},
-		safeZones:    map[uuid.UUID][]pf.Position{},
+		safeZones:    map[uuid.UUID][]pathfinding.Position{},
 		eventBus:     eventBus,
 		focusIndex:   0,
 		focusTargets: focusTargets,
@@ -109,39 +109,39 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.height = msg.Height
 
-		m.eventBus.InitialiseSimulation(e.InitialiseSimulationPayload{
+		m.eventBus.InitialiseSimulation(events.InitialiseSimulationPayload{
 			Width:  m.width,
 			Height: m.height,
 		})
 		return m, nil
 
-	case e.SimulationEvent:
-		event := e.SimulationEvent(msg)
+	case events.SimulationEvent:
+		event := events.SimulationEvent(msg)
 
 		// Skip processing any events where the simulation ID doesn't match the current simulation
 		// this avoids processing stale events
-		if event.EventType != e.SimulationCreated && event.SimulationID != m.simulationID {
+		if event.EventType != events.SimulationCreated && event.SimulationID != m.simulationID {
 			return m, m.consumeSimulationEvent
 		}
 
 		switch event.EventType {
-		case e.SimulationCreated:
+		case events.SimulationCreated:
 			m.handleSimulationCreated(event)
-		case e.SimulationCompleted:
+		case events.SimulationCompleted:
 			return m, tea.Quit
-		case e.CitizenMoved:
+		case events.CitizenMoved:
 			m.handleCitizenMoved(event)
-		case e.CitizenDied:
+		case events.CitizenDied:
 			m.handleCitizenDied(event)
-		case e.SafeZoneEmerged:
+		case events.SafeZoneEmerged:
 			m.handleSafeZoneEmerged(event)
-		case e.CitizenEscaped:
+		case events.CitizenEscaped:
 			m.handleCitizenEscaped(event)
-		case e.HazardEmerged:
+		case events.HazardEmerged:
 			m.handleHazardEmerged(event)
-		case e.HazardExpanded:
+		case events.HazardExpanded:
 			m.handleHazardExpanded(event)
-		case e.HazardDissipated:
+		case events.HazardDissipated:
 			m.handleHazardDissipated(event)
 		}
 
@@ -171,7 +171,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "r":
 			m.simulationID = uuid.Nil
-			m.eventBus.InitialiseSimulation(e.InitialiseSimulationPayload{
+			m.eventBus.InitialiseSimulation(events.InitialiseSimulationPayload{
 				Width:  m.width,
 				Height: m.height,
 			})

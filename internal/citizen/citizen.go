@@ -3,9 +3,9 @@ package citizen
 
 import (
 	"fmt"
-	pf "hazard/internal/pathfinding"
+	"hazard/internal/pathfinding"
 	"hazard/internal/random"
-	sz "hazard/internal/safezone"
+	"hazard/internal/safezone"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -15,12 +15,12 @@ import (
 type Citizen struct {
 	ID                 uuid.UUID
 	Status             Status
-	CurrentPosition    pf.Position
-	CurrentDestination pf.Position
-	TargetSafeZone     *sz.SafeZone
-	Path               []pf.Position
+	CurrentPosition    pathfinding.Position
+	CurrentDestination pathfinding.Position
+	TargetSafeZone     *safezone.SafeZone
+	Path               []pathfinding.Position
 	CurrentPathIndex   int
-	PreviousCellType   pf.CellType
+	PreviousCellType   pathfinding.CellType
 }
 
 // Status defines the state of citizen activity
@@ -38,7 +38,7 @@ const (
 )
 
 // CreateCitizens instantiates citizens in a grid
-func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Position]*sz.SafeZone) []Citizen {
+func CreateCitizens(citizenCount int, grid *pathfinding.Grid, safeZoneLocations map[pathfinding.Position]*safezone.SafeZone) []Citizen {
 	citizens := make([]Citizen, 0, citizenCount)
 
 	for range citizenCount {
@@ -62,7 +62,7 @@ func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Po
 		}
 
 		citizen.PreviousCellType = grid.GetCell(startPosition)
-		grid.UpdateCell(startPosition, pf.CellCitizen)
+		grid.UpdateCell(startPosition, pathfinding.CellCitizen)
 
 		citizens = append(citizens, citizen)
 	}
@@ -71,9 +71,9 @@ func CreateCitizens(citizenCount int, grid *pf.Grid, safeZoneLocations map[pf.Po
 }
 
 // FindNearestSafeZone finds a path from the citizen's current position to the nearest safe zone with capacity
-func (c *Citizen) FindNearestSafeZone(grid *pf.Grid, safeZoneLocations map[pf.Position]*sz.SafeZone) error {
-	isGoal := func(pos pf.Position) bool {
-		if grid.GetCell(pos) != pf.CellSafeZone {
+func (c *Citizen) FindNearestSafeZone(grid *pathfinding.Grid, safeZoneLocations map[pathfinding.Position]*safezone.SafeZone) error {
+	isGoal := func(pos pathfinding.Position) bool {
+		if grid.GetCell(pos) != pathfinding.CellSafeZone {
 			return false
 		}
 		safeZone, ok := safeZoneLocations[pos]
@@ -82,7 +82,7 @@ func (c *Citizen) FindNearestSafeZone(grid *pf.Grid, safeZoneLocations map[pf.Po
 		}
 		return safeZone.HasCapacity
 	}
-	path, err := pf.FindPathToGoal(grid, c.CurrentPosition, isGoal)
+	path, err := pathfinding.FindPathToGoal(grid, c.CurrentPosition, isGoal)
 
 	if err != nil {
 		return err
@@ -102,8 +102,8 @@ func (c *Citizen) FindNearestSafeZone(grid *pf.Grid, safeZoneLocations map[pf.Po
 }
 
 // RecalculatePath recalculates the path from the citizen's current position to their destination
-func (c *Citizen) RecalculatePath(grid *pf.Grid) error {
-	path, err := pf.FindPath(grid, c.CurrentPosition, c.CurrentDestination)
+func (c *Citizen) RecalculatePath(grid *pathfinding.Grid) error {
+	path, err := pathfinding.FindPath(grid, c.CurrentPosition, c.CurrentDestination)
 	if err != nil {
 		return fmt.Errorf("pathfinding failed: %w", err)
 	}
@@ -114,7 +114,7 @@ func (c *Citizen) RecalculatePath(grid *pf.Grid) error {
 }
 
 // IncrementLocation moves the citizen one step along their path and updates their status
-func (c *Citizen) IncrementLocation(grid *pf.Grid) (bool, bool) {
+func (c *Citizen) IncrementLocation(grid *pathfinding.Grid) (bool, bool) {
 
 	if c.Status == StatusEscaped || c.Status == StatusDead {
 		return false, c.Status == StatusEscaped
@@ -138,16 +138,16 @@ func (c *Citizen) IncrementLocation(grid *pf.Grid) (bool, bool) {
 }
 
 // randomWalk walks 1 step in a random direction
-func (c *Citizen) randomWalk(grid *pf.Grid) bool {
+func (c *Citizen) randomWalk(grid *pathfinding.Grid) bool {
 	curPos := c.CurrentPosition
-	var validDirections []pf.Position
+	var validDirections []pathfinding.Position
 
-	for _, direction := range pf.Directions {
-		dir := pf.Position{
+	for _, direction := range pathfinding.Directions {
+		dir := pathfinding.Position{
 			X: curPos.X + direction.X,
 			Y: curPos.Y + direction.Y,
 		}
-		if grid.InBounds(dir) && !pf.AvoidableCellType[grid.GetCell(dir)] {
+		if grid.InBounds(dir) && !pathfinding.AvoidableCellType[grid.GetCell(dir)] {
 			validDirections = append(validDirections, dir)
 		}
 	}
@@ -162,18 +162,18 @@ func (c *Citizen) randomWalk(grid *pf.Grid) bool {
 	return true
 }
 
-func (c *Citizen) updatePosition(newPos pf.Position, grid *pf.Grid) {
+func (c *Citizen) updatePosition(newPos pathfinding.Position, grid *pathfinding.Grid) {
 	grid.UpdateCell(c.CurrentPosition, c.PreviousCellType)
 
 	c.CurrentPosition = newPos
 
 	c.PreviousCellType = grid.GetCell(c.CurrentPosition)
-	grid.UpdateCell(c.CurrentPosition, pf.CellCitizen)
+	grid.UpdateCell(c.CurrentPosition, pathfinding.CellCitizen)
 }
 
 // Copy returns a deep copy of the Citizen
 func (c *Citizen) Copy() Citizen {
-	path := make([]pf.Position, len(c.Path))
+	path := make([]pathfinding.Position, len(c.Path))
 	copy(path, c.Path)
 	return Citizen{
 		ID:                 c.ID,

@@ -2,8 +2,8 @@
 package safezone
 
 import (
-	pf "hazard/internal/pathfinding"
-	r "hazard/internal/ranging"
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 	"log/slog"
 	"maps"
 
@@ -14,22 +14,22 @@ import (
 type Config struct {
 	Probability float32
 	Count       int
-	RadiusRange r.Range
+	RadiusRange bounds.Range
 }
 
 // SafeZone represents an area safe from hazards for citizens to navigate to
 type SafeZone struct {
 	ID            uuid.UUID
-	Position      pf.Position
+	Position      pathfinding.Position
 	Radius        int
-	Cells         []pf.Position
+	Cells         []pathfinding.Position
 	HasCapacity   bool
 	Occupants     []uuid.UUID
-	occupiedCells map[pf.Position]bool
+	occupiedCells map[pathfinding.Position]bool
 }
 
 // Create creates a safe zone at a random open position with a random radius
-func Create(config Config, grid *pf.Grid) (SafeZone, error) {
+func Create(config Config, grid *pathfinding.Grid) (SafeZone, error) {
 	radius := config.RadiusRange.Random()
 
 	origin, err := grid.GetRandomOpenPosition(radius, radius, grid.Width-1-radius, grid.Height-1-radius)
@@ -38,12 +38,12 @@ func Create(config Config, grid *pf.Grid) (SafeZone, error) {
 	}
 
 	// Mark all open cells as part of the safe zone
-	var cells []pf.Position
+	var cells []pathfinding.Position
 	for dx := -radius; dx <= radius; dx++ {
 		for dy := -radius; dy <= radius; dy++ {
-			pos := pf.Position{X: origin.X + dx, Y: origin.Y + dy}
-			if grid.InBounds(pos) && grid.GetCell(pos) == pf.CellOpen {
-				grid.UpdateCell(pos, pf.CellSafeZone)
+			pos := pathfinding.Position{X: origin.X + dx, Y: origin.Y + dy}
+			if grid.InBounds(pos) && grid.GetCell(pos) == pathfinding.CellOpen {
+				grid.UpdateCell(pos, pathfinding.CellSafeZone)
 				cells = append(cells, pos)
 			}
 		}
@@ -60,20 +60,20 @@ func Create(config Config, grid *pf.Grid) (SafeZone, error) {
 		Cells:         cells,
 		HasCapacity:   true,
 		Occupants:     []uuid.UUID{},
-		occupiedCells: map[pf.Position]bool{},
+		occupiedCells: map[pathfinding.Position]bool{},
 	}, nil
 }
 
 // AddOccupant adds a citizen to the safe zone, marking their cell as occupied.
 // It first tries the citizen's arrival cell; if it's already taken, the first free cell is used.
 // Returns the assigned position and whether the citizen was admitted.
-func (s *SafeZone) AddOccupant(citizenID uuid.UUID, position pf.Position, grid *pf.Grid) (pf.Position, bool) {
+func (s *SafeZone) AddOccupant(citizenID uuid.UUID, position pathfinding.Position, grid *pathfinding.Grid) (pathfinding.Position, bool) {
 	if !s.HasCapacity {
-		return pf.Position{}, false
+		return pathfinding.Position{}, false
 	}
 
 	if s.occupiedCells == nil {
-		s.occupiedCells = make(map[pf.Position]bool)
+		s.occupiedCells = make(map[pathfinding.Position]bool)
 	}
 
 	assignPos := position
@@ -87,13 +87,13 @@ func (s *SafeZone) AddOccupant(citizenID uuid.UUID, position pf.Position, grid *
 			}
 		}
 		if !found {
-			return pf.Position{}, false
+			return pathfinding.Position{}, false
 		}
 	}
 
 	s.Occupants = append(s.Occupants, citizenID)
 	s.occupiedCells[assignPos] = true
-	grid.UpdateCell(assignPos, pf.CellEscapedCitizen)
+	grid.UpdateCell(assignPos, pathfinding.CellEscapedCitizen)
 
 	if len(s.Occupants) == len(s.Cells) {
 		s.HasCapacity = false
@@ -104,15 +104,15 @@ func (s *SafeZone) AddOccupant(citizenID uuid.UUID, position pf.Position, grid *
 
 // Copy returns a deep copy of the SafeZone
 func (s *SafeZone) Copy() SafeZone {
-	cells := make([]pf.Position, len(s.Cells))
+	cells := make([]pathfinding.Position, len(s.Cells))
 	copy(cells, s.Cells)
 
 	occupants := make([]uuid.UUID, len(s.Occupants))
 	copy(occupants, s.Occupants)
 
-	var occupiedCells map[pf.Position]bool
+	var occupiedCells map[pathfinding.Position]bool
 	if s.occupiedCells != nil {
-		occupiedCells = make(map[pf.Position]bool, len(s.occupiedCells))
+		occupiedCells = make(map[pathfinding.Position]bool, len(s.occupiedCells))
 		maps.Copy(occupiedCells, s.occupiedCells)
 	}
 

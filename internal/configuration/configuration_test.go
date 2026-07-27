@@ -1,10 +1,10 @@
 package configuration
 
 import (
-	h "hazard/internal/hazard"
-	o "hazard/internal/obstacle"
-	r "hazard/internal/ranging"
-	sz "hazard/internal/safezone"
+	"hazard/internal/bounds"
+	"hazard/internal/hazard"
+	"hazard/internal/obstacle"
+	"hazard/internal/safezone"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,18 +13,18 @@ import (
 func TestSimulationConfig_Validate(t *testing.T) {
 	validConfig := SimulationConfig{
 		CitizenCount: 5,
-		Hazard: h.Config{
-			DurationRange: r.PositiveRange{Min: 1, Max: 10},
+		Hazard: hazard.Config{
+			DurationRange: bounds.PositiveRange{Min: 1, Max: 10},
 			Count:         5,
 			Probability:   0.5,
 		},
-		SafeZone: sz.Config{
+		SafeZone: safezone.Config{
 			Count:       1,
-			RadiusRange: r.Range{Min: 1, Max: 1},
+			RadiusRange: bounds.Range{Min: 1, Max: 1},
 		},
-		Obstacle: o.Config{
-			CountRange: r.Range{Min: 1, Max: 5},
-			SizeRange:  r.PositiveRange{Min: 2, Max: 5},
+		Obstacle: obstacle.Config{
+			CountRange: bounds.Range{Min: 1, Max: 5},
+			SizeRange:  bounds.PositiveRange{Min: 2, Max: 5},
 		},
 	}
 

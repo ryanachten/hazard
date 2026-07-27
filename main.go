@@ -3,7 +3,7 @@ package main
 
 import (
 	"context"
-	cfg "hazard/internal/configuration"
+	"hazard/internal/configuration"
 	"hazard/internal/engine"
 	"hazard/internal/events"
 	"hazard/internal/tui"
@@ -18,7 +18,7 @@ import (
 var debugFilename = "debug.log"
 
 func main() {
-	config := cfg.DefaultConfig
+	config := configuration.DefaultConfig
 
 	err := config.Validate()
 	if err != nil {

@@ -1,10 +1,10 @@
 package events
 
 import (
-	c "hazard/internal/citizen"
-	h "hazard/internal/hazard"
-	pf "hazard/internal/pathfinding"
-	sz "hazard/internal/safezone"
+	"hazard/internal/citizen"
+	"hazard/internal/hazard"
+	"hazard/internal/pathfinding"
+	"hazard/internal/safezone"
 	"testing"
 	"time"
 
@@ -34,7 +34,7 @@ func TestEventLog_AccumulatesEvents(t *testing.T) {
 	meta := EventMetadata{SimulationID: simID, Tick: 0}
 
 	bus.SimulationCreated(SimulationCreatedPayload{}, meta)
-	bus.CitizenMoved(uuid.New(), pf.Position{}, EventMetadata{SimulationID: simID, Tick: 1})
+	bus.CitizenMoved(uuid.New(), pathfinding.Position{}, EventMetadata{SimulationID: simID, Tick: 1})
 
 	require.Len(t, bus.EventLog, 2)
 }
@@ -42,11 +42,11 @@ func TestEventLog_AccumulatesEvents(t *testing.T) {
 func TestSimulationCreated_StoresCorrectType(t *testing.T) {
 	bus := New()
 	simID := uuid.New()
-	grid := pf.NewGrid(3, 3, pf.CellOpen)
+	grid := pathfinding.NewGrid(3, 3, pathfinding.CellOpen)
 	payload := SimulationCreatedPayload{
 		Grid:      grid.Copy(),
-		Citizens:  []c.Citizen{},
-		SafeZones: []sz.SafeZone{},
+		Citizens:  []citizen.Citizen{},
+		SafeZones: []safezone.SafeZone{},
 	}
 
 	bus.SimulationCreated(payload, EventMetadata{SimulationID: simID, Tick: 0})
@@ -73,8 +73,8 @@ func TestSimulationCompleted_StoresCorrectType(t *testing.T) {
 func TestHazardEmerged_StoresPayload(t *testing.T) {
 	bus := New()
 	hazardID := uuid.New()
-	hazardType := h.FireHazard
-	pos := pf.Position{X: 3, Y: 4}
+	hazardType := hazard.FireHazard
+	pos := pathfinding.Position{X: 3, Y: 4}
 
 	bus.HazardEmerged(hazardID, HazardEmergedPayload{Type: hazardType, Position: pos},
 		EventMetadata{SimulationID: uuid.New(), Tick: 1})
@@ -93,7 +93,7 @@ func TestHazardEmerged_StoresPayload(t *testing.T) {
 func TestHazardExpanded_StoresUpdatedCells(t *testing.T) {
 	bus := New()
 	hazardID := uuid.New()
-	cells := []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}}
+	cells := []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}}
 
 	bus.HazardExpanded(hazardID, cells, EventMetadata{SimulationID: uuid.New(), Tick: 2})
 
@@ -102,7 +102,7 @@ func TestHazardExpanded_StoresUpdatedCells(t *testing.T) {
 	require.Equal(t, HazardExpanded, evt.EventType)
 	require.Equal(t, hazardID, evt.EntityID)
 
-	storedCells, ok := evt.Payload.([]pf.Position)
+	storedCells, ok := evt.Payload.([]pathfinding.Position)
 	require.True(t, ok)
 	require.Equal(t, cells, storedCells)
 }
@@ -110,7 +110,7 @@ func TestHazardExpanded_StoresUpdatedCells(t *testing.T) {
 func TestHazardDissipated_StoresUpdatedCells(t *testing.T) {
 	bus := New()
 	hazardID := uuid.New()
-	cells := []pf.Position{{X: 5, Y: 5}, {X: 5, Y: 6}}
+	cells := []pathfinding.Position{{X: 5, Y: 5}, {X: 5, Y: 6}}
 
 	bus.HazardDissipated(hazardID, cells, EventMetadata{SimulationID: uuid.New(), Tick: 3})
 
@@ -123,9 +123,9 @@ func TestCitizenEvents_StoreCorrectTypes(t *testing.T) {
 	citizenID := uuid.New()
 	simID := uuid.New()
 
-	bus.CitizenMoved(citizenID, pf.Position{X: 1, Y: 0},
+	bus.CitizenMoved(citizenID, pathfinding.Position{X: 1, Y: 0},
 		EventMetadata{SimulationID: simID, Tick: 1})
-	bus.CitizenPathUpdated(citizenID, []pf.Position{{X: 0, Y: 0}},
+	bus.CitizenPathUpdated(citizenID, []pathfinding.Position{{X: 0, Y: 0}},
 		EventMetadata{SimulationID: simID, Tick: 1})
 	bus.CitizenEscaped(citizenID, CitizenEscapedPayload{
 		SafeZoneID:     uuid.New(),
@@ -147,7 +147,7 @@ func TestCitizenEvents_StoreCorrectTypes(t *testing.T) {
 func TestSafeZoneEmerged_StoresCells(t *testing.T) {
 	bus := New()
 	safeZoneID := uuid.New()
-	cells := []pf.Position{{X: 2, Y: 2}, {X: 3, Y: 2}}
+	cells := []pathfinding.Position{{X: 2, Y: 2}, {X: 3, Y: 2}}
 
 	bus.SafeZoneEmerged(safeZoneID, SafeZoneEmergedPayload{ID: safeZoneID, Cells: cells},
 		EventMetadata{SimulationID: uuid.New(), Tick: 1})

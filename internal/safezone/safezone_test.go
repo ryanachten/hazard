@@ -1,8 +1,8 @@
 package safezone
 
 import (
-	pf "hazard/internal/pathfinding"
-	r "hazard/internal/ranging"
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 	"testing"
 
 	"github.com/google/uuid"
@@ -10,10 +10,10 @@ import (
 )
 
 func TestCreateSafeZone_PlacedAtOpenPosition(t *testing.T) {
-	grid := pf.NewGrid(10, 10, pf.CellOpen)
+	grid := pathfinding.NewGrid(10, 10, pathfinding.CellOpen)
 	config := Config{
 		Count:       1,
-		RadiusRange: r.Range{Min: 1, Max: 1},
+		RadiusRange: bounds.Range{Min: 1, Max: 1},
 	}
 
 	safeZone, err := Create(config, &grid)
@@ -22,16 +22,16 @@ func TestCreateSafeZone_PlacedAtOpenPosition(t *testing.T) {
 	require.True(t, grid.InBounds(safeZone.Position))
 	require.NotEmpty(t, safeZone.Cells)
 	for _, cell := range safeZone.Cells {
-		require.Equal(t, pf.CellSafeZone, grid.GetCell(cell),
+		require.Equal(t, pathfinding.CellSafeZone, grid.GetCell(cell),
 			"cell %v must be marked as safe zone", cell)
 	}
 }
 
 func TestCreateSafeZone_RadiusZeroMarksOnlyOrigin(t *testing.T) {
-	grid := pf.NewGrid(5, 5, pf.CellOpen)
+	grid := pathfinding.NewGrid(5, 5, pathfinding.CellOpen)
 	config := Config{
 		Count:       1,
-		RadiusRange: r.Range{Min: 0, Max: 0},
+		RadiusRange: bounds.Range{Min: 0, Max: 0},
 	}
 
 	safeZone, err := Create(config, &grid)
@@ -39,35 +39,35 @@ func TestCreateSafeZone_RadiusZeroMarksOnlyOrigin(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, safeZone.Cells, 1)
 	require.Equal(t, safeZone.Position, safeZone.Cells[0])
-	require.Equal(t, pf.CellSafeZone, grid.GetCell(safeZone.Position))
+	require.Equal(t, pathfinding.CellSafeZone, grid.GetCell(safeZone.Position))
 }
 
 func TestCreateSafeZone_DoesNotOverwriteNonOpenCells(t *testing.T) {
-	grid := pf.NewGrid(5, 5, pf.CellObstacle)
+	grid := pathfinding.NewGrid(5, 5, pathfinding.CellObstacle)
 	// Only one open cell, forcing the origin to (2,1) with radius 1
-	grid.UpdateCell(pf.Position{X: 2, Y: 1}, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 2, Y: 2}, pf.CellObstacle)
+	grid.UpdateCell(pathfinding.Position{X: 2, Y: 1}, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 2, Y: 2}, pathfinding.CellObstacle)
 	config := Config{
 		Count:       1,
-		RadiusRange: r.Range{Min: 1, Max: 1},
+		RadiusRange: bounds.Range{Min: 1, Max: 1},
 	}
 
 	safeZone, err := Create(config, &grid)
 
 	require.NoError(t, err)
-	require.Equal(t, pf.CellObstacle, grid.GetCell(pf.Position{X: 2, Y: 2}),
+	require.Equal(t, pathfinding.CellObstacle, grid.GetCell(pathfinding.Position{X: 2, Y: 2}),
 		"obstacle cell must not be overwritten by safe zone")
 	for _, cell := range safeZone.Cells {
-		require.NotEqual(t, pf.Position{X: 2, Y: 2}, cell,
+		require.NotEqual(t, pathfinding.Position{X: 2, Y: 2}, cell,
 			"safe zone should not claim obstacle cell")
 	}
 }
 
 func TestCreateSafeZone_ReturnsErrorWhenNoOpenCells(t *testing.T) {
-	grid := pf.NewGrid(4, 4, pf.CellObstacle)
+	grid := pathfinding.NewGrid(4, 4, pathfinding.CellObstacle)
 	config := Config{
 		Count:       1,
-		RadiusRange: r.Range{Min: 1, Max: 1},
+		RadiusRange: bounds.Range{Min: 1, Max: 1},
 	}
 
 	_, err := Create(config, &grid)
@@ -77,10 +77,10 @@ func TestCreateSafeZone_ReturnsErrorWhenNoOpenCells(t *testing.T) {
 }
 
 func TestCreateSafeZone_RadiusMarksMultipleCells(t *testing.T) {
-	grid := pf.NewGrid(5, 5, pf.CellOpen)
+	grid := pathfinding.NewGrid(5, 5, pathfinding.CellOpen)
 	config := Config{
 		Count:       1,
-		RadiusRange: r.Range{Min: 2, Max: 2},
+		RadiusRange: bounds.Range{Min: 2, Max: 2},
 	}
 
 	safeZone, err := Create(config, &grid)
@@ -93,75 +93,75 @@ func TestCreateSafeZone_RadiusMarksMultipleCells(t *testing.T) {
 }
 
 func TestAddOccupant_AdmitsCitizenAndMarksCell(t *testing.T) {
-	grid := pf.NewGrid(3, 3, pf.CellOpen)
+	grid := pathfinding.NewGrid(3, 3, pathfinding.CellOpen)
 	sz := SafeZone{
-		Cells:         []pf.Position{{X: 1, Y: 1}},
+		Cells:         []pathfinding.Position{{X: 1, Y: 1}},
 		HasCapacity:   true,
 		Occupants:     []uuid.UUID{},
-		occupiedCells: map[pf.Position]bool{},
+		occupiedCells: map[pathfinding.Position]bool{},
 	}
 
-	pos, ok := sz.AddOccupant(uuid.New(), pf.Position{X: 1, Y: 1}, &grid)
+	pos, ok := sz.AddOccupant(uuid.New(), pathfinding.Position{X: 1, Y: 1}, &grid)
 
 	require.True(t, ok)
-	require.Equal(t, pf.Position{X: 1, Y: 1}, pos)
+	require.Equal(t, pathfinding.Position{X: 1, Y: 1}, pos)
 	require.Len(t, sz.Occupants, 1)
-	require.Equal(t, pf.CellEscapedCitizen, grid.GetCell(pos))
+	require.Equal(t, pathfinding.CellEscapedCitizen, grid.GetCell(pos))
 }
 
 func TestAddOccupant_DeniesWhenAtCapacity(t *testing.T) {
-	grid := pf.NewGrid(3, 3, pf.CellOpen)
+	grid := pathfinding.NewGrid(3, 3, pathfinding.CellOpen)
 	// Single-cell safe zone, one occupant fills it
-	grid.UpdateCell(pf.Position{X: 1, Y: 1}, pf.CellSafeZone)
+	grid.UpdateCell(pathfinding.Position{X: 1, Y: 1}, pathfinding.CellSafeZone)
 	sz := SafeZone{
-		Cells:         []pf.Position{{X: 1, Y: 1}},
+		Cells:         []pathfinding.Position{{X: 1, Y: 1}},
 		HasCapacity:   true,
 		Occupants:     []uuid.UUID{},
-		occupiedCells: map[pf.Position]bool{},
+		occupiedCells: map[pathfinding.Position]bool{},
 	}
 
 	// First occupant admitted — single-cell zone is now at capacity
-	_, ok := sz.AddOccupant(uuid.New(), pf.Position{X: 1, Y: 1}, &grid)
+	_, ok := sz.AddOccupant(uuid.New(), pathfinding.Position{X: 1, Y: 1}, &grid)
 	require.True(t, ok)
 	require.False(t, sz.HasCapacity, "single-cell zone should be at capacity after first occupant")
 
 	// Second occupant must be denied — zone is full
-	_, ok = sz.AddOccupant(uuid.New(), pf.Position{X: 1, Y: 1}, &grid)
+	_, ok = sz.AddOccupant(uuid.New(), pathfinding.Position{X: 1, Y: 1}, &grid)
 	require.False(t, ok, "single-cell zone with one occupant must deny second entrant")
 	require.False(t, sz.HasCapacity)
 }
 
 func TestAddOccupant_ReassignsCellIfArrivalCellTaken(t *testing.T) {
-	grid := pf.NewGrid(3, 3, pf.CellOpen)
+	grid := pathfinding.NewGrid(3, 3, pathfinding.CellOpen)
 	sz := SafeZone{
-		Cells:         []pf.Position{{X: 1, Y: 1}, {X: 2, Y: 1}},
+		Cells:         []pathfinding.Position{{X: 1, Y: 1}, {X: 2, Y: 1}},
 		HasCapacity:   true,
 		Occupants:     []uuid.UUID{},
-		occupiedCells: map[pf.Position]bool{},
+		occupiedCells: map[pathfinding.Position]bool{},
 	}
 
 	// First occupant takes (1,1)
-	pos1, ok := sz.AddOccupant(uuid.New(), pf.Position{X: 1, Y: 1}, &grid)
+	pos1, ok := sz.AddOccupant(uuid.New(), pathfinding.Position{X: 1, Y: 1}, &grid)
 	require.True(t, ok)
-	require.Equal(t, pf.Position{X: 1, Y: 1}, pos1)
+	require.Equal(t, pathfinding.Position{X: 1, Y: 1}, pos1)
 
 	// Second occupant arrives at (1,1) but gets reassigned to (2,1)
-	pos2, ok := sz.AddOccupant(uuid.New(), pf.Position{X: 1, Y: 1}, &grid)
+	pos2, ok := sz.AddOccupant(uuid.New(), pathfinding.Position{X: 1, Y: 1}, &grid)
 	require.True(t, ok)
-	require.Equal(t, pf.Position{X: 2, Y: 1}, pos2)
+	require.Equal(t, pathfinding.Position{X: 2, Y: 1}, pos2)
 	require.Len(t, sz.Occupants, 2)
-	require.Equal(t, pf.CellEscapedCitizen, grid.GetCell(pos2))
+	require.Equal(t, pathfinding.CellEscapedCitizen, grid.GetCell(pos2))
 }
 
 func TestSafeZone_CopyCreatesDeepCopy(t *testing.T) {
 	original := SafeZone{
 		ID:            uuid.New(),
-		Position:      pf.Position{X: 5, Y: 5},
+		Position:      pathfinding.Position{X: 5, Y: 5},
 		Radius:        2,
-		Cells:         []pf.Position{{X: 4, Y: 4}, {X: 5, Y: 5}},
+		Cells:         []pathfinding.Position{{X: 4, Y: 4}, {X: 5, Y: 5}},
 		HasCapacity:   true,
 		Occupants:     []uuid.UUID{uuid.New()},
-		occupiedCells: map[pf.Position]bool{{X: 4, Y: 4}: true},
+		occupiedCells: map[pathfinding.Position]bool{{X: 4, Y: 4}: true},
 	}
 	copied := original.Copy()
 
@@ -172,7 +172,7 @@ func TestSafeZone_CopyCreatesDeepCopy(t *testing.T) {
 	require.Equal(t, original.Occupants, copied.Occupants)
 
 	// Mutate originals to verify deep copy
-	original.Cells[0] = pf.Position{X: 9, Y: 9}
+	original.Cells[0] = pathfinding.Position{X: 9, Y: 9}
 	original.Occupants[0] = uuid.Nil
 	require.NotEqual(t, original.Cells[0], copied.Cells[0],
 		"mutating original cells must not affect copy")

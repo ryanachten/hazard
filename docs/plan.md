@@ -59,7 +59,7 @@ internal/
 │   ├── citizen.go
 │   ├── configuration.go
 │   ├── hazard.go
-│   ├── safe_zone.go
+│   ├── safezone.go
 │   └── utilities.go
 ├── engine/              # Core simulation engine (tick loop, state management)
 │   └── simulation.go
@@ -69,7 +69,7 @@ internal/
 │   └── grid.go
 ├── events/              # Event types, event bus, and commands
 │   ├── commands.go
-│   ├── event_bus.go
+│   ├── eventbus.go
 │   └── events.go
 ├── tui/                 # Bubbletea TUI components
 │   ├── model.go         # Main model, update, view

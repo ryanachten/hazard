@@ -4,7 +4,7 @@ import (
 	c "hazard/internal/citizen"
 	h "hazard/internal/hazard"
 	pf "hazard/internal/pathfinding"
-	sz "hazard/internal/safe_zone"
+	sz "hazard/internal/safezone"
 	"testing"
 	"time"
 

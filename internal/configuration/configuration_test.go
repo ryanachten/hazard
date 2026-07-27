@@ -4,7 +4,7 @@ import (
 	h "hazard/internal/hazard"
 	o "hazard/internal/obstacle"
 	r "hazard/internal/ranging"
-	sz "hazard/internal/safe_zone"
+	sz "hazard/internal/safezone"
 	"testing"
 
 	"github.com/stretchr/testify/require"

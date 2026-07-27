@@ -2,7 +2,7 @@ package citizen
 
 import (
 	pf "hazard/internal/pathfinding"
-	sz "hazard/internal/safe_zone"
+	sz "hazard/internal/safezone"
 	"testing"
 
 	"github.com/google/uuid"

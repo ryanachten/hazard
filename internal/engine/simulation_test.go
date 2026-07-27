@@ -277,7 +277,6 @@ func TestTick_TransitionsCreatedToRunning(t *testing.T) {
 	simulation := Simulation{
 		State:     SimulationCreated,
 		TickCount: 0,
-		Citizens:  []citizen.Citizen{},
 	}
 
 	simulation.Tick()
@@ -461,7 +460,7 @@ func TestTick_CitizensRecalculateTowardNearestZoneAfterEmergence(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		SafeZones: []safezone.SafeZone{
+		SafeZones: []*safezone.SafeZone{
 			{Position: pathfinding.Position{X: 9, Y: 9}, Radius: 1},
 		},
 		Citizens: []citizen.Citizen{
@@ -505,7 +504,6 @@ func TestTick_SafeZoneCapacityPreventsOverfilling(t *testing.T) {
 		Radius:      0,
 		Cells:       sz1Cells,
 		HasCapacity: true,
-		Occupants:   []uuid.UUID{},
 	}
 	sz2 := safezone.SafeZone{
 		ID:          uuid.New(),
@@ -513,7 +511,6 @@ func TestTick_SafeZoneCapacityPreventsOverfilling(t *testing.T) {
 		Radius:      0,
 		Cells:       sz2Cells,
 		HasCapacity: true,
-		Occupants:   []uuid.UUID{},
 	}
 
 	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
@@ -526,7 +523,7 @@ func TestTick_SafeZoneCapacityPreventsOverfilling(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		SafeZones:         []safezone.SafeZone{sz1, sz2},
+		SafeZones:         []*safezone.SafeZone{&sz1, &sz2},
 		Citizens: []citizen.Citizen{
 			{
 				ID:               uuid.New(),

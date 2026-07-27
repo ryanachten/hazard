@@ -21,7 +21,7 @@ func main() {
 	config := configuration.DefaultConfig
 	err := config.Validate()
 	if err != nil {
-		slog.Error("error validation config", "err", err)
+		slog.Error("error validating config", "err", err)
 		os.Exit(1)
 	}
 
@@ -74,12 +74,6 @@ func main() {
 
 	// Log to debug file rather than stdout to avoid disrupting TUI
 	_ = os.Remove(debugFilename)
-	_, err = os.Create(debugFilename)
-	if err != nil {
-		slog.Error("error creating debug file", "err", err)
-		os.Exit(1)
-	}
-
 	f, err := tea.LogToFile(debugFilename, "")
 	if err != nil {
 		slog.Error("error logging to debug file", "err", err)

@@ -55,22 +55,38 @@ docs/
 
 ```text
 internal/
-├── common/              # Shared domain types (Citizen, Hazard, SafeZone, Configuration, utilities)
+├── bounds/              # Grid bounds and range utilities
+│   ├── range.go
+│   └── range_test.go
+├── citizen/             # Citizen entity and movement logic
 │   ├── citizen.go
+│   └── citizen_test.go
+├── configuration/       # Simulation configuration types
 │   ├── configuration.go
-│   ├── hazard.go
-│   ├── safezone.go
-│   └── utilities.go
+│   └── configuration_test.go
 ├── engine/              # Core simulation engine (tick loop, state management)
-│   └── simulation.go
-├── pathfinding/         # A* and alternative pathfinding implementations
-│   ├── astar.go
-│   ├── dijkstra.go
-│   └── grid.go
+│   ├── simulation.go
+│   └── simulation_test.go
 ├── events/              # Event types, event bus, and commands
 │   ├── commands.go
 │   ├── eventbus.go
 │   └── events.go
+├── hazard/              # Hazard entity and expansion logic
+│   ├── hazard.go
+│   └── hazard_test.go
+├── obstacle/            # Static obstacle entity
+│   ├── obstacle.go
+│   └── obstacle_test.go
+├── pathfinding/         # A* and alternative pathfinding implementations
+│   ├── astar.go
+│   ├── dijkstra.go
+│   └── grid.go
+├── random/              # Random number generation utilities
+│   ├── random.go
+│   └── random_test.go
+├── safezone/            # Safe zone entity and capacity logic
+│   ├── safezone.go
+│   └── safezone_test.go
 ├── tui/                 # Bubbletea TUI components
 │   ├── model.go         # Main model, update, view
 │   ├── events.go        # Event handlers for grid rendering

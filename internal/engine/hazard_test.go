@@ -63,7 +63,7 @@ func TestHazard_RemovedAfterDuration(t *testing.T) {
 	sim := Simulation{
 		Grid:     &grid,
 		eventBus: events.New(),
-		SafeZones: []safezone.SafeZone{
+		SafeZones: []*safezone.SafeZone{
 			{Position: pathfinding.Position{X: 9, Y: 9}, Radius: 1},
 		},
 	}
@@ -185,7 +185,7 @@ func TestHazard_BlocksCitizenPath(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		SafeZones:         []safezone.SafeZone{sz1},
+		SafeZones:         []*safezone.SafeZone{&sz1},
 		Citizens: []citizen.Citizen{
 			{
 				ID:                 uuid.New(),

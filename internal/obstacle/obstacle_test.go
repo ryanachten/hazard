@@ -1,8 +1,8 @@
 package obstacle
 
 import (
-	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
+	r "hazard/internal/ranging"
 	"testing"
 
 	"github.com/stretchr/testify/require"

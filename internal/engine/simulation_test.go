@@ -5,9 +5,9 @@ import (
 	config "hazard/internal/configuration"
 	"hazard/internal/events"
 	h "hazard/internal/hazard"
-	r "hazard/internal/numrange"
 	o "hazard/internal/obstacle"
 	pf "hazard/internal/pathfinding"
+	r "hazard/internal/ranging"
 	sz "hazard/internal/safe_zone"
 	"testing"
 

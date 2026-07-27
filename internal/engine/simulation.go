@@ -102,17 +102,19 @@ func (s *Simulation) Tick() {
 
 	for i := range s.Citizens {
 
-		if s.Citizens[i].Status == c.StatusDead || s.Citizens[i].Status == c.StatusEscaped {
+		citizen := &s.Citizens[i]
+
+		if citizen.Status == c.StatusDead || citizen.Status == c.StatusEscaped {
 			continue
 		}
 
-		isDead := s.removeDeadCitizen(i)
+		isDead := s.removeDeadCitizen(citizen)
 		if isDead {
 			continue
 		}
 
-		s.updateCitizenPath(i, safeZoneCreated)
-		s.updateCitizenLocation(i)
+		s.updateCitizenPath(citizen, safeZoneCreated)
+		s.updateCitizenLocation(citizen)
 	}
 
 	s.TickCount++
@@ -133,59 +135,35 @@ func (s *Simulation) ProcessCommand(cmd events.SimulationCommand) {
 			s.State = SimulationRunning
 		}
 	case events.UpdateHazardProbability:
-		probability, ok := cmd.Payload.(float32)
-		if !ok {
-			slog.Error("error parsing probability", "probability", probability)
-		} else {
+		if probability, ok := parsePayload[float32](cmd.Payload); ok {
 			s.Config.Hazard.Probability = probability
 		}
 	case events.UpdateHazardCount:
-		count, ok := cmd.Payload.(int)
-		if !ok {
-			slog.Error("error parsing count", "count", count)
-		} else {
+		if count, ok := parsePayload[int](cmd.Payload); ok {
 			s.Config.Hazard.Count = count
 		}
 	case events.UpdateHazardDurationMin:
-		duration, ok := cmd.Payload.(int)
-		if !ok {
-			slog.Error("error parsing duration", "duration", duration)
-		} else {
+		if duration, ok := parsePayload[int](cmd.Payload); ok {
 			s.Config.Hazard.DurationRange.Min = duration
 		}
 	case events.UpdateHazardDurationMax:
-		duration, ok := cmd.Payload.(int)
-		if !ok {
-			slog.Error("error parsing duration", "duration", duration)
-		} else {
+		if duration, ok := parsePayload[int](cmd.Payload); ok {
 			s.Config.Hazard.DurationRange.Max = duration
 		}
 	case events.UpdateSafeZoneProbability:
-		probability, ok := cmd.Payload.(float32)
-		if !ok {
-			slog.Error("error parsing probability", "probability", probability)
-		} else {
+		if probability, ok := parsePayload[float32](cmd.Payload); ok {
 			s.Config.SafeZone.Probability = probability
 		}
 	case events.UpdateSafeZoneCount:
-		count, ok := cmd.Payload.(int)
-		if !ok {
-			slog.Error("error parsing count", "count", count)
-		} else {
+		if count, ok := parsePayload[int](cmd.Payload); ok {
 			s.Config.SafeZone.Count = count
 		}
 	case events.UpdateSafeZoneRadiusMin:
-		radius, ok := cmd.Payload.(int)
-		if !ok {
-			slog.Error("error parsing radius", "radius", radius)
-		} else {
+		if radius, ok := parsePayload[int](cmd.Payload); ok {
 			s.Config.SafeZone.RadiusRange.Min = radius
 		}
 	case events.UpdateSafeZoneRadiusMax:
-		radius, ok := cmd.Payload.(int)
-		if !ok {
-			slog.Error("error parsing radius", "radius", radius)
-		} else {
+		if radius, ok := parsePayload[int](cmd.Payload); ok {
 			s.Config.SafeZone.RadiusRange.Max = radius
 		}
 	}
@@ -193,14 +171,14 @@ func (s *Simulation) ProcessCommand(cmd events.SimulationCommand) {
 
 func (s *Simulation) updateOrRemoveHazards() {
 	for i := len(s.Hazards) - 1; i >= 0; i-- {
-		if s.TickCount > s.Hazards[i].CreatedAt+uint64(s.Hazards[i].Duration) {
-			hazardID := s.Hazards[i].ID
-			updatedCells := s.Hazards[i].Remove(s.Grid)
+		hazard := &s.Hazards[i]
+		if s.TickCount > hazard.CreatedAt+uint64(hazard.Duration) {
+			updatedCells := hazard.Remove(s.Grid)
 			s.Hazards = slices.Delete(s.Hazards, i, i+1)
-			s.eventBus.HazardDissipated(hazardID, updatedCells, s.getEventMetadata())
+			s.eventBus.HazardDissipated(hazard.ID, updatedCells, s.getEventMetadata())
 		} else {
-			updatedCells := s.Hazards[i].Expand(s.Grid)
-			s.eventBus.HazardExpanded(s.Hazards[i].ID, updatedCells, s.getEventMetadata())
+			updatedCells := hazard.Expand(s.Grid)
+			s.eventBus.HazardExpanded(hazard.ID, updatedCells, s.getEventMetadata())
 		}
 	}
 }
@@ -252,19 +230,19 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 	return true
 }
 
-func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
-	if s.Citizens[citizenIndex].Status == c.StatusEscaped {
+func (s *Simulation) removeDeadCitizen(citizen *c.Citizen) bool {
+	if citizen.Status == c.StatusEscaped {
 		return false
 	}
 
-	if s.Grid.GetCell(s.Citizens[citizenIndex].CurrentPosition) != pf.CellHazard {
+	if s.Grid.GetCell(citizen.CurrentPosition) != pf.CellHazard {
 		return false
 	}
 
-	s.Citizens[citizenIndex].Status = c.StatusDead
-	s.Grid.UpdateCell(s.Citizens[citizenIndex].CurrentPosition, pf.CellDeadCitizen)
+	citizen.Status = c.StatusDead
+	s.Grid.UpdateCell(citizen.CurrentPosition, pf.CellDeadCitizen)
 	s.DeadCitizensCount++
-	s.eventBus.CitizenDied(s.Citizens[citizenIndex].ID, events.CitizenDiedPayload{
+	s.eventBus.CitizenDied(citizen.ID, events.CitizenDiedPayload{
 		TotalDead:      s.DeadCitizensCount,
 		TotalRemaining: len(s.Citizens) - s.DeadCitizensCount - s.EscapedCitizensCount,
 	}, s.getEventMetadata())
@@ -272,54 +250,58 @@ func (s *Simulation) removeDeadCitizen(citizenIndex int) bool {
 	return true
 }
 
-func (s *Simulation) updateCitizenPath(citizenIndex int, safeZoneCreated bool) {
+func (s *Simulation) updateCitizenPath(citizen *c.Citizen, safeZoneCreated bool) {
 	pathUpdated := false
 
 	// If no safe zone assigned, new safe zone added, or the target has no capacity
 	// determine which available safe zone is closest
-	targetSafeZone := s.Citizens[citizenIndex].TargetSafeZone
+	targetSafeZone := citizen.TargetSafeZone
 	if safeZoneCreated || targetSafeZone == nil || !targetSafeZone.HasCapacity {
-		if err := s.Citizens[citizenIndex].FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
-			s.Citizens[citizenIndex].Path = nil
+		if err := citizen.FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
+			citizen.Path = nil
 		}
 		pathUpdated = true
 	} else {
-		// Check if next cell intersects with avoidable cell types and needs recalculating
-		curIndex := s.Citizens[citizenIndex].CurrentPathIndex
-		nextIndex := curIndex + 1
-		if nextIndex < len(s.Citizens[citizenIndex].Path) {
-			pos := s.Citizens[citizenIndex].Path[nextIndex]
-			if pf.AvoidableCellType[s.Grid.GetCell(pos)] {
-				if err := s.Citizens[citizenIndex].RecalculatePath(s.Grid); err != nil {
-					// Destination itself is blocked (e.g. occupied by another citizen).
-					// Find a new safe zone with capacity.
-					if err := s.Citizens[citizenIndex].FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
-						s.Citizens[citizenIndex].Path = nil
-					}
-				}
-				pathUpdated = true
-			}
-		}
+		pathUpdated = s.verifyAndUpdateBlockedPath(citizen)
 	}
 
 	if pathUpdated {
-		s.eventBus.CitizenPathUpdated(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].Path, s.getEventMetadata())
+		s.eventBus.CitizenPathUpdated(citizen.ID, citizen.Path, s.getEventMetadata())
 	}
 }
 
-func (s *Simulation) updateCitizenLocation(citizenIndex int) {
-	hasMoved, hasEscaped := s.Citizens[citizenIndex].IncrementLocation(s.Grid)
+// Check if next cell intersects with avoidable cell types and needs recalculating
+func (s *Simulation) verifyAndUpdateBlockedPath(citizen *c.Citizen) bool {
+	curIndex := citizen.CurrentPathIndex
+	nextIndex := curIndex + 1
+	if nextIndex < len(citizen.Path) {
+		pos := citizen.Path[nextIndex]
+		if pf.AvoidableCellType[s.Grid.GetCell(pos)] {
+			if err := citizen.RecalculatePath(s.Grid); err != nil {
+				// Destination itself is blocked (e.g. occupied by another citizen).
+				// Find a new safe zone with capacity.
+				if err := citizen.FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
+					citizen.Path = nil
+				}
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Simulation) updateCitizenLocation(citizen *c.Citizen) {
+	hasMoved, hasEscaped := citizen.IncrementLocation(s.Grid)
 	if hasMoved {
-		s.eventBus.CitizenMoved(s.Citizens[citizenIndex].ID, s.Citizens[citizenIndex].CurrentPosition, s.getEventMetadata())
+		s.eventBus.CitizenMoved(citizen.ID, citizen.CurrentPosition, s.getEventMetadata())
 	}
 
 	if hasEscaped {
-		citizen := &s.Citizens[citizenIndex]
 		safeZone := s.safeZoneLocations[citizen.CurrentPosition]
 		assignedPosition, hasCapacity := safeZone.AddOccupant(citizen.ID, citizen.CurrentPosition, s.Grid)
 
 		if !hasCapacity {
-			s.updateCitizenPath(citizenIndex, true)
+			s.updateCitizenPath(citizen, true)
 		} else {
 			s.EscapedCitizensCount++
 			citizen.Status = c.StatusEscaped
@@ -344,4 +326,12 @@ func (s *Simulation) getEventMetadata() events.EventMetadata {
 		SimulationID: s.ID,
 		Tick:         s.TickCount,
 	}
+}
+
+func parsePayload[T any](payload any) (T, bool) {
+	parsedPayload, ok := payload.(T)
+	if !ok {
+		slog.Error("error parsing payload", "payload", payload)
+	}
+	return parsedPayload, ok
 }

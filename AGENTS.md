@@ -13,6 +13,8 @@ shell commands, and other important information, read the current plan at `docs/
 - Avoid non-descriptive package names like `common` and `utility`. Prefer multiple packages focused on the domain type
 - Avoid repetition. i.e. `bytes.Buffer` not `bytes.BytesBuffer` etc. 
 - Use `.New()` method naming when returning a pointer to a given type
+- Prefer use to structured logs via `slog` rather than `log``
+- Avoid use of import aliases, unless it solves a problem - i.e. avoids long package names (like `pathfinding`), prevents awkward references (like `hazard.Hazard`)
 
 ### References
 - Dave Cheney's [Practical Go](https://dave.cheney.net/practical-go)

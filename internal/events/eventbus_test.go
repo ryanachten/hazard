@@ -46,7 +46,7 @@ func TestSimulationCreated_StoresCorrectType(t *testing.T) {
 	payload := SimulationCreatedPayload{
 		Grid:      grid.Copy(),
 		Citizens:  []citizen.Citizen{},
-		SafeZones: []safezone.SafeZone{},
+		SafeZones: []*safezone.SafeZone{},
 	}
 
 	bus.SimulationCreated(payload, EventMetadata{SimulationID: simID, Tick: 0})

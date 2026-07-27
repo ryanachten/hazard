@@ -26,7 +26,7 @@ type Simulation struct {
 	DeadCitizensCount    int
 	EscapedCitizensCount int
 	Hazards              []hazard.Hazard
-	SafeZones            []safezone.SafeZone
+	SafeZones            []*safezone.SafeZone
 	eventBus             *events.EventBus
 	safeZoneLocations    map[pathfinding.Position]*safezone.SafeZone
 }
@@ -67,7 +67,7 @@ func NewSimulation(width, height int, config configuration.SimulationConfig, eve
 		State:             SimulationRunning,
 		TickCount:         0,
 		Grid:              &grid,
-		SafeZones:         []safezone.SafeZone{safeZone},
+		SafeZones:         []*safezone.SafeZone{&safeZone},
 		Citizens:          citizen.CreateCitizens(config.CitizenCount, &grid, safeZoneLocations),
 		eventBus:          eventBus,
 		safeZoneLocations: safeZoneLocations,
@@ -215,7 +215,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 		return false
 	}
 
-	s.SafeZones = append(s.SafeZones, safeZone)
+	s.SafeZones = append(s.SafeZones, &safeZone)
 
 	for _, cell := range safeZone.Cells {
 		s.safeZoneLocations[cell] = &safeZone

@@ -58,7 +58,7 @@ const (
 type SimulationCreatedPayload struct {
 	Grid      pathfinding.Grid
 	Citizens  []citizen.Citizen
-	SafeZones []safezone.SafeZone
+	SafeZones []*safezone.SafeZone
 	Obstacles []obstacle.Obstacle
 }
 
@@ -69,9 +69,10 @@ func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata 
 		citizenSnapshot[i] = citizen.Copy()
 	}
 
-	safeZoneSnapshot := make([]safezone.SafeZone, len(payload.SafeZones))
+	safeZoneSnapshot := make([]*safezone.SafeZone, len(payload.SafeZones))
 	for i, safeZone := range payload.SafeZones {
-		safeZoneSnapshot[i] = safeZone.Copy()
+		sz := safeZone.Copy()
+		safeZoneSnapshot[i] = &sz
 	}
 
 	obstacleSnapshot := make([]obstacle.Obstacle, len(payload.Obstacles))

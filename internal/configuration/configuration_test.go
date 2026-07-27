@@ -45,7 +45,7 @@ func TestSimulationConfig_Validate(t *testing.T) {
 				c.Hazard.Probability = -0.1
 				return c
 			}(),
-			wantErr: "Hazard.Probability must be between 0.0 and 1.0",
+			wantErr: "hazard probability must be between 0.0 and 1.0",
 		},
 		{
 			name: "hazard probability greater than 1",
@@ -54,7 +54,7 @@ func TestSimulationConfig_Validate(t *testing.T) {
 				c.Hazard.Probability = 1.5
 				return c
 			}(),
-			wantErr: "Hazard.Probability must be between 0.0 and 1.0",
+			wantErr: "hazard probability must be between 0.0 and 1.0",
 		},
 		{
 			name: "safe zone probability negative",
@@ -63,7 +63,7 @@ func TestSimulationConfig_Validate(t *testing.T) {
 				c.SafeZone.Probability = -0.1
 				return c
 			}(),
-			wantErr: "SafeZone.Probability must be between 0.0 and 1.0",
+			wantErr: "safe zone probability must be between 0.0 and 1.0",
 		},
 		{
 			name: "safe zone probability greater than 1",
@@ -72,7 +72,7 @@ func TestSimulationConfig_Validate(t *testing.T) {
 				c.SafeZone.Probability = 1.5
 				return c
 			}(),
-			wantErr: "SafeZone.Probability must be between 0.0 and 1.0",
+			wantErr: "safe zone probability must be between 0.0 and 1.0",
 		},
 		{
 			name: "safe zone count less than 1",
@@ -81,7 +81,7 @@ func TestSimulationConfig_Validate(t *testing.T) {
 				c.SafeZone.Count = 0
 				return c
 			}(),
-			wantErr: "SafeZone.Count must be at least 1",
+			wantErr: "safe zone count must be at least 1",
 		},
 	}
 

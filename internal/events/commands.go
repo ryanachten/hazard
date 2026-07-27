@@ -26,7 +26,7 @@ const (
 	// UpdateSafeZoneProbability updates the probability of safe zones occurring
 	UpdateSafeZoneProbability commandType = "simulation.updateSafeZoneProbability"
 	// UpdateSafeZoneCount updates the number of safe zones which can exist
-	UpdateSafeZoneCount commandType = "simulation.UpdateSafeZoneCount"
+	UpdateSafeZoneCount commandType = "simulation.updateSafeZoneCount"
 	// UpdateSafeZoneRadiusMin updates the min radius of a safe zone
 	UpdateSafeZoneRadiusMin commandType = "simulation.updateSafeZoneRadiusMin"
 	// UpdateSafeZoneRadiusMax updates the max radius of a safe zone

@@ -174,12 +174,19 @@ func (c *Citizen) updatePosition(newPos pathfinding.Position, grid *pathfinding.
 func (c *Citizen) Copy() Citizen {
 	path := make([]pathfinding.Position, len(c.Path))
 	copy(path, c.Path)
+
+	var safeZone *safezone.SafeZone
+	if c.TargetSafeZone != nil {
+		sz := c.TargetSafeZone.Copy()
+		safeZone = &sz
+	}
+
 	return Citizen{
 		ID:                 c.ID,
 		Status:             c.Status,
 		CurrentPosition:    c.CurrentPosition,
 		CurrentDestination: c.CurrentDestination,
-		TargetSafeZone:     c.TargetSafeZone,
+		TargetSafeZone:     safeZone,
 		Path:               path,
 		CurrentPathIndex:   c.CurrentPathIndex,
 		PreviousCellType:   c.PreviousCellType,

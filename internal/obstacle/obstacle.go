@@ -24,7 +24,7 @@ type Obstacle struct {
 // CreateObstacles randomly on a grid
 func CreateObstacles(config Config, grid *pf.Grid) []Obstacle {
 	obstacleCount := config.CountRange.Random()
-	obstacles := []Obstacle{}
+	var obstacles []Obstacle
 
 	for range obstacleCount {
 		height := config.SizeRange.Random()
@@ -37,7 +37,7 @@ func CreateObstacles(config Config, grid *pf.Grid) []Obstacle {
 		}
 
 		// Mark all open cells as part of the obstacle
-		cells := []pf.Position{}
+		var cells []pf.Position
 		for dx := -width; dx <= width; dx++ {
 			for dy := -height; dy <= height; dy++ {
 				pos := pf.Position{X: origin.X + dx, Y: origin.Y + dy}

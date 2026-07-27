@@ -15,6 +15,8 @@ shell commands, and other important information, read the current plan at `docs/
 - Use `.New()` method naming when returning a pointer to a given type
 - Prefer use to structured logs via `slog` rather than `log``
 - Avoid use of import aliases, unless it solves a problem - i.e. avoids long package names (like `pathfinding`), prevents awkward references (like `hazard.Hazard`)
+- Prefer nil slice values via `var t []string` when declaring a slice over zero-length slices like `t := []string{}`
 
 ### References
 - Dave Cheney's [Practical Go](https://dave.cheney.net/practical-go)
+- Go [Code Review Comments](https://go.dev/wiki/CodeReviewComments)

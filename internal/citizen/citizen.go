@@ -140,7 +140,7 @@ func (c *Citizen) IncrementLocation(grid *pf.Grid) (bool, bool) {
 // randomWalk walks 1 step in a random direction
 func (c *Citizen) randomWalk(grid *pf.Grid) bool {
 	curPos := c.CurrentPosition
-	validDirections := []pf.Position{}
+	var validDirections []pf.Position
 
 	for _, direction := range pf.Directions {
 		dir := pf.Position{

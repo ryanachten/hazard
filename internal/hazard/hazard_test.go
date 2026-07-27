@@ -1,12 +1,13 @@
 package hazard
 
 import (
-	"hazard/internal/bounds"
-	"hazard/internal/pathfinding"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 )
 
 func TestCreateHazard(t *testing.T) {

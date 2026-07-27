@@ -2,6 +2,11 @@
 package engine
 
 import (
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"hazard/internal/bounds"
 	"hazard/internal/citizen"
 	"hazard/internal/configuration"
@@ -9,10 +14,6 @@ import (
 	"hazard/internal/hazard"
 	"hazard/internal/pathfinding"
 	"hazard/internal/safezone"
-	"testing"
-
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewSimulation_EmitsCreationEvent(t *testing.T) {

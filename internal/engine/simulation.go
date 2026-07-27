@@ -1,6 +1,12 @@
 package engine
 
 import (
+	"log/slog"
+	"math/rand"
+	"slices"
+
+	"github.com/google/uuid"
+
 	"hazard/internal/citizen"
 	"hazard/internal/configuration"
 	"hazard/internal/events"
@@ -8,11 +14,6 @@ import (
 	"hazard/internal/obstacle"
 	"hazard/internal/pathfinding"
 	"hazard/internal/safezone"
-	"log/slog"
-	"math/rand"
-	"slices"
-
-	"github.com/google/uuid"
 )
 
 // Simulation engine for hazards
@@ -170,14 +171,14 @@ func (s *Simulation) ProcessCommand(cmd events.SimulationCommand) {
 
 func (s *Simulation) updateOrRemoveHazards() {
 	for i := len(s.Hazards) - 1; i >= 0; i-- {
-		hazard := &s.Hazards[i]
-		if s.TickCount > hazard.CreatedAt+uint64(hazard.Duration) {
-			updatedCells := hazard.Remove(s.Grid)
+		hz := &s.Hazards[i]
+		if s.TickCount > hz.CreatedAt+uint64(hz.Duration) {
+			updatedCells := hz.Remove(s.Grid)
 			s.Hazards = slices.Delete(s.Hazards, i, i+1)
-			s.eventBus.HazardDissipated(hazard.ID, updatedCells, s.getEventMetadata())
+			s.eventBus.HazardDissipated(hz.ID, updatedCells, s.getEventMetadata())
 		} else {
-			updatedCells := hazard.Expand(s.Grid)
-			s.eventBus.HazardExpanded(hazard.ID, updatedCells, s.getEventMetadata())
+			updatedCells := hz.Expand(s.Grid)
+			s.eventBus.HazardExpanded(hz.ID, updatedCells, s.getEventMetadata())
 		}
 	}
 }
@@ -188,18 +189,18 @@ func (s *Simulation) generateIntermittentHazard() {
 		return
 	}
 
-	hazard, err := hazard.Create(hazardConfig, s.Grid)
+	hz, err := hazard.Create(hazardConfig, s.Grid)
 	if err != nil {
 		slog.Warn("error creating hazard", "err", err)
 		return
 	}
 
-	hazard.CreatedAt = s.TickCount
-	s.Hazards = append(s.Hazards, hazard)
+	hz.CreatedAt = s.TickCount
+	s.Hazards = append(s.Hazards, hz)
 
-	s.eventBus.HazardEmerged(hazard.ID, events.HazardEmergedPayload{
-		Type:     hazard.Type,
-		Position: hazard.Origin,
+	s.eventBus.HazardEmerged(hz.ID, events.HazardEmergedPayload{
+		Type:     hz.Type,
+		Position: hz.Origin,
 	}, s.getEventMetadata())
 }
 

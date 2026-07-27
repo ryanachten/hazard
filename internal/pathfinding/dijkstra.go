@@ -49,7 +49,7 @@ func FindPathToGoal(grid *Grid, from Position, isGoal GoalPredicate) ([]Position
 	var goalPosition Position
 	found := false
 	for pq.Len() > 0 {
-		curItem := heap.Pop(&pq).(*Item)
+		curItem, _ := heap.Pop(&pq).(*Item)
 		curPos := curItem.value
 
 		if isGoal(curPos) {

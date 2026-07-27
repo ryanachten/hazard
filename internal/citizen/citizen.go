@@ -3,12 +3,13 @@ package citizen
 
 import (
 	"fmt"
-	"hazard/internal/pathfinding"
-	"hazard/internal/random"
-	"hazard/internal/safezone"
 	"log/slog"
 
 	"github.com/google/uuid"
+
+	"hazard/internal/pathfinding"
+	"hazard/internal/random"
+	"hazard/internal/safezone"
 )
 
 // Citizen subjected to a hazard

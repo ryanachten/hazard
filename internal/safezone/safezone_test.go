@@ -1,12 +1,13 @@
 package safezone
 
 import (
-	"hazard/internal/bounds"
-	"hazard/internal/pathfinding"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 )
 
 func TestCreateSafeZone_PlacedAtOpenPosition(t *testing.T) {

@@ -1,13 +1,14 @@
 package configuration
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"hazard/internal/bounds"
 	"hazard/internal/hazard"
 	"hazard/internal/obstacle"
 	"hazard/internal/safezone"
-	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestSimulationConfig_Validate(t *testing.T) {

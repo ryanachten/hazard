@@ -4,6 +4,7 @@ package configuration
 import (
 	"errors"
 	"fmt"
+
 	"hazard/internal/bounds"
 	"hazard/internal/hazard"
 	"hazard/internal/obstacle"

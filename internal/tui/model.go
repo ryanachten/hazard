@@ -2,13 +2,14 @@
 package tui
 
 import (
-	"hazard/internal/events"
-	"hazard/internal/pathfinding"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/google/uuid"
+
+	"hazard/internal/events"
+	"hazard/internal/pathfinding"
 )
 
 type citizenState struct {

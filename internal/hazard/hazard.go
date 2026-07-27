@@ -2,11 +2,12 @@
 package hazard
 
 import (
-	"hazard/internal/bounds"
-	"hazard/internal/pathfinding"
 	"math/rand"
 
 	"github.com/google/uuid"
+
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 )
 
 // Config configures simulation hazards

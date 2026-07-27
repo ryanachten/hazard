@@ -4,7 +4,7 @@ package hazard
 import (
 	"hazard/internal/bounds"
 	"hazard/internal/pathfinding"
-	"math/rand/v2"
+	"math/rand"
 
 	"github.com/google/uuid"
 )
@@ -67,14 +67,14 @@ func Create(config Config, grid *pathfinding.Grid) (Hazard, error) {
 
 	grid.UpdateCell(origin, pathfinding.CellHazard)
 
-	hazard := Hazard{
+	hz := Hazard{
 		ID:       uuid.New(),
 		Duration: duration,
-		Type:     hazardTypes[rand.IntN(len(hazardTypes))],
+		Type:     hazardTypes[rand.Intn(len(hazardTypes))],
 		Origin:   origin,
 	}
 
-	return hazard, nil
+	return hz, nil
 }
 
 // expandTypes define what cells can be overwritten during expansion

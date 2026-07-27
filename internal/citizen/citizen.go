@@ -115,7 +115,6 @@ func (c *Citizen) RecalculatePath(grid *pathfinding.Grid) error {
 
 // IncrementLocation moves the citizen one step along their path and updates their status
 func (c *Citizen) IncrementLocation(grid *pathfinding.Grid) (bool, bool) {
-
 	if c.Status == StatusEscaped || c.Status == StatusDead {
 		return false, c.Status == StatusEscaped
 	}

@@ -51,17 +51,17 @@ func InitialiseController(eventBus *events.EventBus) InputController {
 }
 
 // View builds a string comprised of the input views
-func (m *InputController) View() (string, *tea.Cursor) {
+func (ic *InputController) View() (string, *tea.Cursor) {
 	var b strings.Builder
 	var c *tea.Cursor
 
 	b.WriteString(heading.SetString("Settings").Render())
 
-	for i, id := range m.InputIDs {
-		b.WriteString(m.inputs[id].label)
+	for i, id := range ic.InputIDs {
+		b.WriteString(ic.inputs[id].label)
 		b.WriteString(" ")
 
-		inputModel := m.inputs[id].model
+		inputModel := ic.inputs[id].model
 		b.WriteString(inputModel.View())
 		b.WriteRune('\n')
 
@@ -76,46 +76,45 @@ func (m *InputController) View() (string, *tea.Cursor) {
 }
 
 // Update the inputs and focus input by ID
-func (m *InputController) Update(msg tea.Msg, focusInputID string) tea.Cmd {
-
-	if focusInputID != m.prevFocusInputID {
-		_, ok := m.inputs[m.prevFocusInputID]
+func (ic *InputController) Update(msg tea.Msg, focusInputID string) tea.Cmd {
+	if focusInputID != ic.prevFocusInputID {
+		_, ok := ic.inputs[ic.prevFocusInputID]
 		if ok {
-			input := m.inputs[m.prevFocusInputID]
+			input := ic.inputs[ic.prevFocusInputID]
 			input.callback()
 			input.model.Blur()
-			m.inputs[m.prevFocusInputID] = input
+			ic.inputs[ic.prevFocusInputID] = input
 		}
 
-		_, ok = m.inputs[focusInputID]
+		_, ok = ic.inputs[focusInputID]
 		if ok {
-			input := m.inputs[focusInputID]
+			input := ic.inputs[focusInputID]
 			input.model.Focus()
-			m.inputs[focusInputID] = input
-			m.prevFocusInputID = focusInputID
+			ic.inputs[focusInputID] = input
+			ic.prevFocusInputID = focusInputID
 		}
 	}
 
-	cmds := make([]tea.Cmd, len(m.inputs))
+	cmds := make([]tea.Cmd, len(ic.inputs))
 
-	for i, id := range m.InputIDs {
+	for i, id := range ic.InputIDs {
 		var model textinput.Model
-		model, cmds[i] = m.inputs[id].model.Update(msg)
-		input := m.inputs[id]
+		model, cmds[i] = ic.inputs[id].model.Update(msg)
+		input := ic.inputs[id]
 		input.model = model
-		m.inputs[id] = input
+		ic.inputs[id] = input
 	}
 
 	return tea.Batch(cmds...)
 }
 
-func (m *InputController) createFloat32Input(
+func (ic *InputController) createFloat32Input(
 	id string, label string, placeholder float32, callback func(state float32)) {
 
 	formattedPlaceholder := strconv.FormatFloat(float64(placeholder), 'f', 2, 32)
 
-	m.createInput(id, label, formattedPlaceholder, func() {
-		val, err := strconv.ParseFloat(m.inputs[id].model.Value(), 32)
+	ic.createInput(id, label, formattedPlaceholder, func() {
+		val, err := strconv.ParseFloat(ic.inputs[id].model.Value(), 32)
 		if err != nil {
 			slog.Error("error parsing input value as float", "inputId", id, "err", err)
 		} else {
@@ -124,13 +123,13 @@ func (m *InputController) createFloat32Input(
 	})
 }
 
-func (m *InputController) createIntInput(
+func (ic *InputController) createIntInput(
 	id string, label string, placeholder int, callback func(state int)) {
 
 	formattedPlaceholder := strconv.Itoa(placeholder)
 
-	m.createInput(id, label, formattedPlaceholder, func() {
-		val, err := strconv.Atoi(m.inputs[id].model.Value())
+	ic.createInput(id, label, formattedPlaceholder, func() {
+		val, err := strconv.Atoi(ic.inputs[id].model.Value())
 		if err != nil {
 			slog.Error("error parsing input value as int", "inputId", id, "err", err)
 		} else {
@@ -139,7 +138,7 @@ func (m *InputController) createIntInput(
 	})
 }
 
-func (m *InputController) createInput(
+func (ic *InputController) createInput(
 	id string, label string, placeholder string, callback func()) {
 	model := textinput.New()
 	model.Placeholder = placeholder
@@ -148,8 +147,8 @@ func (m *InputController) createInput(
 	model.SetWidth(inputWidth)
 	model.SetValue(placeholder)
 
-	m.InputIDs = append(m.InputIDs, id)
-	m.inputs[id] = input{
+	ic.InputIDs = append(ic.InputIDs, id)
+	ic.inputs[id] = input{
 		id:       id,
 		label:    label,
 		model:    model,

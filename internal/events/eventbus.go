@@ -14,6 +14,5 @@ func New() *EventBus {
 	return &EventBus{
 		SimulationCommands: make(chan SimulationCommand, eventBufferSize),
 		SimulationEvents:   make(chan SimulationEvent, eventBufferSize),
-		EventLog:           []SimulationEvent{},
 	}
 }

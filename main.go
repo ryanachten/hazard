@@ -7,7 +7,6 @@ import (
 	"hazard/internal/engine"
 	"hazard/internal/events"
 	"hazard/internal/tui"
-	"log"
 	"log/slog"
 	"os"
 	"time"
@@ -18,19 +17,19 @@ import (
 var debugFilename = "debug.log"
 
 func main() {
+	// Validate configuration
 	config := configuration.DefaultConfig
-
 	err := config.Validate()
 	if err != nil {
-		log.Fatalf("error validation config: %v", err)
+		slog.Error("error validation config", "err", err)
+		os.Exit(1)
 	}
 
+	var simulation engine.Simulation
 	eventBus := events.New()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	var simulation engine.Simulation
 
 	go func() {
 		ticker := time.NewTicker(time.Duration(config.TickIntervalMs) * time.Millisecond)
@@ -73,25 +72,34 @@ func main() {
 		}
 	}()
 
+	// Log to debug file rather than stdout to avoid disrupting TUI
 	_ = os.Remove(debugFilename)
 	_, err = os.Create(debugFilename)
 	if err != nil {
-		log.Fatalf("error creating debug file: %v", err)
+		slog.Error("error creating debug file", "err", err)
+		os.Exit(1)
 	}
+
 	f, err := tea.LogToFile(debugFilename, "")
 	if err != nil {
-		log.Fatalf("error logging to debug file: %v", err)
+		slog.Error("error logging to debug file", "err", err)
+		os.Exit(1)
 	}
-	log.SetOutput(f)
+
+	handler := slog.NewTextHandler(f, nil)
+	slog.SetDefault(slog.New(handler))
+
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Printf("error closing file: %v", err)
+			slog.Error("error closing debug file", "err", err)
 		}
 	}()
 
+	// Run bubbletea TUI
 	p := tea.NewProgram(tui.InitialModel(eventBus))
 	if _, err := p.Run(); err != nil {
-		log.Fatalf("error running program: %v", err)
+		slog.Error("error running program", "err", err)
+		os.Exit(1)
 	}
 
 	cancel()

@@ -3,8 +3,8 @@ package main
 
 import (
 	"context"
-	c "hazard/internal/configuration"
-	eng "hazard/internal/engine"
+	cfg "hazard/internal/configuration"
+	"hazard/internal/engine"
 	"hazard/internal/events"
 	"hazard/internal/tui"
 	"log"
@@ -18,7 +18,7 @@ import (
 var debugFilename = "debug.log"
 
 func main() {
-	config := c.DefaultConfig
+	config := cfg.DefaultConfig
 
 	err := config.Validate()
 	if err != nil {
@@ -30,7 +30,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var simulation eng.Simulation
+	var simulation engine.Simulation
 
 	go func() {
 		ticker := time.NewTicker(time.Duration(config.TickIntervalMs) * time.Millisecond)
@@ -39,7 +39,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				if simulation.State == eng.SimulationRunning {
+				if simulation.State == engine.SimulationRunning {
 					simulation.Tick()
 				}
 			case cmd := <-eventBus.SimulationCommands:
@@ -50,7 +50,7 @@ func main() {
 						slog.Error("error parsing initialisation payload", "payload", payload)
 						continue
 					}
-					newSim, err := eng.NewSimulation(payload.Width, payload.Height, config, eventBus)
+					newSim, err := engine.NewSimulation(payload.Width, payload.Height, config, eventBus)
 					if err != nil {
 						slog.Error("error creating simulation", "err", err)
 						continue

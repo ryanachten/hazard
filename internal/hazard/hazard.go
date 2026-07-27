@@ -2,8 +2,8 @@
 package hazard
 
 import (
-	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
+	r "hazard/internal/ranging"
 	"math/rand/v2"
 
 	"github.com/google/uuid"

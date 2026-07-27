@@ -2,8 +2,8 @@
 package obstacle
 
 import (
-	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
+	r "hazard/internal/ranging"
 	"log/slog"
 
 	"github.com/google/uuid"

@@ -1,8 +1,8 @@
 package safe_zone
 
 import (
-	r "hazard/internal/numrange"
 	pf "hazard/internal/pathfinding"
+	r "hazard/internal/ranging"
 	"testing"
 
 	"github.com/google/uuid"

@@ -2,7 +2,7 @@ package engine
 
 import (
 	c "hazard/internal/citizen"
-	config "hazard/internal/configuration"
+	cfg "hazard/internal/configuration"
 	"hazard/internal/events"
 	h "hazard/internal/hazard"
 	o "hazard/internal/obstacle"
@@ -18,7 +18,7 @@ import (
 // Simulation engine for hazards
 type Simulation struct {
 	ID                   uuid.UUID
-	Config               config.SimulationConfig
+	Config               cfg.SimulationConfig
 	State                SimulationState
 	TickCount            uint64
 	Grid                 *pf.Grid
@@ -46,7 +46,7 @@ const (
 )
 
 // NewSimulation creates a simulation based on configuration
-func NewSimulation(width, height int, config config.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
+func NewSimulation(width, height int, config cfg.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
 	grid := pf.NewGrid(width, height, pf.CellOpen)
 
 	safeZone, err := sz.Create(config.SafeZone, &grid)

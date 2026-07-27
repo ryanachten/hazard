@@ -2,8 +2,8 @@ package configuration
 
 import (
 	h "hazard/internal/hazard"
-	r "hazard/internal/numrange"
 	o "hazard/internal/obstacle"
+	r "hazard/internal/ranging"
 	sz "hazard/internal/safe_zone"
 	"testing"
 

@@ -18,5 +18,7 @@ shell commands, and other important information, read the current plan at `docs/
 - Prefer nil slice values via `var t []string` when declaring a slice over zero-length slices like `t := []string{}`
 
 ### References
+When reviewing Go code, defer to the following resources for styleguide and best practices:
 - Dave Cheney's [Practical Go](https://dave.cheney.net/practical-go)
 - Go [Code Review Comments](https://go.dev/wiki/CodeReviewComments)
+- Google [Go styleguide](https://google.github.io/styleguide/go/decisions)

@@ -59,7 +59,6 @@ func Create(config Config, grid *pathfinding.Grid) (SafeZone, error) {
 		Radius:        radius,
 		Cells:         cells,
 		HasCapacity:   true,
-		Occupants:     []uuid.UUID{},
 		occupiedCells: map[pathfinding.Position]bool{},
 	}, nil
 }

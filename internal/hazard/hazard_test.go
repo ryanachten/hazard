@@ -1,8 +1,8 @@
 package hazard
 
 import (
-	r "hazard/internal/bounds"
-	pf "hazard/internal/pathfinding"
+	"hazard/internal/bounds"
+	"hazard/internal/pathfinding"
 	"testing"
 
 	"github.com/google/uuid"
@@ -10,9 +10,9 @@ import (
 )
 
 func TestCreateHazard(t *testing.T) {
-	grid := pf.NewGrid(10, 10, pf.CellOpen)
+	grid := pathfinding.NewGrid(10, 10, pathfinding.CellOpen)
 	config := Config{
-		DurationRange: r.PositiveRange{Min: 5, Max: 10},
+		DurationRange: bounds.PositiveRange{Min: 5, Max: 10},
 		Probability:   0.5,
 		Count:         0,
 	}
@@ -23,14 +23,14 @@ func TestCreateHazard(t *testing.T) {
 	require.LessOrEqual(t, hazard.Duration, 10)
 	require.Contains(t, []Type{FireHazard, FloodHazard, LavaHazard}, hazard.Type)
 	require.True(t, grid.InBounds(hazard.Origin))
-	require.Equal(t, pf.CellHazard, grid.GetCell(hazard.Origin))
+	require.Equal(t, pathfinding.CellHazard, grid.GetCell(hazard.Origin))
 	require.NotEqual(t, uuid.Nil, hazard.ID)
 }
 
 func TestCreateHazard_NoOpenCells(t *testing.T) {
-	grid := pf.NewGrid(2, 2, pf.CellObstacle)
+	grid := pathfinding.NewGrid(2, 2, pathfinding.CellObstacle)
 	config := Config{
-		DurationRange: r.PositiveRange{Min: 5, Max: 5},
+		DurationRange: bounds.PositiveRange{Min: 5, Max: 5},
 	}
 
 	_, err := Create(config, &grid)
@@ -39,9 +39,9 @@ func TestCreateHazard_NoOpenCells(t *testing.T) {
 }
 
 func TestRandomType(t *testing.T) {
-	grid := pf.NewGrid(20, 20, pf.CellOpen)
+	grid := pathfinding.NewGrid(20, 20, pathfinding.CellOpen)
 	config := Config{
-		DurationRange: r.PositiveRange{Min: 5, Max: 10},
+		DurationRange: bounds.PositiveRange{Min: 5, Max: 10},
 	}
 
 	seen := make(map[Type]bool)
@@ -55,34 +55,34 @@ func TestRandomType(t *testing.T) {
 }
 
 func TestHazard_CellsBlockPathfinding(t *testing.T) {
-	grid := pf.NewGrid(5, 5, pf.CellOpen)
+	grid := pathfinding.NewGrid(5, 5, pathfinding.CellOpen)
 	hazard := Hazard{
 		ID:            uuid.New(),
 		Type:          FireHazard,
-		Origin:        pf.Position{X: 2, Y: 2},
+		Origin:        pathfinding.Position{X: 2, Y: 2},
 		CurrentRadius: 0,
 	}
 
-	grid.UpdateCell(pf.Position{X: 2, Y: 2}, pf.CellHazard)
+	grid.UpdateCell(pathfinding.Position{X: 2, Y: 2}, pathfinding.CellHazard)
 	hazard.Expand(&grid)
 
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 2, Y: 2}))
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 2, Y: 1}))
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 2, Y: 3}))
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 1, Y: 2}))
-	require.Equal(t, pf.CellHazard, grid.GetCell(pf.Position{X: 3, Y: 2}))
+	require.Equal(t, pathfinding.CellHazard, grid.GetCell(pathfinding.Position{X: 2, Y: 2}))
+	require.Equal(t, pathfinding.CellHazard, grid.GetCell(pathfinding.Position{X: 2, Y: 1}))
+	require.Equal(t, pathfinding.CellHazard, grid.GetCell(pathfinding.Position{X: 2, Y: 3}))
+	require.Equal(t, pathfinding.CellHazard, grid.GetCell(pathfinding.Position{X: 1, Y: 2}))
+	require.Equal(t, pathfinding.CellHazard, grid.GetCell(pathfinding.Position{X: 3, Y: 2}))
 
-	path, err := pf.FindPath(&grid, pf.Position{X: 0, Y: 0}, pf.Position{X: 4, Y: 4})
+	path, err := pathfinding.FindPath(&grid, pathfinding.Position{X: 0, Y: 0}, pathfinding.Position{X: 4, Y: 4})
 	require.NoError(t, err)
 	for _, pos := range path {
-		require.NotEqual(t, pf.CellHazard, grid.GetCell(pos), "path must not enter hazard cell at %v", pos)
+		require.NotEqual(t, pathfinding.CellHazard, grid.GetCell(pos), "path must not enter hazard cell at %v", pos)
 	}
 
 	for y := range grid.Height {
 		for x := range grid.Width {
-			grid.Cells[y][x] = pf.CellHazard
+			grid.Cells[y][x] = pathfinding.CellHazard
 		}
 	}
-	_, err = pf.FindPath(&grid, pf.Position{X: 0, Y: 0}, pf.Position{X: 4, Y: 4})
-	require.ErrorIs(t, err, pf.ErrDestinationUnreachable)
+	_, err = pathfinding.FindPath(&grid, pathfinding.Position{X: 0, Y: 0}, pathfinding.Position{X: 4, Y: 4})
+	require.ErrorIs(t, err, pathfinding.ErrDestinationUnreachable)
 }

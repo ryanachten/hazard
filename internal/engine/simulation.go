@@ -61,7 +61,7 @@ func NewSimulation(width, height int, config configuration.SimulationConfig, eve
 
 	obstacles := obstacle.CreateObstacles(config.Obstacle, &grid)
 
-	var simulation = Simulation{
+	sim := Simulation{
 		ID:                uuid.New(),
 		Config:            config,
 		State:             SimulationRunning,
@@ -73,19 +73,19 @@ func NewSimulation(width, height int, config configuration.SimulationConfig, eve
 		safeZoneLocations: safeZoneLocations,
 	}
 
-	simulation.eventBus.SimulationCreated(
+	sim.eventBus.SimulationCreated(
 		events.SimulationCreatedPayload{
-			Grid:      simulation.Grid.Copy(),
-			Citizens:  simulation.Citizens,
-			SafeZones: simulation.SafeZones,
+			Grid:      sim.Grid.Copy(),
+			Citizens:  sim.Citizens,
+			SafeZones: sim.SafeZones,
 			Obstacles: obstacles,
 		},
 		events.EventMetadata{
-			SimulationID: simulation.ID,
-			Tick:         simulation.TickCount,
+			SimulationID: sim.ID,
+			Tick:         sim.TickCount,
 		})
 
-	return simulation, nil
+	return sim, nil
 }
 
 // Tick increments a simulation by one tick
@@ -101,7 +101,6 @@ func (s *Simulation) Tick() {
 	safeZoneCreated := s.generateIntermittentSafeZone()
 
 	for i := range s.Citizens {
-
 		c := &s.Citizens[i]
 
 		if c.Status == citizen.StatusDead || c.Status == citizen.StatusEscaped {

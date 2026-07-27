@@ -1,6 +1,5 @@
 # Build and runtime output
 debug*.log
-hazard
 
 # Coverage reports
 cov.out

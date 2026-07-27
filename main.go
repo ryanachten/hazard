@@ -1,4 +1,4 @@
-// Main entrypoint for app
+// Program hazard is a 2D grid-based hazard simulation
 package main
 
 import (

@@ -2,13 +2,13 @@
 package engine
 
 import (
-	c "hazard/internal/citizen"
-	config "hazard/internal/configuration"
+	"hazard/internal/bounds"
+	"hazard/internal/citizen"
+	"hazard/internal/configuration"
 	"hazard/internal/events"
-	h "hazard/internal/hazard"
-	pf "hazard/internal/pathfinding"
-	r "hazard/internal/ranging"
-	sz "hazard/internal/safezone"
+	"hazard/internal/hazard"
+	"hazard/internal/pathfinding"
+	"hazard/internal/safezone"
 	"testing"
 
 	"github.com/google/uuid"
@@ -16,17 +16,17 @@ import (
 )
 
 func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
-	config := config.SimulationConfig{
+	config := configuration.SimulationConfig{
 		CitizenCount: 0,
-		Hazard: h.Config{
+		Hazard: hazard.Config{
 			Probability:   0,
 			Count:         0,
-			DurationRange: r.PositiveRange{Min: 1, Max: 1},
+			DurationRange: bounds.PositiveRange{Min: 1, Max: 1},
 		},
-		SafeZone: sz.Config{
+		SafeZone: safezone.Config{
 			Probability: 0,
 			Count:       1,
-			RadiusRange: r.Range{Min: 1, Max: 1},
+			RadiusRange: bounds.Range{Min: 1, Max: 1},
 		},
 	}
 
@@ -39,14 +39,14 @@ func TestNewSimulation_EmitsCreationEvent(t *testing.T) {
 }
 
 func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
-	grid := pf.NewGrid(3, 1, pf.CellOpen)
+	grid := pathfinding.NewGrid(3, 1, pathfinding.CellOpen)
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Cells:       []pf.Position{{X: 2, Y: 0}},
+		Cells:       []pathfinding.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 2, Y: 0}: &sz1,
 	}
 
@@ -54,11 +54,11 @@ func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
 				TargetSafeZone:   &sz1,
 			},
@@ -81,17 +81,17 @@ func TestTick_EmitsCitizenMovedEvent(t *testing.T) {
 }
 
 func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
-	grid := pf.NewGrid(3, 1, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
+	grid := pathfinding.NewGrid(3, 1, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 2, Y: 0}, pathfinding.CellSafeZone)
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Position:    pf.Position{X: 2, Y: 0},
+		Position:    pathfinding.Position{X: 2, Y: 0},
 		Radius:      0,
-		Cells:       []pf.Position{{X: 2, Y: 0}},
+		Cells:       []pathfinding.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 2, Y: 0}: &sz1,
 	}
 
@@ -99,11 +99,11 @@ func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 		},
@@ -133,17 +133,17 @@ func TestTick_EmitsCitizenEscapedEvent(t *testing.T) {
 }
 
 func TestTick_EmitsCitizenDiedEvent(t *testing.T) {
-	grid := pf.NewGrid(3, 1, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 0, Y: 0}, pf.CellHazard)
+	grid := pathfinding.NewGrid(3, 1, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 0, Y: 0}, pathfinding.CellHazard)
 
 	sim := Simulation{
 		Grid:     &grid,
 		eventBus: events.New(),
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 		},
@@ -163,17 +163,17 @@ func TestTick_EmitsCitizenDiedEvent(t *testing.T) {
 }
 
 func TestTick_EmitsHazardExpandedEvents(t *testing.T) {
-	grid := pf.NewGrid(10, 10, pf.CellOpen)
+	grid := pathfinding.NewGrid(10, 10, pathfinding.CellOpen)
 
 	sim := Simulation{
 		Grid:     &grid,
 		eventBus: events.New(),
-		Hazards: []h.Hazard{
+		Hazards: []hazard.Hazard{
 			{
 				ID:            uuid.New(),
 				CreatedAt:     0,
 				Duration:      100,
-				Origin:        pf.Position{X: 5, Y: 5},
+				Origin:        pathfinding.Position{X: 5, Y: 5},
 				CurrentRadius: 0,
 			},
 		},
@@ -194,17 +194,17 @@ func TestTick_EmitsHazardExpandedEvents(t *testing.T) {
 }
 
 func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
-	grid := pf.NewGrid(3, 1, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
+	grid := pathfinding.NewGrid(3, 1, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 2, Y: 0}, pathfinding.CellSafeZone)
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Position:    pf.Position{X: 2, Y: 0},
+		Position:    pathfinding.Position{X: 2, Y: 0},
 		Radius:      0,
-		Cells:       []pf.Position{{X: 2, Y: 0}},
+		Cells:       []pathfinding.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 2, Y: 0}: &sz1,
 	}
 
@@ -212,11 +212,11 @@ func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 		},
@@ -234,17 +234,17 @@ func TestTick_EmitsSimulationCompletedEvent(t *testing.T) {
 }
 
 func TestEventTicks_InAscendingOrder(t *testing.T) {
-	grid := pf.NewGrid(5, 1, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 4, Y: 0}, pf.CellSafeZone)
+	grid := pathfinding.NewGrid(5, 1, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 4, Y: 0}, pathfinding.CellSafeZone)
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Position:    pf.Position{X: 4, Y: 0},
+		Position:    pathfinding.Position{X: 4, Y: 0},
 		Radius:      0,
-		Cells:       []pf.Position{{X: 4, Y: 0}},
+		Cells:       []pathfinding.Position{{X: 4, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 4, Y: 0}: &sz1,
 	}
 
@@ -252,11 +252,11 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 		},
@@ -280,14 +280,14 @@ func TestEventTicks_InAscendingOrder(t *testing.T) {
 }
 
 func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
-	grid := pf.NewGrid(3, 1, pf.CellOpen)
+	grid := pathfinding.NewGrid(3, 1, pathfinding.CellOpen)
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Cells:       []pf.Position{{X: 2, Y: 0}},
+		Cells:       []pathfinding.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 2, Y: 0}: &sz1,
 	}
 
@@ -295,11 +295,11 @@ func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
 				TargetSafeZone:   &sz1,
 			},
@@ -319,23 +319,23 @@ func TestSimulationEventsAccessor_AccumulatesEvents(t *testing.T) {
 }
 
 func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
-	grid := pf.NewGrid(5, 5, pf.CellOpen)
-	destination := pf.Position{X: 4, Y: 4}
+	grid := pathfinding.NewGrid(5, 5, pathfinding.CellOpen)
+	destination := pathfinding.Position{X: 4, Y: 4}
 
-	grid.UpdateCell(pf.Position{X: 4, Y: 4}, pf.CellSafeZone)
+	grid.UpdateCell(pathfinding.Position{X: 4, Y: 4}, pathfinding.CellSafeZone)
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Position:    pf.Position{X: 4, Y: 4},
+		Position:    pathfinding.Position{X: 4, Y: 4},
 		Radius:      0,
-		Cells:       []pf.Position{{X: 4, Y: 4}},
+		Cells:       []pathfinding.Position{{X: 4, Y: 4}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 4, Y: 4}: &sz1,
 	}
 
-	path := []pf.Position{
+	path := []pathfinding.Position{
 		{X: 0, Y: 0},
 		{X: 0, Y: 1},
 		{X: 0, Y: 2},
@@ -351,11 +351,11 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 		eventBus:          events.New(),
 		Grid:              &grid,
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
 				ID:                 uuid.New(),
-				Status:             c.StatusIdle,
-				CurrentPosition:    pf.Position{X: 0, Y: 0},
+				Status:             citizen.StatusIdle,
+				CurrentPosition:    pathfinding.Position{X: 0, Y: 0},
 				CurrentDestination: destination,
 				Path:               path,
 				CurrentPathIndex:   1,
@@ -364,8 +364,8 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 		},
 	}
 
-	blockedCell := pf.Position{X: 0, Y: 2}
-	grid.UpdateCell(blockedCell, pf.CellHazard)
+	blockedCell := pathfinding.Position{X: 0, Y: 2}
+	grid.UpdateCell(blockedCell, pathfinding.CellHazard)
 
 	sim.Tick()
 
@@ -381,17 +381,17 @@ func TestTick_EmitsCitizenPathUpdatedOnRecalculation(t *testing.T) {
 }
 
 func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
-	grid := pf.NewGrid(5, 1, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 4, Y: 0}, pf.CellSafeZone)
+	grid := pathfinding.NewGrid(5, 1, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 4, Y: 0}, pathfinding.CellSafeZone)
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Position:    pf.Position{X: 4, Y: 0},
+		Position:    pathfinding.Position{X: 4, Y: 0},
 		Radius:      0,
-		Cells:       []pf.Position{{X: 4, Y: 0}},
+		Cells:       []pathfinding.Position{{X: 4, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 4, Y: 0}: &sz1,
 	}
 
@@ -400,12 +400,12 @@ func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
 				ID:               uuid.New(),
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 		},
@@ -438,28 +438,28 @@ func TestCompletedSimulation_HasCompleteEventChain(t *testing.T) {
 }
 
 func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
-	grid := pf.NewGrid(5, 2, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 4, Y: 0}, pf.CellSafeZone)
-	grid.UpdateCell(pf.Position{X: 4, Y: 1}, pf.CellSafeZone)
+	grid := pathfinding.NewGrid(5, 2, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 4, Y: 0}, pathfinding.CellSafeZone)
+	grid.UpdateCell(pathfinding.Position{X: 4, Y: 1}, pathfinding.CellSafeZone)
 
 	citizen1ID := uuid.New()
 	citizen2ID := uuid.New()
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Position:    pf.Position{X: 4, Y: 0},
+		Position:    pathfinding.Position{X: 4, Y: 0},
 		Radius:      0,
-		Cells:       []pf.Position{{X: 4, Y: 0}},
+		Cells:       []pathfinding.Position{{X: 4, Y: 0}},
 		HasCapacity: true,
 	}
-	sz2 := sz.SafeZone{
+	sz2 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Position:    pf.Position{X: 4, Y: 1},
+		Position:    pathfinding.Position{X: 4, Y: 1},
 		Radius:      0,
-		Cells:       []pf.Position{{X: 4, Y: 1}},
+		Cells:       []pathfinding.Position{{X: 4, Y: 1}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 4, Y: 0}: &sz1,
 		{X: 4, Y: 1}: &sz2,
 	}
@@ -468,19 +468,19 @@ func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
 				ID:               citizen1ID,
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}, {X: 3, Y: 0}, {X: 4, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 			{
 				ID:               citizen2ID,
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 1},
-				Path:             []pf.Position{{X: 0, Y: 1}, {X: 1, Y: 1}, {X: 2, Y: 1}, {X: 3, Y: 1}, {X: 4, Y: 1}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 1},
+				Path:             []pathfinding.Position{{X: 0, Y: 1}, {X: 1, Y: 1}, {X: 2, Y: 1}, {X: 3, Y: 1}, {X: 4, Y: 1}},
 				CurrentPathIndex: 0,
 			},
 		},
@@ -507,8 +507,8 @@ func TestMultipleCitizens_ProduceIndependentEvents(t *testing.T) {
 
 func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 	simID := uuid.New()
-	grid := pf.NewGrid(3, 1, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 0, Y: 0}, pf.CellHazard)
+	grid := pathfinding.NewGrid(3, 1, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 0, Y: 0}, pathfinding.CellHazard)
 
 	citizenID := uuid.New()
 
@@ -516,12 +516,12 @@ func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 		ID:       simID,
 		Grid:     &grid,
 		eventBus: events.New(),
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
 				ID:               citizenID,
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 		},
@@ -542,16 +542,16 @@ func TestCitizenDiedEvent_IncludesMetadata(t *testing.T) {
 }
 
 func TestPausedSimulation_EmitsNoEvents(t *testing.T) {
-	grid := pf.NewGrid(3, 1, pf.CellOpen)
+	grid := pathfinding.NewGrid(3, 1, pathfinding.CellOpen)
 
 	sim := Simulation{
 		State:    SimulationPaused,
 		Grid:     &grid,
 		eventBus: events.New(),
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
-				Status:           c.StatusIdle,
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+				Status:           citizen.StatusIdle,
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 		},
@@ -562,17 +562,17 @@ func TestPausedSimulation_EmitsNoEvents(t *testing.T) {
 }
 
 func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
-	grid := pf.NewGrid(3, 1, pf.CellOpen)
-	grid.UpdateCell(pf.Position{X: 2, Y: 0}, pf.CellSafeZone)
+	grid := pathfinding.NewGrid(3, 1, pathfinding.CellOpen)
+	grid.UpdateCell(pathfinding.Position{X: 2, Y: 0}, pathfinding.CellSafeZone)
 
-	sz1 := sz.SafeZone{
+	sz1 := safezone.SafeZone{
 		ID:          uuid.New(),
-		Position:    pf.Position{X: 2, Y: 0},
+		Position:    pathfinding.Position{X: 2, Y: 0},
 		Radius:      0,
-		Cells:       []pf.Position{{X: 2, Y: 0}},
+		Cells:       []pathfinding.Position{{X: 2, Y: 0}},
 		HasCapacity: true,
 	}
-	safeZoneLocations := map[pf.Position]*sz.SafeZone{
+	safeZoneLocations := map[pathfinding.Position]*safezone.SafeZone{
 		{X: 2, Y: 0}: &sz1,
 	}
 
@@ -580,11 +580,11 @@ func TestCompletedSimulation_EmitsNoNewEvents(t *testing.T) {
 		Grid:              &grid,
 		eventBus:          events.New(),
 		safeZoneLocations: safeZoneLocations,
-		Citizens: []c.Citizen{
+		Citizens: []citizen.Citizen{
 			{
-				Status:           c.StatusIdle,
-				CurrentPosition:  pf.Position{X: 0, Y: 0},
-				Path:             []pf.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
+				Status:           citizen.StatusIdle,
+				CurrentPosition:  pathfinding.Position{X: 0, Y: 0},
+				Path:             []pathfinding.Position{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 2, Y: 0}},
 				CurrentPathIndex: 0,
 			},
 		},

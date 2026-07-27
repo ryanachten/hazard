@@ -2,11 +2,11 @@
 package events
 
 import (
-	c "hazard/internal/citizen"
-	h "hazard/internal/hazard"
-	o "hazard/internal/obstacle"
-	pf "hazard/internal/pathfinding"
-	sz "hazard/internal/safezone"
+	"hazard/internal/citizen"
+	"hazard/internal/hazard"
+	"hazard/internal/obstacle"
+	"hazard/internal/pathfinding"
+	"hazard/internal/safezone"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,25 +56,25 @@ const (
 
 // SimulationCreatedPayload for simulation start event
 type SimulationCreatedPayload struct {
-	Grid      pf.Grid
-	Citizens  []c.Citizen
-	SafeZones []sz.SafeZone
-	Obstacles []o.Obstacle
+	Grid      pathfinding.Grid
+	Citizens  []citizen.Citizen
+	SafeZones []safezone.SafeZone
+	Obstacles []obstacle.Obstacle
 }
 
 // SimulationCreated raised when simulation starts
 func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata EventMetadata) {
-	citizenSnapshot := make([]c.Citizen, len(payload.Citizens))
+	citizenSnapshot := make([]citizen.Citizen, len(payload.Citizens))
 	for i, citizen := range payload.Citizens {
 		citizenSnapshot[i] = citizen.Copy()
 	}
 
-	safeZoneSnapshot := make([]sz.SafeZone, len(payload.SafeZones))
+	safeZoneSnapshot := make([]safezone.SafeZone, len(payload.SafeZones))
 	for i, safeZone := range payload.SafeZones {
 		safeZoneSnapshot[i] = safeZone.Copy()
 	}
 
-	obstacleSnapshot := make([]o.Obstacle, len(payload.Obstacles))
+	obstacleSnapshot := make([]obstacle.Obstacle, len(payload.Obstacles))
 	for i, obstacle := range payload.Obstacles {
 		obstacleSnapshot[i] = obstacle.Copy()
 	}
@@ -93,19 +93,19 @@ func (e *EventBus) SimulationCompleted(metadata EventMetadata) {
 }
 
 // CitizenMoved raised when a citizen moves
-func (e *EventBus) CitizenMoved(citizenID uuid.UUID, newPosition pf.Position, metadata EventMetadata) {
+func (e *EventBus) CitizenMoved(citizenID uuid.UUID, newPosition pathfinding.Position, metadata EventMetadata) {
 	e.createEvent(CitizenMoved, citizenID, metadata, newPosition)
 }
 
 // CitizenPathUpdated raised when a citizen's path is recalculated
-func (e *EventBus) CitizenPathUpdated(citizenID uuid.UUID, path []pf.Position, metadata EventMetadata) {
+func (e *EventBus) CitizenPathUpdated(citizenID uuid.UUID, path []pathfinding.Position, metadata EventMetadata) {
 	e.createEvent(CitizenPathUpdated, citizenID, metadata, getPositionSnapshot(path))
 }
 
 // CitizenEscapedPayload for citizen escape event
 type CitizenEscapedPayload struct {
 	SafeZoneID       uuid.UUID
-	AssignedPosition pf.Position
+	AssignedPosition pathfinding.Position
 	TotalEscaped     int
 	TotalRemaining   int
 }
@@ -129,7 +129,7 @@ func (e *EventBus) CitizenDied(citizenID uuid.UUID, payload CitizenDiedPayload, 
 // SafeZoneEmergedPayload for safe zone emergence event
 type SafeZoneEmergedPayload struct {
 	ID    uuid.UUID
-	Cells []pf.Position
+	Cells []pathfinding.Position
 }
 
 // SafeZoneEmerged raised when a safe zone emerges
@@ -142,8 +142,8 @@ func (e *EventBus) SafeZoneEmerged(safeZoneID uuid.UUID, payload SafeZoneEmerged
 
 // HazardEmergedPayload for hazard emergence event
 type HazardEmergedPayload struct {
-	Type     h.Type
-	Position pf.Position
+	Type     hazard.Type
+	Position pathfinding.Position
 }
 
 // HazardEmerged raised when a hazard emerges
@@ -152,12 +152,12 @@ func (e *EventBus) HazardEmerged(hazardID uuid.UUID, payload HazardEmergedPayloa
 }
 
 // HazardExpanded raised when a hazard expands
-func (e *EventBus) HazardExpanded(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) {
+func (e *EventBus) HazardExpanded(hazardID uuid.UUID, updatedCells []pathfinding.Position, metadata EventMetadata) {
 	e.createEvent(HazardExpanded, hazardID, metadata, getPositionSnapshot(updatedCells))
 }
 
 // HazardDissipated raised when a hazard disappears
-func (e *EventBus) HazardDissipated(hazardID uuid.UUID, updatedCells []pf.Position, metadata EventMetadata) {
+func (e *EventBus) HazardDissipated(hazardID uuid.UUID, updatedCells []pathfinding.Position, metadata EventMetadata) {
 	e.createEvent(HazardDissipated, hazardID, metadata, getPositionSnapshot(updatedCells))
 }
 
@@ -177,8 +177,8 @@ func (e *EventBus) createEvent(eventType eventType, entityID uuid.UUID, metadata
 	e.EventLog = append(e.EventLog, event)
 }
 
-func getPositionSnapshot(src []pf.Position) []pf.Position {
-	snapshot := make([]pf.Position, len(src))
+func getPositionSnapshot(src []pathfinding.Position) []pathfinding.Position {
+	snapshot := make([]pathfinding.Position, len(src))
 	copy(snapshot, src)
 
 	return snapshot

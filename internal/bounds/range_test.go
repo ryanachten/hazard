@@ -1,4 +1,4 @@
-package ranging
+package bounds
 
 import (
 	"testing"

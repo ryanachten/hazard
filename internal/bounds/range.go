@@ -1,5 +1,5 @@
-// Package ranging defines numeric range utilities
-package ranging
+// Package bounds defines numeric range utilities
+package bounds
 
 import (
 	"fmt"

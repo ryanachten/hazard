@@ -1,13 +1,13 @@
 package engine
 
 import (
-	c "hazard/internal/citizen"
-	cfg "hazard/internal/configuration"
+	"hazard/internal/citizen"
+	"hazard/internal/configuration"
 	"hazard/internal/events"
-	h "hazard/internal/hazard"
-	o "hazard/internal/obstacle"
-	pf "hazard/internal/pathfinding"
-	sz "hazard/internal/safezone"
+	"hazard/internal/hazard"
+	"hazard/internal/obstacle"
+	"hazard/internal/pathfinding"
+	"hazard/internal/safezone"
 	"log/slog"
 	"math/rand"
 	"slices"
@@ -18,17 +18,17 @@ import (
 // Simulation engine for hazards
 type Simulation struct {
 	ID                   uuid.UUID
-	Config               cfg.SimulationConfig
+	Config               configuration.SimulationConfig
 	State                SimulationState
 	TickCount            uint64
-	Grid                 *pf.Grid
-	Citizens             []c.Citizen
+	Grid                 *pathfinding.Grid
+	Citizens             []citizen.Citizen
 	DeadCitizensCount    int
 	EscapedCitizensCount int
-	Hazards              []h.Hazard
-	SafeZones            []sz.SafeZone
+	Hazards              []hazard.Hazard
+	SafeZones            []safezone.SafeZone
 	eventBus             *events.EventBus
-	safeZoneLocations    map[pf.Position]*sz.SafeZone
+	safeZoneLocations    map[pathfinding.Position]*safezone.SafeZone
 }
 
 // SimulationState phases of a simulation
@@ -46,20 +46,20 @@ const (
 )
 
 // NewSimulation creates a simulation based on configuration
-func NewSimulation(width, height int, config cfg.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
-	grid := pf.NewGrid(width, height, pf.CellOpen)
+func NewSimulation(width, height int, config configuration.SimulationConfig, eventBus *events.EventBus) (Simulation, error) {
+	grid := pathfinding.NewGrid(width, height, pathfinding.CellOpen)
 
-	safeZone, err := sz.Create(config.SafeZone, &grid)
+	safeZone, err := safezone.Create(config.SafeZone, &grid)
 	if err != nil {
 		return Simulation{}, err
 	}
 
-	safeZoneLocations := make(map[pf.Position]*sz.SafeZone)
+	safeZoneLocations := make(map[pathfinding.Position]*safezone.SafeZone)
 	for _, cell := range safeZone.Cells {
 		safeZoneLocations[cell] = &safeZone
 	}
 
-	obstacles := o.CreateObstacles(config.Obstacle, &grid)
+	obstacles := obstacle.CreateObstacles(config.Obstacle, &grid)
 
 	var simulation = Simulation{
 		ID:                uuid.New(),
@@ -67,8 +67,8 @@ func NewSimulation(width, height int, config cfg.SimulationConfig, eventBus *eve
 		State:             SimulationRunning,
 		TickCount:         0,
 		Grid:              &grid,
-		SafeZones:         []sz.SafeZone{safeZone},
-		Citizens:          c.CreateCitizens(config.CitizenCount, &grid, safeZoneLocations),
+		SafeZones:         []safezone.SafeZone{safeZone},
+		Citizens:          citizen.CreateCitizens(config.CitizenCount, &grid, safeZoneLocations),
 		eventBus:          eventBus,
 		safeZoneLocations: safeZoneLocations,
 	}
@@ -102,19 +102,19 @@ func (s *Simulation) Tick() {
 
 	for i := range s.Citizens {
 
-		citizen := &s.Citizens[i]
+		c := &s.Citizens[i]
 
-		if citizen.Status == c.StatusDead || citizen.Status == c.StatusEscaped {
+		if c.Status == citizen.StatusDead || c.Status == citizen.StatusEscaped {
 			continue
 		}
 
-		isDead := s.removeDeadCitizen(citizen)
+		isDead := s.removeDeadCitizen(c)
 		if isDead {
 			continue
 		}
 
-		s.updateCitizenPath(citizen, safeZoneCreated)
-		s.updateCitizenLocation(citizen)
+		s.updateCitizenPath(c, safeZoneCreated)
+		s.updateCitizenLocation(c)
 	}
 
 	s.TickCount++
@@ -189,7 +189,7 @@ func (s *Simulation) generateIntermittentHazard() {
 		return
 	}
 
-	hazard, err := h.Create(hazardConfig, s.Grid)
+	hazard, err := hazard.Create(hazardConfig, s.Grid)
 	if err != nil {
 		slog.Warn("error creating hazard", "err", err)
 		return
@@ -210,7 +210,7 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 		return false
 	}
 
-	safeZone, err := sz.Create(safeZoneConfig, s.Grid)
+	safeZone, err := safezone.Create(safeZoneConfig, s.Grid)
 	if err != nil {
 		slog.Warn("error creating safe zone", "err", err)
 		return false
@@ -230,19 +230,19 @@ func (s *Simulation) generateIntermittentSafeZone() bool {
 	return true
 }
 
-func (s *Simulation) removeDeadCitizen(citizen *c.Citizen) bool {
-	if citizen.Status == c.StatusEscaped {
+func (s *Simulation) removeDeadCitizen(c *citizen.Citizen) bool {
+	if c.Status == citizen.StatusEscaped {
 		return false
 	}
 
-	if s.Grid.GetCell(citizen.CurrentPosition) != pf.CellHazard {
+	if s.Grid.GetCell(c.CurrentPosition) != pathfinding.CellHazard {
 		return false
 	}
 
-	citizen.Status = c.StatusDead
-	s.Grid.UpdateCell(citizen.CurrentPosition, pf.CellDeadCitizen)
+	c.Status = citizen.StatusDead
+	s.Grid.UpdateCell(c.CurrentPosition, pathfinding.CellDeadCitizen)
 	s.DeadCitizensCount++
-	s.eventBus.CitizenDied(citizen.ID, events.CitizenDiedPayload{
+	s.eventBus.CitizenDied(c.ID, events.CitizenDiedPayload{
 		TotalDead:      s.DeadCitizensCount,
 		TotalRemaining: len(s.Citizens) - s.DeadCitizensCount - s.EscapedCitizensCount,
 	}, s.getEventMetadata())
@@ -250,38 +250,38 @@ func (s *Simulation) removeDeadCitizen(citizen *c.Citizen) bool {
 	return true
 }
 
-func (s *Simulation) updateCitizenPath(citizen *c.Citizen, safeZoneCreated bool) {
+func (s *Simulation) updateCitizenPath(c *citizen.Citizen, safeZoneCreated bool) {
 	pathUpdated := false
 
 	// If no safe zone assigned, new safe zone added, or the target has no capacity
 	// determine which available safe zone is closest
-	targetSafeZone := citizen.TargetSafeZone
+	targetSafeZone := c.TargetSafeZone
 	if safeZoneCreated || targetSafeZone == nil || !targetSafeZone.HasCapacity {
-		if err := citizen.FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
-			citizen.Path = nil
+		if err := c.FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
+			c.Path = nil
 		}
 		pathUpdated = true
 	} else {
-		pathUpdated = s.verifyAndUpdateBlockedPath(citizen)
+		pathUpdated = s.verifyAndUpdateBlockedPath(c)
 	}
 
 	if pathUpdated {
-		s.eventBus.CitizenPathUpdated(citizen.ID, citizen.Path, s.getEventMetadata())
+		s.eventBus.CitizenPathUpdated(c.ID, c.Path, s.getEventMetadata())
 	}
 }
 
 // Check if next cell intersects with avoidable cell types and needs recalculating
-func (s *Simulation) verifyAndUpdateBlockedPath(citizen *c.Citizen) bool {
-	curIndex := citizen.CurrentPathIndex
+func (s *Simulation) verifyAndUpdateBlockedPath(c *citizen.Citizen) bool {
+	curIndex := c.CurrentPathIndex
 	nextIndex := curIndex + 1
-	if nextIndex < len(citizen.Path) {
-		pos := citizen.Path[nextIndex]
-		if pf.AvoidableCellType[s.Grid.GetCell(pos)] {
-			if err := citizen.RecalculatePath(s.Grid); err != nil {
+	if nextIndex < len(c.Path) {
+		pos := c.Path[nextIndex]
+		if pathfinding.AvoidableCellType[s.Grid.GetCell(pos)] {
+			if err := c.RecalculatePath(s.Grid); err != nil {
 				// Destination itself is blocked (e.g. occupied by another citizen).
 				// Find a new safe zone with capacity.
-				if err := citizen.FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
-					citizen.Path = nil
+				if err := c.FindNearestSafeZone(s.Grid, s.safeZoneLocations); err != nil {
+					c.Path = nil
 				}
 			}
 			return true
@@ -290,28 +290,28 @@ func (s *Simulation) verifyAndUpdateBlockedPath(citizen *c.Citizen) bool {
 	return false
 }
 
-func (s *Simulation) updateCitizenLocation(citizen *c.Citizen) {
-	hasMoved, hasEscaped := citizen.IncrementLocation(s.Grid)
+func (s *Simulation) updateCitizenLocation(c *citizen.Citizen) {
+	hasMoved, hasEscaped := c.IncrementLocation(s.Grid)
 	if hasMoved {
-		s.eventBus.CitizenMoved(citizen.ID, citizen.CurrentPosition, s.getEventMetadata())
+		s.eventBus.CitizenMoved(c.ID, c.CurrentPosition, s.getEventMetadata())
 	}
 
 	if hasEscaped {
-		safeZone := s.safeZoneLocations[citizen.CurrentPosition]
-		assignedPosition, hasCapacity := safeZone.AddOccupant(citizen.ID, citizen.CurrentPosition, s.Grid)
+		safeZone := s.safeZoneLocations[c.CurrentPosition]
+		assignedPosition, hasCapacity := safeZone.AddOccupant(c.ID, c.CurrentPosition, s.Grid)
 
 		if !hasCapacity {
-			s.updateCitizenPath(citizen, true)
+			s.updateCitizenPath(c, true)
 		} else {
 			s.EscapedCitizensCount++
-			citizen.Status = c.StatusEscaped
+			c.Status = citizen.StatusEscaped
 
-			if assignedPosition != citizen.CurrentPosition {
-				s.Grid.UpdateCell(citizen.CurrentPosition, citizen.PreviousCellType)
-				citizen.CurrentPosition = assignedPosition
+			if assignedPosition != c.CurrentPosition {
+				s.Grid.UpdateCell(c.CurrentPosition, c.PreviousCellType)
+				c.CurrentPosition = assignedPosition
 			}
 
-			s.eventBus.CitizenEscaped(citizen.ID, events.CitizenEscapedPayload{
+			s.eventBus.CitizenEscaped(c.ID, events.CitizenEscapedPayload{
 				SafeZoneID:       safeZone.ID,
 				AssignedPosition: assignedPosition,
 				TotalEscaped:     s.EscapedCitizensCount,

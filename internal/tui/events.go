@@ -2,8 +2,8 @@ package tui
 
 import (
 	"hazard/internal/events"
-	h "hazard/internal/hazard"
-	pf "hazard/internal/pathfinding"
+	"hazard/internal/hazard"
+	"hazard/internal/pathfinding"
 	"hazard/internal/random"
 	"log/slog"
 
@@ -55,7 +55,7 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 }
 
 func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
-	newPosition, ok := event.Payload.(pf.Position)
+	newPosition, ok := event.Payload.(pathfinding.Position)
 	if !ok {
 		slog.Error("error converting payload to pf.Position", "payload", event.Payload)
 	}
@@ -133,11 +133,11 @@ func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
 	var character string
 
 	switch payload.Type {
-	case h.FireHazard:
+	case hazard.FireHazard:
 		character = getFireCell()
-	case h.FloodHazard:
+	case hazard.FloodHazard:
 		character = getFloodCell()
-	case h.LavaHazard:
+	case hazard.LavaHazard:
 		character = getLavaCell()
 	}
 
@@ -146,7 +146,7 @@ func (m *Model) handleHazardEmerged(event events.SimulationEvent) {
 }
 
 func (m *Model) handleHazardExpanded(event events.SimulationEvent) {
-	updatedCells, ok := event.Payload.([]pf.Position)
+	updatedCells, ok := event.Payload.([]pathfinding.Position)
 	if !ok {
 		slog.Error("error converting payload to []pf.Position", "payload", event.Payload)
 	}
@@ -159,7 +159,7 @@ func (m *Model) handleHazardExpanded(event events.SimulationEvent) {
 }
 
 func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
-	updatedCells, ok := event.Payload.([]pf.Position)
+	updatedCells, ok := event.Payload.([]pathfinding.Position)
 	if !ok {
 		slog.Error("error converting payload to []pf.Position", "payload", event.Payload)
 	}
@@ -169,9 +169,9 @@ func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
 	}
 }
 
-func (m *Model) createSafeZone(safeZoneID uuid.UUID, cells []pf.Position) {
+func (m *Model) createSafeZone(safeZoneID uuid.UUID, cells []pathfinding.Position) {
 	safeZoneChar := getSafeZoneCell(random.ValInSlice(safeZoneCharacters))
-	m.safeZones[safeZoneID] = make([]pf.Position, len(cells))
+	m.safeZones[safeZoneID] = make([]pathfinding.Position, len(cells))
 
 	for i, cellPos := range cells {
 		m.grid[cellPos.Y][cellPos.X] = safeZoneChar

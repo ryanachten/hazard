@@ -14,7 +14,7 @@ shell commands, and other important information, read the current plan at `docs/
 - Avoid repetition. i.e. `bytes.Buffer` not `bytes.BytesBuffer` etc. 
 - Use `.New()` method naming when returning a pointer to a given type
 - Prefer use to structured logs via `slog` rather than `log``
-- Avoid use of import aliases, unless it solves a problem - i.e. avoids long package names (like `pathfinding`), prevents awkward references (like `hazard.Hazard`)
+- Avoid use of import aliases, unless it solves a problem. This is usually signals a problem with the package name. One exception to this rule is where standard use of an external package like `bubbletea` recommends using an alias.
 - Prefer nil slice values via `var t []string` when declaring a slice over zero-length slices like `t := []string{}`
 
 ### References

@@ -6,7 +6,6 @@ cov.out
 
 # Local AI tooling
 .specify/*
-!.specify/memory/
 .opencode/*
 
 # Misc

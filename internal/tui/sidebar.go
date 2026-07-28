@@ -16,7 +16,8 @@ func (m Model) renderSidebar() (string, *tea.Cursor) {
 		logo,
 		m.renderCitizenStatus(),
 		inputView,
-		m.renderHelpKey(),
+		m.renderControls(),
+		m.renderKey(),
 	)
 
 	return sidebar, cursor
@@ -41,7 +42,7 @@ func (m Model) renderCitizenStatus() string {
 	return activeCitizens + deadCitizens + escapedCitizens
 }
 
-func (m Model) renderHelpKey() string {
+func (m Model) renderKey() string {
 	var b strings.Builder
 
 	b.WriteString(heading.SetString("Key").Render())
@@ -89,23 +90,30 @@ func (m Model) renderHelpKey() string {
 		b.WriteString(floodStyle.SetString(char).Render())
 	}
 
-	b.WriteString("\n\n")
+	return b.String()
+}
+
+func (m Model) renderControls() string {
+	var b strings.Builder
+
 	b.WriteString(heading.SetString("Controls").Render())
 
 	b.WriteString("\nPause/Resume: ")
-	b.WriteString(helpBarKey.SetString("space").Render())
+	b.WriteString(sidebarValueStyle.SetString("space").Render())
 
 	b.WriteString("\nReset: ")
-	b.WriteString(helpBarKey.SetString("r").Render())
+	b.WriteString(sidebarValueStyle.SetString("r").Render())
 
 	b.WriteString("\nToggle paths: ")
-	b.WriteString(helpBarKey.SetString("p").Render())
+	b.WriteString(sidebarValueStyle.SetString("p").Render())
 
 	b.WriteString("\nNavigate inputs: ")
-	b.WriteString(helpBarKey.SetString("tab").Render())
+	b.WriteString(sidebarValueStyle.SetString("tab").Render())
 
 	b.WriteString("\nQuit: ")
-	b.WriteString(helpBarKey.SetString("q").Render())
+	b.WriteString(sidebarValueStyle.SetString("q").Render())
+
+	b.WriteString("\n")
 
 	return b.String()
 }

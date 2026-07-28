@@ -117,3 +117,7 @@ var heading = lipgloss.NewStyle().
 	Bold(true).
 	Underline(true).
 	Width(sidebarWidth)
+
+var helpBarKey = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#58a6ff")).
+	Bold(true)

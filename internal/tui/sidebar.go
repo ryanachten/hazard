@@ -89,5 +89,23 @@ func (m Model) renderHelpKey() string {
 		b.WriteString(floodStyle.SetString(char).Render())
 	}
 
+	b.WriteString("\n\n")
+	b.WriteString(heading.SetString("Controls").Render())
+
+	b.WriteString("\nPause/Resume: ")
+	b.WriteString(helpBarKey.SetString("space").Render())
+
+	b.WriteString("\nReset: ")
+	b.WriteString(helpBarKey.SetString("r").Render())
+
+	b.WriteString("\nToggle paths: ")
+	b.WriteString(helpBarKey.SetString("p").Render())
+
+	b.WriteString("\nNavigate inputs: ")
+	b.WriteString(helpBarKey.SetString("tab").Render())
+
+	b.WriteString("\nQuit: ")
+	b.WriteString(helpBarKey.SetString("q").Render())
+
 	return b.String()
 }

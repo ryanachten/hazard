@@ -14,6 +14,15 @@ var citizenCharacter = lipgloss.NewStyle().
 	SetString("@").
 	Render()
 
+var pathHorizontalCharacter = lipgloss.NewStyle().
+	Inherit(citizenStyle).
+	SetString("-").
+	Render()
+var pathVerticalCharacter = lipgloss.NewStyle().
+	Inherit(citizenStyle).
+	SetString("|").
+	Render()
+
 var citizenDeadStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color("#991b1b")).
 	Background(lipgloss.Color("#2a0505"))

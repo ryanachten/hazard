@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/google/uuid"
 
+	"hazard/internal/citizen"
 	"hazard/internal/events"
 	"hazard/internal/pathfinding"
 )
@@ -16,6 +17,7 @@ type citizenState struct {
 	Position     pathfinding.Position
 	SafeZoneID   uuid.UUID
 	PreviousCell string
+	Status       citizen.Status
 }
 
 // Model represents the TUI state for the hazard simulation
@@ -23,6 +25,7 @@ type Model struct {
 	simulationID        uuid.UUID
 	grid                [][]string
 	citizens            map[uuid.UUID]citizenState
+	paths               map[uuid.UUID][]pathfinding.Position
 	escapedCitizenCount int
 	deadCitizenCount    int
 	activeCitizenCount  int
@@ -35,6 +38,7 @@ type Model struct {
 	focusTargets        int
 	inputs              InputController
 	showSidebar         bool
+	showPaths           bool
 }
 
 var sidebarWidth = 35
@@ -47,6 +51,7 @@ func InitialModel(eventBus *events.EventBus) Model {
 	return Model{
 		grid:         [][]string{},
 		citizens:     map[uuid.UUID]citizenState{},
+		paths:        map[uuid.UUID][]pathfinding.Position{},
 		hazards:      map[uuid.UUID]string{},
 		safeZones:    map[uuid.UUID][]pathfinding.Position{},
 		eventBus:     eventBus,
@@ -69,14 +74,19 @@ func (m Model) Init() tea.Cmd {
 // View renders the current simulation state
 func (m Model) View() tea.View {
 	var grid strings.Builder
+	pathOverlay := m.buildPathOverlay()
 
 	for y := range m.grid {
 		if y > 0 {
 			grid.WriteString("\n")
 		}
 		for x := range m.grid[y] {
-			cell := m.grid[y][x]
-			grid.WriteString(cell)
+			pos := pathfinding.Position{X: x, Y: y}
+			if pathChar, ok := pathOverlay[pos]; ok {
+				grid.WriteString(pathChar)
+			} else {
+				grid.WriteString(m.grid[y][x])
+			}
 		}
 	}
 
@@ -92,6 +102,64 @@ func (m Model) View() tea.View {
 
 	view := tea.NewView(styledGrid)
 	return view
+}
+
+func (m Model) buildPathOverlay() map[pathfinding.Position]string {
+	if !m.showPaths {
+		return nil
+	}
+
+	overlay := make(map[pathfinding.Position]string)
+
+	for id, citizenPath := range m.paths {
+		state, ok := m.citizens[id]
+		if !ok {
+			continue
+		}
+
+		if state.Status != citizen.StatusIdle && state.Status != citizen.StatusNavigating {
+			continue
+		}
+
+		startIndex := -1
+		for i, pos := range citizenPath {
+			if pos == state.Position {
+				startIndex = i
+				break
+			}
+		}
+		if startIndex == -1 {
+			continue
+		}
+
+		remaining := citizenPath[startIndex+1:]
+		for i := range remaining {
+			overlay[remaining[i]] = pathDirection(remaining, i)
+		}
+	}
+
+	return overlay
+}
+
+func pathDirection(path []pathfinding.Position, i int) string {
+	next := i < len(path)-1
+	prev := i > 0
+
+	if next {
+		if path[i].Y == path[i+1].Y {
+			return pathHorizontalCharacter
+		}
+		return pathVerticalCharacter
+	}
+
+	if prev {
+		if path[i].Y == path[i-1].Y {
+			return pathHorizontalCharacter
+		}
+		return pathVerticalCharacter
+	}
+
+	return pathHorizontalCharacter
 }
 
 // Update handles messages and updates the TUI model
@@ -131,6 +199,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case events.CitizenMoved:
 			m.handleCitizenMoved(event)
+		case events.CitizenPathUpdated:
+			m.handleCitizenPathUpdated(event)
 		case events.CitizenDied:
 			m.handleCitizenDied(event)
 		case events.SafeZoneEmerged:
@@ -171,11 +241,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "r":
 			m.simulationID = uuid.Nil
+			m.paths = map[uuid.UUID][]pathfinding.Position{}
+			m.showPaths = false
 			m.eventBus.InitialiseSimulation(events.InitialiseSimulationPayload{
 				Width:  m.width,
 				Height: m.height,
 			})
 			return m, nil
+
+		case "p":
+			m.showPaths = !m.showPaths
 		}
 	}
 

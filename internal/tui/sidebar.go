@@ -9,18 +9,46 @@ import (
 )
 
 func (m Model) renderSidebar() (string, *tea.Cursor) {
-	inputView, cursor := m.inputs.View()
+	var sections []string
+	var cursor *tea.Cursor
+	used := 0
 
-	sidebar := lipgloss.JoinVertical(
-		lipgloss.Left,
-		logo,
-		m.renderCitizenStatus(),
-		inputView,
-		m.renderControls(),
-		m.renderKey(),
-	)
+	sections = append(sections, logo)
+	used += lineCount(logo)
 
+	statusStr := m.renderCitizenStatus()
+	if used+lineCount(statusStr) <= m.height {
+		sections = append(sections, statusStr)
+		used += lineCount(statusStr)
+	}
+
+	controlsStr := m.renderControls()
+	if used+lineCount(controlsStr) <= m.height {
+		sections = append(sections, controlsStr)
+		used += lineCount(controlsStr)
+	}
+
+	keyStr := m.renderKey()
+	if used+lineCount(keyStr) <= m.height {
+		sections = append(sections, keyStr)
+		used += lineCount(keyStr)
+	}
+
+	inputView, inputCursor := m.inputs.View()
+	if used+lineCount(inputView) <= m.height {
+		sections = append(sections, inputView)
+		cursor = inputCursor
+	}
+
+	sidebar := lipgloss.JoinVertical(lipgloss.Left, sections...)
 	return sidebar, cursor
+}
+
+func lineCount(s string) int {
+	if s == "" {
+		return 0
+	}
+	return strings.Count(s, "\n") + 1
 }
 
 func (m Model) renderCitizenStatus() string {
@@ -89,6 +117,8 @@ func (m Model) renderKey() string {
 	for _, char := range floodCharacters {
 		b.WriteString(floodStyle.SetString(char).Render())
 	}
+
+	b.WriteString("\n")
 
 	return b.String()
 }

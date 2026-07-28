@@ -60,7 +60,7 @@ func (ic *InputController) View() (string, *tea.Cursor) {
 
 	for i, id := range ic.InputIDs {
 		b.WriteString(ic.inputs[id].label)
-		b.WriteString(" ")
+		b.WriteString(": ")
 
 		inputModel := ic.inputs[id].model
 		b.WriteString(inputModel.View())
@@ -144,9 +144,21 @@ func (ic *InputController) createInput(
 	model := textinput.New()
 	model.Placeholder = placeholder
 	model.CharLimit = 4
+	model.Prompt = ""
 
 	model.SetWidth(inputWidth)
 	model.SetValue(placeholder)
+
+	model.SetStyles(textinput.Styles{
+		Focused: textinput.StyleState{
+			Text:   sidebarValueStyle,
+			Prompt: sidebarValueStyle,
+		},
+		Blurred: textinput.StyleState{
+			Text:   sidebarValueStyle,
+			Prompt: sidebarValueStyle,
+		},
+	})
 
 	ic.InputIDs = append(ic.InputIDs, id)
 	ic.inputs[id] = input{

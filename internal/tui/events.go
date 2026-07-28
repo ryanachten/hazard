@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"hazard/internal/citizen"
 	"hazard/internal/events"
 	"hazard/internal/hazard"
 	"hazard/internal/pathfinding"
@@ -43,7 +44,9 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 		m.grid[pos.Y][pos.X] = citizenCharacter
 		m.citizens[citizen.ID] = citizenState{
 			Position: citizen.CurrentPosition,
+			Status:   citizen.Status,
 		}
+		m.paths[citizen.ID] = citizen.Path
 	}
 	m.activeCitizenCount = len(payload.Citizens)
 
@@ -75,8 +78,19 @@ func (m *Model) handleCitizenMoved(event events.SimulationEvent) {
 	m.citizens[event.EntityID] = citizenState{
 		Position:     newPosition,
 		PreviousCell: m.grid[newPosition.Y][newPosition.X],
+		Status:       citizen.StatusNavigating,
 	}
 	m.grid[newPosition.Y][newPosition.X] = citizenCharacter
+}
+
+func (m *Model) handleCitizenPathUpdated(event events.SimulationEvent) {
+	path, ok := event.Payload.([]pathfinding.Position)
+	if !ok {
+		slog.Error("error converting payload to []pathfinding.Position", "payload", event.Payload)
+		return
+	}
+
+	m.paths[event.EntityID] = path
 }
 
 func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
@@ -98,7 +112,10 @@ func (m *Model) handleCitizenEscaped(event events.SimulationEvent) {
 
 	state := m.citizens[event.EntityID]
 	state.Position = assignedPos
+	state.Status = citizen.StatusEscaped
 	m.citizens[event.EntityID] = state
+
+	delete(m.paths, event.EntityID)
 
 	m.escapedCitizenCount = payload.TotalEscaped
 	m.activeCitizenCount = payload.TotalRemaining
@@ -111,8 +128,14 @@ func (m *Model) handleCitizenDied(event events.SimulationEvent) {
 		return
 	}
 
-	var currentPosition = m.citizens[event.EntityID].Position
+	currentPosition := m.citizens[event.EntityID].Position
 	m.grid[currentPosition.Y][currentPosition.X] = citizenDeadCharacter
+
+	state := m.citizens[event.EntityID]
+	state.Status = citizen.StatusDead
+	m.citizens[event.EntityID] = state
+
+	delete(m.paths, event.EntityID)
 
 	m.deadCitizenCount = payload.TotalDead
 	m.activeCitizenCount = payload.TotalRemaining

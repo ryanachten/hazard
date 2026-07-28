@@ -49,6 +49,10 @@ func (m Model) renderHelpKey() string {
 	b.WriteString("\nActive citizen: ")
 	b.WriteString(citizenCharacter)
 
+	b.WriteString("\nCitizen Path: ")
+	b.WriteString(pathHorizontalCharacter)
+	b.WriteString(pathVerticalCharacter)
+
 	b.WriteString("\nDead citizen: ")
 	b.WriteString(citizenDeadCharacter)
 

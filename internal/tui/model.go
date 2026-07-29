@@ -61,6 +61,19 @@ func InitialModel(eventBus *events.EventBus) Model {
 	}
 }
 
+func (m *Model) updateFocusTargets() {
+	used := lineCount(logo)
+	used += lineCount(m.renderCitizenStatus())
+	used += lineCount(m.renderControls())
+	used += lineCount(m.renderKey())
+	inputView, _ := m.inputs.View()
+	if used+lineCount(inputView) <= m.height {
+		m.focusTargets = 1 + len(m.inputs.InputIDs)
+	} else {
+		m.focusTargets = 1
+	}
+}
+
 func (m Model) consumeSimulationEvent() tea.Msg {
 	event := <-m.eventBus.SimulationEvents
 	return event
@@ -134,32 +147,31 @@ func (m Model) buildPathOverlay() map[pathfinding.Position]string {
 
 		remaining := citizenPath[startIndex+1:]
 		for i := range remaining {
-			overlay[remaining[i]] = pathDirection(remaining, i)
+			var from pathfinding.Position
+			if i == 0 {
+				from = state.Position
+			} else {
+				from = remaining[i-1]
+			}
+			overlay[remaining[i]] = pathDirection(remaining, i, from)
 		}
 	}
 
 	return overlay
 }
 
-func pathDirection(path []pathfinding.Position, i int) string {
-	next := i < len(path)-1
-	prev := i > 0
-
-	if next {
+func pathDirection(path []pathfinding.Position, i int, from pathfinding.Position) string {
+	if i < len(path)-1 {
 		if path[i].Y == path[i+1].Y {
 			return pathHorizontalCharacter
 		}
 		return pathVerticalCharacter
 	}
 
-	if prev {
-		if path[i].Y == path[i-1].Y {
-			return pathHorizontalCharacter
-		}
-		return pathVerticalCharacter
+	if path[i].Y == from.Y {
+		return pathHorizontalCharacter
 	}
-
-	return pathHorizontalCharacter
+	return pathVerticalCharacter
 }
 
 // Update handles messages and updates the TUI model
@@ -176,6 +188,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.height = msg.Height
+		m.updateFocusTargets()
 
 		m.eventBus.InitialiseSimulation(events.InitialiseSimulationPayload{
 			Width:  m.width,
@@ -243,6 +256,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.simulationID = uuid.Nil
 			m.paths = map[uuid.UUID][]pathfinding.Position{}
 			m.showPaths = false
+			m.updateFocusTargets()
 			m.eventBus.InitialiseSimulation(events.InitialiseSimulationPayload{
 				Width:  m.width,
 				Height: m.height,

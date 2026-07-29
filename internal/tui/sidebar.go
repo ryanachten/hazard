@@ -37,7 +37,12 @@ func (m Model) renderSidebar() (string, *tea.Cursor) {
 	inputView, inputCursor := m.inputs.View()
 	if used+lineCount(inputView) <= m.height {
 		sections = append(sections, inputView)
-		cursor = inputCursor
+		if inputCursor != nil {
+			c := *inputCursor
+			c.Y += used
+			c.X += m.width + 5
+			cursor = &c
+		}
 	}
 
 	sidebar := lipgloss.JoinVertical(lipgloss.Left, sections...)

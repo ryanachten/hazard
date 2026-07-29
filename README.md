@@ -35,7 +35,7 @@ Citizens recalculate when their next cell is blocked, scanning only the immediat
 ## Pathfinding
 Two pathfinding algorithms are adopted as part of citizen navigation:
 - **Dijkstra (uniform-cost search)** - is used to find the nearest safe zone — the goal is a predicate matching any safe zone cell with capacity remaining.
-- **A\* with Manhattan heuristic** - once an available safe zone is identified, A* is to determine the path a citizen follows to their nearest safe zone.
+- **A\* with Manhattan heuristic** - once an available safe zone is identified, A* is used to determine the path a citizen follows to their nearest safe zone.
 
  Both treat obstacles, hazards, and other citizens as blocked cells and search cardinal neighbours via a priority queue. When no valid path exists, the citizen random walks until a route opens or a hazard overtakes them.
 
@@ -67,11 +67,12 @@ The terminal UI is built using the Charm ecosystem. [Bubbletea](https://github.c
 - [Go](https://go.dev/dl/) 1.26.4
 - [golangci-lint](https://golangci-lint.run/) v2.12.2 (for linting)
 - [pre-commit](https://pre-commit.com/) (for git hooks)
+- [VHS](https://github.com/charmbracelet/vhs) (for creating demo recordings)
 
 ### Command
 **Run**
 ```bash
-`go run .`
+go run .
 ```
 
 **Build**

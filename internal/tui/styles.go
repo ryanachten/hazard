@@ -24,7 +24,7 @@ var pathVerticalCharacter = lipgloss.NewStyle().
 	Render()
 
 var citizenDeadStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color("#991b1b")).
+	Foreground(lipgloss.Color("#c41b1b")).
 	Background(lipgloss.Color("#2a0505"))
 var citizenDeadCharacter = lipgloss.NewStyle().
 	Inherit(citizenDeadStyle).

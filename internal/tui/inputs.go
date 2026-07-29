@@ -66,10 +66,10 @@ func (ic *InputController) View() (string, *tea.Cursor) {
 		b.WriteString(inputModel.View())
 		b.WriteRune('\n')
 
-		cursor := inputModel.Cursor()
-		if inputModel.Focused() && cursor != nil {
-			c = cursor
-			c.Y += i
+		if cursorPtr := inputModel.Cursor(); inputModel.Focused() && cursorPtr != nil {
+			cp := *cursorPtr
+			cp.Y += i
+			c = &cp
 		}
 	}
 

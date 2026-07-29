@@ -6,10 +6,10 @@ usage() {
   echo "Usage: $0 [basename] [runs]"
   echo "Records screen recordings of 'go run .' through predefined sizes."
   echo
-  echo "Sizes: 1920x1080, 1280x720, 960x540"
+  echo "Sizes: 1920x1080, 1920x1080 (path overlay), 1280x720, 800x600"
   echo "Defaults: basename=demo, runs=3"
   echo
-  echo "Output: <basename>_<width>x<height>_<run>.gif"
+  echo "Output: <basename>_<width>x<height>[_<suffix>]_<run>.gif"
   echo
   echo "Examples:"
   echo "  $0"
@@ -24,6 +24,11 @@ fi
 
 BASE="${1:-demo}"
 RUNS="${2:-3}"
+
+if ! [[ "$RUNS" =~ ^[0-9]+$ ]] || [ "$RUNS" -lt 1 ]; then
+  echo "Error: runs must be a positive integer"
+  exit 1
+fi
 
 SIZES=(
   "1920 1080"
@@ -41,14 +46,15 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 
-trap 'rm -f /tmp/hazard-record-*' EXIT
+TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
 for SIZE in "${SIZES[@]}"; do
   read -r WIDTH HEIGHT EXTRA <<< "$SIZE"
   for RUN in $(seq 1 "$RUNS"); do
     SUFFIX="${EXTRA:+_${EXTRA}}"
     OUTPUT="${BASE}_${WIDTH}x${HEIGHT}${SUFFIX}_${RUN}.gif"
-    TAPE_FILE="$(mktemp /tmp/hazard-record-XXXXXX)"
+    TAPE_FILE="$(mktemp "$TEMP_DIR/hazard-record-XXXXXX")"
 
     PATH_CMD=""
     if [[ "$EXTRA" == "path" ]]; then
@@ -67,10 +73,10 @@ Set CursorBlink false
 Hide
 Type "go run ."
 Enter
-Sleep 1s
+Sleep 2s
 Show
 ${PATH_CMD}
-Wait@60s
+Sleep 60s
 EOF
 
     echo "Recording (${RUN}/${RUNS}): ${WIDTH}x${HEIGHT} -> ${OUTPUT}"

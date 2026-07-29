@@ -39,6 +39,7 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 	}
 
 	// Initialise citizens
+	m.paths = map[uuid.UUID][]pathfinding.Position{}
 	for _, c := range payload.Citizens {
 		pos := c.CurrentPosition
 		m.grid[pos.Y][pos.X] = citizenCharacter

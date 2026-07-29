@@ -39,12 +39,13 @@ type Model struct {
 	inputs              InputController
 	showSidebar         bool
 	showPaths           bool
+	hideSidebar         bool
 }
 
 var sidebarWidth = 35
 
 // InitialModel creates the initial TUI model state
-func InitialModel(eventBus *events.EventBus) Model {
+func InitialModel(eventBus *events.EventBus, hideSidebar bool) Model {
 	inputs := InitialiseController(eventBus)
 	focusTargets := 1 + len(inputs.inputs)
 
@@ -58,6 +59,7 @@ func InitialModel(eventBus *events.EventBus) Model {
 		focusIndex:   0,
 		focusTargets: focusTargets,
 		inputs:       inputs,
+		hideSidebar:  hideSidebar,
 	}
 }
 
@@ -167,7 +169,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
-		if msg.Width > sidebarWidth*2 {
+		if msg.Width > sidebarWidth*2 && !m.hideSidebar {
 			m.width = msg.Width - sidebarWidth
 			m.showSidebar = true
 		} else {

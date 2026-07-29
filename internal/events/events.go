@@ -57,10 +57,11 @@ const (
 
 // SimulationCreatedPayload for simulation start event
 type SimulationCreatedPayload struct {
-	Grid      pathfinding.Grid
-	Citizens  []citizen.Citizen
-	SafeZones []*safezone.SafeZone
-	Obstacles []obstacle.Obstacle
+	Grid             pathfinding.Grid
+	Citizens         []citizen.Citizen
+	SafeZones        []*safezone.SafeZone
+	Obstacles        []obstacle.Obstacle
+	UseLogoObstacles bool
 }
 
 // SimulationCreated raised when simulation starts
@@ -82,10 +83,11 @@ func (e *EventBus) SimulationCreated(payload SimulationCreatedPayload, metadata 
 	}
 
 	e.createEvent(SimulationCreated, metadata.SimulationID, metadata, SimulationCreatedPayload{
-		Grid:      payload.Grid,
-		Citizens:  citizenSnapshot,
-		SafeZones: safeZoneSnapshot,
-		Obstacles: obstacleSnapshot,
+		Grid:             payload.Grid,
+		Citizens:         citizenSnapshot,
+		SafeZones:        safeZoneSnapshot,
+		Obstacles:        obstacleSnapshot,
+		UseLogoObstacles: payload.UseLogoObstacles,
 	})
 }
 

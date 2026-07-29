@@ -39,14 +39,14 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 	}
 
 	// Initialise citizens
-	for _, citizen := range payload.Citizens {
-		pos := citizen.CurrentPosition
+	for _, c := range payload.Citizens {
+		pos := c.CurrentPosition
 		m.grid[pos.Y][pos.X] = citizenCharacter
-		m.citizens[citizen.ID] = citizenState{
-			Position: citizen.CurrentPosition,
-			Status:   citizen.Status,
+		m.citizens[c.ID] = citizenState{
+			Position: c.CurrentPosition,
+			Status:   c.Status,
 		}
-		m.paths[citizen.ID] = citizen.Path
+		m.paths[c.ID] = c.Path
 	}
 	m.activeCitizenCount = len(payload.Citizens)
 
@@ -56,6 +56,18 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 		for _, cellPos := range obstacle.Cells {
 			m.grid[cellPos.Y][cellPos.X] = obstacleChar
 		}
+	}
+
+	if payload.UseLogoObstacles && logoCharWidth > 0 && logoCharHeight > 0 && len(m.grid) > 0 && len(m.grid[0]) > 0 {
+		startX := (len(m.grid[0]) - logoCharWidth) / 2
+		startY := (len(m.grid) - logoCharHeight) / 2
+		if startX < 0 {
+			startX = 0
+		}
+		if startY < 0 {
+			startY = 0
+		}
+		placeLogoOnGrid(m.grid, startX, startY)
 	}
 }
 
@@ -197,6 +209,8 @@ func (m *Model) handleHazardDissipated(event events.SimulationEvent) {
 	for _, cell := range updatedCells {
 		m.grid[cell.Y][cell.X] = getOpenCell()
 	}
+
+
 }
 
 func (m *Model) createSafeZone(safeZoneID uuid.UUID, cells []pathfinding.Position) {

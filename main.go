@@ -90,7 +90,7 @@ func main() {
 	}()
 
 	// Run bubbletea TUI
-	p := tea.NewProgram(tui.InitialModel(eventBus))
+	p := tea.NewProgram(tui.InitialModel(eventBus, config.HideSidebar))
 	if _, err := p.Run(); err != nil {
 		slog.Error("error running program", "err", err)
 		os.Exit(1)

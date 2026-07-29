@@ -102,6 +102,43 @@ func getObstacleCell() string {
 	return obstacleStyle.SetString(char).Render()
 }
 
+var logoLines = []string{
+	"░█░█░█▀█░▀▀█░█▀█░█▀▄░█▀▄",
+	"░█▀█░█▀█░▄▀░░█▀█░█▀▄░█░█",
+	"░▀░▀░▀░▀░▀▀▀░▀░▀░▀░▀░▀▀░",
+}
+
+var logoChars [][]string
+var logoCharWidth, logoCharHeight int
+
+func init() {
+	logoChars = make([][]string, len(logoLines))
+	for i, line := range logoLines {
+		runes := []rune(line)
+		chars := make([]string, len(runes))
+		for j, r := range runes {
+			chars[j] = string(r)
+		}
+		logoChars[i] = chars
+	}
+	logoCharHeight = len(logoChars)
+	if logoCharHeight > 0 {
+		logoCharWidth = len(logoChars[0])
+	}
+}
+
+func placeLogoOnGrid(grid [][]string, startX, startY int) {
+	for row := range logoCharHeight {
+		for col := range logoCharWidth {
+			y := startY + row
+			x := startX + col
+			if y >= 0 && y < len(grid) && x >= 0 && x < len(grid[y]) {
+				grid[y][x] = obstacleStyle.SetString(logoChars[row][col]).Render()
+			}
+		}
+	}
+}
+
 var gridStyle = lipgloss.NewStyle().PaddingRight(2).MarginRight(2).Border(lipgloss.ThickBorder(), false, true, false, false)
 
 var logo = lipgloss.NewStyle().

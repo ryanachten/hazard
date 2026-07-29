@@ -76,10 +76,11 @@ func NewSimulation(width, height int, config configuration.SimulationConfig, eve
 
 	sim.eventBus.SimulationCreated(
 		events.SimulationCreatedPayload{
-			Grid:      sim.Grid.Copy(),
-			Citizens:  sim.Citizens,
-			SafeZones: sim.SafeZones,
-			Obstacles: obstacles,
+			Grid:             sim.Grid.Copy(),
+			Citizens:         sim.Citizens,
+			SafeZones:        sim.SafeZones,
+			Obstacles:        obstacles,
+			UseLogoObstacles: config.UseLogoObstacles,
 		},
 		events.EventMetadata{
 			SimulationID: sim.ID,

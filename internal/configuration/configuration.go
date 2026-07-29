@@ -13,17 +13,21 @@ import (
 
 // SimulationConfig configuration for a simulation
 type SimulationConfig struct {
-	TickIntervalMs int
-	CitizenCount   int
-	Hazard         hazard.Config
-	SafeZone       safezone.Config
-	Obstacle       obstacle.Config
+	TickIntervalMs   int
+	CitizenCount     int
+	UseLogoObstacles bool
+	HideSidebar      bool
+	Hazard           hazard.Config
+	SafeZone         safezone.Config
+	Obstacle         obstacle.Config
 }
 
 // DefaultConfig for the simulation
 var DefaultConfig = SimulationConfig{
-	TickIntervalMs: 100,
-	CitizenCount:   30,
+	TickIntervalMs:   100,
+	CitizenCount:     30,
+	UseLogoObstacles: true,
+	HideSidebar:      true,
 	Hazard: hazard.Config{
 		Probability:   0.1,
 		Count:         4,

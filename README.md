@@ -69,7 +69,7 @@ The terminal UI is built using the Charm ecosystem. [Bubbletea](https://github.c
 - [pre-commit](https://pre-commit.com/) (for git hooks)
 - [VHS](https://github.com/charmbracelet/vhs) (for creating demo recordings)
 
-### Command
+### Commands
 **Run**
 ```bash
 go run .

@@ -39,14 +39,14 @@ func (m *Model) handleSimulationCreated(event events.SimulationEvent) {
 	}
 
 	// Initialise citizens
-	for _, citizen := range payload.Citizens {
-		pos := citizen.CurrentPosition
+	for _, c := range payload.Citizens {
+		pos := c.CurrentPosition
 		m.grid[pos.Y][pos.X] = citizenCharacter
-		m.citizens[citizen.ID] = citizenState{
-			Position: citizen.CurrentPosition,
-			Status:   citizen.Status,
+		m.citizens[c.ID] = citizenState{
+			Position: c.CurrentPosition,
+			Status:   c.Status,
 		}
-		m.paths[citizen.ID] = citizen.Path
+		m.paths[c.ID] = c.Path
 	}
 	m.activeCitizenCount = len(payload.Citizens)
 
